@@ -1,6 +1,5 @@
 const API = '';
 
-const BRANCH_POSITIONS = [0, 1, 2, 3, 4, 5];
 const PATHWAY_THEMES = {
   arcane_blade: 'arcane',
   ruin_artificer: 'ruin',
@@ -337,8 +336,12 @@ function renderBranches() {
   const layout = document.getElementById('branchLayout');
   if (!layout) return;
   const branches = adventureState?.branches || metaState?.branches || [];
-  layout.innerHTML = branches.map((branch, index) => `
-    <section class="branch-card pos-${BRANCH_POSITIONS[index] ?? 0}" style="--branch-color:${esc(branch.color || '#62d7ff')}">
+  const totalNodes = branches.reduce((sum, branch) => sum + (Array.isArray(branch.skills) ? branch.skills.length : 0), 0);
+  const nodeCountEl = document.getElementById('treeNodeCount');
+  if (nodeCountEl) nodeCountEl.textContent = String(totalNodes);
+
+  layout.innerHTML = branches.map((branch) => `
+    <section class="branch-lane" style="--branch-color:${esc(branch.color || '#62d7ff')}">
       <div class="branch-head">
         <div class="gate-kicker">${esc(branch.icon)} branch</div>
         <h3>${esc(branch.name)}</h3>
@@ -348,7 +351,7 @@ function renderBranches() {
           <span>${Number(branch.points_earned || 0)} pts</span>
         </div>
       </div>
-      <div class="skill-list">
+      <div class="skill-path">
         ${(branch.skills || []).map((skill) => renderSkillCard(skill)).join('')}
       </div>
     </section>
@@ -382,14 +385,14 @@ function renderBranches() {
 function renderSkillCard(skill) {
   let status = 'Locked';
   let button = '<button disabled>Locked</button>';
-  let classes = 'skill-card locked';
+  let classes = 'skill-card branch-node locked';
   if (skill.unlocked) {
     status = 'Unlocked';
-    classes = 'skill-card unlocked';
+    classes = 'skill-card branch-node unlocked';
     button = '<button disabled>Unlocked</button>';
   } else if (skill.available) {
     status = 'Available';
-    classes = 'skill-card available';
+    classes = 'skill-card branch-node available';
     button = `<button data-unlock-skill="${esc(skill.id)}">Claim ${Number(skill.points)} pts</button>`;
   }
   return `
@@ -399,7 +402,10 @@ function renderSkillCard(skill) {
           <small>Tier ${Number(skill.tier || 1)}</small>
           <strong>${esc(skill.name)}</strong>
         </div>
-        <span class="skill-status">${status}</span>
+        <div class="skill-side">
+          <span class="skill-points">${Number(skill.points)} pts</span>
+          <span class="skill-status">${status}</span>
+        </div>
       </div>
       <p>${esc(skill.summary)}</p>
       <div class="skill-footer">

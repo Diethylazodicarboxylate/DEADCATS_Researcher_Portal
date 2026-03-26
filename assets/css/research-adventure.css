@@ -902,6 +902,175 @@ body::after {
   border: 1px dashed rgba(255, 255, 255, 0.08);
 }
 
+.tree-board {
+  padding: 22px;
+  display: grid;
+  gap: 20px;
+  background:
+    radial-gradient(circle at top, rgba(98, 215, 255, 0.08), transparent 24%),
+    linear-gradient(180deg, rgba(8, 12, 20, 0.96), rgba(7, 11, 20, 0.9));
+}
+
+.tree-hub {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: stretch;
+  padding: 18px 20px;
+  border: 1px solid rgba(98, 215, 255, 0.14);
+  background:
+    linear-gradient(135deg, rgba(18, 25, 42, 0.92), rgba(8, 12, 22, 0.88));
+}
+
+.tree-hub-copy h3 {
+  font-family: var(--pixel-font);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--text-bright);
+  margin: 10px 0 8px;
+}
+
+.tree-hub-copy p {
+  max-width: 68ch;
+  color: var(--text-mid);
+}
+
+.tree-hub-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+  gap: 12px;
+  min-width: 280px;
+}
+
+.tree-hub-stats div {
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(5, 8, 16, 0.76);
+}
+
+.tree-hub-stats span,
+.skill-points {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.tree-hub-stats strong {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--pixel-font);
+  font-size: 0.9rem;
+  color: var(--text-bright);
+}
+
+.tree-scroll {
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.branch-layout.board-layout {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(320px, 360px);
+  gap: 18px;
+  width: max-content;
+  min-width: 100%;
+  min-height: auto;
+  position: relative;
+}
+
+.branch-lane {
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(15, 20, 34, 0.94), rgba(7, 10, 18, 0.92));
+  box-shadow: var(--adventure-shadow);
+}
+
+.branch-lane .branch-head {
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.skill-path {
+  position: relative;
+  display: grid;
+  gap: 14px;
+}
+
+.skill-path::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 16px;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), var(--branch-color), rgba(255,255,255,0.08));
+}
+
+.branch-node {
+  position: relative;
+  margin-left: 28px;
+  padding: 14px 14px 14px 16px;
+}
+
+.branch-node::before {
+  content: '';
+  position: absolute;
+  top: 24px;
+  left: -28px;
+  width: 28px;
+  height: 2px;
+  background: var(--branch-color);
+  opacity: 0.55;
+}
+
+.branch-node::after {
+  content: '';
+  position: absolute;
+  top: 18px;
+  left: -34px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--branch-color);
+  background: #07101a;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.22);
+}
+
+.branch-node.unlocked::after {
+  background: var(--branch-color);
+}
+
+.branch-node.available::after {
+  animation: nodePulse 1.8s ease-in-out infinite;
+}
+
+@keyframes nodePulse {
+  50% {
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.22), 0 0 18px var(--branch-color);
+  }
+}
+
+.skill-top {
+  align-items: flex-start;
+}
+
+.skill-side {
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+}
+
+.skill-points {
+  color: var(--gold);
+  font-size: 9px;
+}
+
 @media (max-width: 1320px) {
   .adventure-grid {
     grid-template-columns: 1fr;
@@ -924,36 +1093,13 @@ body::after {
     display: grid;
   }
 
-  .nexus-map,
-  .branch-layout {
-    min-height: auto;
-  }
-
-  .nexus-core {
-    position: relative;
-    inset: auto;
-    transform: none;
-    margin: 0 auto 22px;
-  }
-
-  .branch-layout {
-    display: grid;
+  .tree-hub {
     grid-template-columns: 1fr;
-    gap: 16px;
+    display: grid;
   }
 
-  .branch-card {
-    position: relative;
-    width: 100%;
-    top: auto;
-    left: auto;
-    right: auto;
-    bottom: auto;
-    transform: none !important;
-  }
-
-  .branch-card::before {
-    display: none;
+  .tree-hub-stats {
+    min-width: 0;
   }
 }
 
@@ -982,5 +1128,13 @@ body::after {
 
   .pathway-card {
     min-height: auto;
+  }
+
+  .branch-layout.board-layout {
+    grid-auto-columns: minmax(280px, 86vw);
+  }
+
+  .tree-board {
+    padding: 16px;
   }
 }
