@@ -1,0 +1,67 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: deadcats-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: deadcats-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    expose:
+      - "8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES}
+      ADMIN_HANDLE: ${ADMIN_HANDLE}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
+      REGISTER_TOKEN: ${REGISTER_TOKEN}
+      ALLOW_SELF_REGISTER: ${ALLOW_SELF_REGISTER}
+      COOKIE_SECURE: ${COOKIE_SECURE}
+      COOKIE_SAMESITE: ${COOKIE_SAMESITE}
+      MASTER_HANDLE: ${MASTER_HANDLE}
+      CTFTIME_TEAM_ID: ${CTFTIME_TEAM_ID}
+      PWNBOX_IMAGE: ${PWNBOX_IMAGE}
+      PWNBOX_AUTO_BUILD: ${PWNBOX_AUTO_BUILD}
+      PWNBOX_SESSION_TTL_MINUTES: ${PWNBOX_SESSION_TTL_MINUTES}
+      PWNBOX_ALLOWED_ORIGINS: ${PWNBOX_ALLOWED_ORIGINS}
+      AI_CHAT_PROVIDER: ${AI_CHAT_PROVIDER}
+      AI_CHAT_BASE_URL: ${AI_CHAT_BASE_URL}
+      AI_CHAT_API_KEY: ${AI_CHAT_API_KEY}
+      AI_CHAT_MODEL: ${AI_CHAT_MODEL}
+      AI_CHAT_TIMEOUT_SECONDS: ${AI_CHAT_TIMEOUT_SECONDS}
+      AI_CHAT_SITE_URL: ${AI_CHAT_SITE_URL}
+      AI_CHAT_SITE_NAME: ${AI_CHAT_SITE_NAME}
+      AI_CHAT_GEMINI_API_KEY: ${AI_CHAT_GEMINI_API_KEY}
+    volumes:
+      - profile_uploads:/app/profile_uploads
+      - vault_files:/app/vault_files
+      - app_logs:/app/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  pgdata:
+  profile_uploads:
+  vault_files:
+  app_logs:
