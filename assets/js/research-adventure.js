@@ -5,20 +5,9 @@ const PATHWAY_THEMES = {
   shadow_conductor: 'shadow',
 };
 
-const OVERVIEW_POSITIONS = [
-  { left: 18, top: 28 },
-  { left: 50, top: 14 },
-  { left: 82, top: 28 },
-  { left: 18, top: 72 },
-  { left: 50, top: 86 },
-  { left: 82, top: 72 },
-];
-
 let metaState = null;
 let adventureState = null;
 let currentUser = readCachedUser();
-let selectedSpecializationId = null;
-let selectedNode = null;
 
 function esc(s) {
   return String(s ?? '')
@@ -97,6 +86,11 @@ function formatDateTime(value) {
   });
 }
 
+function progressPercent(completion) {
+  if (!completion || !completion.total) return 0;
+  return Math.round((completion.completed / completion.total) * 100);
+}
+
 function pathwayPalette(pathwayKey, sequence) {
   const power = Math.max(0, 9 - Number(sequence || 9));
   const palettes = {
@@ -129,12 +123,8 @@ function createPixelAvatar(pathwayKey, sequence, size = 128) {
   const auraColor = p.glow;
   const aura = [];
   const figure = [];
-  for (let x = 2; x < 14; x += 1) {
-    aura.push(rect(x, 1, `${auraColor}20`), rect(x, 14, `${auraColor}20`));
-  }
-  for (let y = 2; y < 14; y += 1) {
-    aura.push(rect(1, y, `${auraColor}20`), rect(14, y, `${auraColor}20`));
-  }
+  for (let x = 2; x < 14; x += 1) aura.push(rect(x, 1, `${auraColor}20`), rect(x, 14, `${auraColor}20`));
+  for (let y = 2; y < 14; y += 1) aura.push(rect(1, y, `${auraColor}20`), rect(14, y, `${auraColor}20`));
   const fill = (coords, color) => coords.map(([x, y]) => rect(x, y, color));
   figure.push(...fill([[6,3],[7,3],[8,3],[9,3],[5,4],[6,4],[7,4],[8,4],[9,4],[10,4],[5,5],[6,5],[7,5],[8,5],[9,5],[10,5],[6,6],[7,6],[8,6],[9,6]], p.skin));
   figure.push(...fill([[5,3],[10,3],[4,4],[11,4],[4,5],[11,5],[5,6],[10,6]], p.shadow));
@@ -152,64 +142,55 @@ function createPixelAvatar(pathwayKey, sequence, size = 128) {
     figure.push(...fill([[3,5],[4,5],[5,5],[2,6],[3,6],[4,6],[5,6],[3,7],[4,7],[5,7],[4,8]], `${p.shadow}ee`));
     figure.push(...fill([[11,5],[12,5],[12,6],[13,6],[12,7],[13,7]], p.weapon));
   }
-  if (seq <= 2) {
-    figure.push(...fill([[5,2],[6,2],[9,2],[10,2],[5,14],[10,14]], p.glow));
-  }
+  if (seq <= 2) figure.push(...fill([[5,2],[6,2],[9,2],[10,2],[5,14],[10,14]], p.glow));
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect width="16" height="16" fill="${p.background}"/>${aura.join('')}${figure.join('')}</svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
-function progressPercent(completion) {
-  if (!completion || !completion.total) return 0;
-  return Math.round((completion.completed / completion.total) * 100);
-}
-
-function currentSpecialization() {
-  const specializations = adventureState?.specializations || [];
-  return specializations.find((item) => item.id === selectedSpecializationId) || specializations[0] || null;
-}
-
-function pickDefaultSpecialization() {
-  if (selectedSpecializationId && currentSpecialization()) return;
-  const specializations = adventureState?.specializations || [];
-  const incomplete = specializations.find((item) => !item.completion?.is_complete);
-  selectedSpecializationId = (incomplete || specializations[0] || {}).id || null;
-}
-
-function nodePercent(completion) {
-  return `${progressPercent(completion)}%`;
-}
-
-function chooseDefaultNode() {
-  const specialization = currentSpecialization();
-  if (!specialization) {
-    selectedNode = null;
-    return;
-  }
-  const skills = specialization.levels.flatMap((level) => level.topics.flatMap((topic) => topic.skills));
-  const available = skills.find((item) => item.available && !item.unlocked);
-  const first = available || skills.find((item) => item.unlocked) || specialization.levels[0]?.topics[0]?.skills[0] || specialization;
-  selectedNode = first ? { kind: first.kind || 'skill', id: first.id } : null;
-}
-
-function findNodeById(kind, id) {
-  const specialization = currentSpecialization();
-  if (!specialization) return null;
-  if (kind === 'specialization' && specialization.id === id) return specialization;
-  for (const level of specialization.levels) {
-    if (kind === 'level' && level.id === id) return level;
-    for (const topic of level.topics) {
-      if (kind === 'topic' && topic.id === id) return topic;
-      for (const skill of topic.skills) {
-        if (kind === 'skill' && skill.id === id) return skill;
-      }
-    }
-  }
-  return null;
-}
-
 function setTheme(pathwayKey) {
   document.body.dataset.pathwayTheme = PATHWAY_THEMES[pathwayKey] || 'arcane';
+}
+
+function getBoardColumns() {
+  const specs = adventureState?.specializations || [];
+  return [specs.slice(0, 3), specs.slice(3, 6)];
+}
+
+function getNodeDescription(type, node) {
+  if (type === 'skill') {
+    return `${node.summary}\n\nStatus: ${node.unlocked ? 'Completed' : node.available ? 'Ready to complete' : 'Locked'}\nReward: ${node.points} points`;
+  }
+  if (type === 'topic' || type === 'level' || type === 'specialization') {
+    return `${node.summary}\n\nCompletion: ${node.completion.completed}/${node.completion.total} skills`;
+  }
+  return node.summary || '';
+}
+
+function tooltipEl() {
+  return document.getElementById('hexTooltip');
+}
+
+function showTooltip(event) {
+  const tip = tooltipEl();
+  if (!tip) return;
+  const text = event.currentTarget.getAttribute('data-tooltip');
+  if (!text) return;
+  tip.textContent = text;
+  tip.classList.remove('hidden');
+  moveTooltip(event);
+}
+
+function moveTooltip(event) {
+  const tip = tooltipEl();
+  if (!tip || tip.classList.contains('hidden')) return;
+  tip.style.left = `${event.clientX + 18}px`;
+  tip.style.top = `${event.clientY + 18}px`;
+}
+
+function hideTooltip() {
+  const tip = tooltipEl();
+  if (!tip) return;
+  tip.classList.add('hidden');
 }
 
 function renderPathwayGate() {
@@ -327,18 +308,87 @@ function renderLadder() {
   }).join('');
 }
 
-function renderOverviewMap() {
-  const wrap = document.getElementById('overviewMap');
-  if (!wrap) return;
-  const specializations = adventureState?.specializations || metaState?.specializations || [];
-  if (!specializations.length) {
-    wrap.innerHTML = '<div class="empty-state">No roadmap specializations loaded.</div>';
-    return;
-  }
+function renderSkillNode(skill) {
+  const stateClass = skill.unlocked ? 'complete' : skill.available ? 'available' : 'locked';
+  return `
+    <button
+      class="road-hex skill-node ${stateClass}"
+      data-skill-id="${esc(skill.id)}"
+      data-tooltip="${esc(getNodeDescription('skill', skill))}"
+      ${skill.available && !skill.unlocked ? '' : 'data-disabled="1"'}
+    >
+      <div class="road-hex-inner">
+        <div class="hex-kicker">${skill.points} pts</div>
+        <div class="hex-title">${esc(skill.name)}</div>
+        <div class="hex-subtitle">${skill.unlocked ? 'Done' : skill.available ? 'Ready' : 'Locked'}</div>
+      </div>
+    </button>
+  `;
+}
 
-  const center = { left: 50, top: 50 };
-  const centerHex = `
-    <div class="overview-center" style="left:${center.left}%;top:${center.top}%;">
+function renderTopic(topic) {
+  return `
+    <div class="topic-cluster">
+      <div class="topic-node-wrap">
+        <div class="road-hex topic-node ${topic.completion.is_complete ? 'complete' : 'active'}" data-tooltip="${esc(getNodeDescription('topic', topic))}">
+          <div class="road-hex-inner">
+            <div class="hex-kicker">Topic</div>
+            <div class="hex-title">${esc(topic.name)}</div>
+            <div class="hex-subtitle">${progressPercent(topic.completion)}%</div>
+          </div>
+        </div>
+      </div>
+      <div class="skill-hex-grid">
+        ${topic.skills.map(renderSkillNode).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderLevel(level) {
+  return `
+    <section class="level-lane">
+      <div class="level-node-wrap">
+        <div class="road-hex level-node ${level.completion.is_complete ? 'complete' : 'active'}" data-tooltip="${esc(getNodeDescription('level', level))}">
+          <div class="road-hex-inner">
+            <div class="hex-kicker">${esc(level.name)}</div>
+            <div class="hex-title">${esc(level.title)}</div>
+            <div class="hex-subtitle">${level.completion.completed}/${level.completion.total}</div>
+          </div>
+        </div>
+      </div>
+      <div class="topic-forest">
+        ${level.topics.map(renderTopic).join('')}
+      </div>
+    </section>
+  `;
+}
+
+function renderSpecialization(spec) {
+  return `
+    <section class="branch-tree" style="--branch-color:${esc(spec.color)}">
+      <div class="branch-root-wrap">
+        <div class="road-hex branch-root ${spec.completion.is_complete ? 'complete' : 'active'}" data-tooltip="${esc(getNodeDescription('specialization', spec))}">
+          <div class="road-hex-inner">
+            <div class="hex-kicker">${esc(spec.icon)} specialization</div>
+            <div class="hex-title">${esc(spec.name)}</div>
+            <div class="hex-subtitle">${progressPercent(spec.completion)}%</div>
+          </div>
+        </div>
+      </div>
+      <div class="level-stack">
+        ${spec.levels.map(renderLevel).join('')}
+      </div>
+    </section>
+  `;
+}
+
+function renderDestinyBoard() {
+  const board = document.getElementById('destinyBoard');
+  if (!board) return;
+  const columns = getBoardColumns();
+  const center = `
+    <div class="board-center-wrap">
       <div class="hex-shell center-hex">
         <div class="hex-content">
           <div class="hex-icon"><img src="${createPixelAvatar(adventureState?.pathway?.key || 'arcane_blade', adventureState?.sequence?.sequence || 9, 76)}" alt="Center avatar"></div>
@@ -348,180 +398,23 @@ function renderOverviewMap() {
       </div>
     </div>
   `;
+  board.innerHTML = `
+    <div class="board-row top-row">${columns[0].map(renderSpecialization).join('')}</div>
+    ${center}
+    <div class="board-row bottom-row">${columns[1].map(renderSpecialization).join('')}</div>
+  `;
 
-  const lines = specializations.map((spec, index) => {
-    const pos = OVERVIEW_POSITIONS[index];
-    const dx = pos.left - center.left;
-    const dy = pos.top - center.top;
-    const length = Math.sqrt(dx * dx + dy * dy);
-    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-    return `<div class="connector-line" style="left:${center.left}%;top:${center.top}%;width:${length}%;transform:rotate(${angle}deg);"></div>`;
-  }).join('');
-
-  const specsHtml = specializations.map((spec, index) => {
-    const pos = OVERVIEW_POSITIONS[index];
-    const percent = progressPercent(spec.completion);
-    const active = spec.id === selectedSpecializationId;
-    return `
-      <button class="overview-spec" data-specialization="${esc(spec.id)}" style="left:${pos.left}%;top:${pos.top}%;">
-        <div class="hex-shell spec-hex ${active ? 'active' : ''}" style="border-color:${esc(spec.color)};">
-          <div class="hex-content">
-            <div class="hex-icon">${esc(spec.icon)}</div>
-            <div class="hex-title">${esc(spec.name)}</div>
-            <div class="hex-subtitle">${percent}% complete</div>
-          </div>
-        </div>
-        <div class="overview-spec-label">
-          <strong>${esc(spec.name)}</strong>
-          <span>${spec.completion.completed}/${spec.completion.total} skills</span>
-        </div>
-      </button>
-    `;
-  }).join('');
-
-  wrap.innerHTML = `${lines}${centerHex}${specsHtml}`;
-  wrap.querySelectorAll('[data-specialization]').forEach((button) => {
-    button.addEventListener('click', () => {
-      selectedSpecializationId = button.getAttribute('data-specialization');
-      chooseDefaultNode();
-      renderOverviewMap();
-      renderWorkspace();
-    });
+  board.querySelectorAll('[data-tooltip]').forEach((node) => {
+    node.addEventListener('mouseenter', showTooltip);
+    node.addEventListener('mousemove', moveTooltip);
+    node.addEventListener('mouseleave', hideTooltip);
   });
-}
-
-function renderWorkspace() {
-  const specialization = currentSpecialization();
-  const header = document.getElementById('workspaceHeader');
-  const canvas = document.getElementById('workspaceCanvas');
-  const inspector = document.getElementById('nodeInspector');
-  const tag = document.getElementById('workspaceTag');
-  if (!specialization) {
-    header.innerHTML = '<div class="workspace-intro">Select a specialization hex from the overview map.</div>';
-    canvas.innerHTML = '';
-    inspector.innerHTML = '';
-    tag.textContent = 'SELECT A BRANCH';
-    return;
-  }
-
-  if (!selectedNode || !findNodeById(selectedNode.kind, selectedNode.id)) {
-    chooseDefaultNode();
-  }
-
-  tag.textContent = specialization.name.toUpperCase();
-  header.innerHTML = `
-    <div class="workspace-panel">
-      <div class="workspace-hex-mini">${esc(specialization.icon)}</div>
-      <div>
-        <div class="gate-kicker">Specialization</div>
-        <div class="workspace-title">${esc(specialization.name)}</div>
-        <p class="workspace-copy">${esc(specialization.summary)}</p>
-        <div class="workspace-stats">
-          <span class="workspace-stat">${specialization.completion.completed} / ${specialization.completion.total} skills</span>
-          <span class="workspace-stat">${progressPercent(specialization.completion)}% complete</span>
-          <span class="workspace-stat">${specialization.points_earned} pts earned</span>
-        </div>
-      </div>
-    </div>
-  `;
-
-  canvas.innerHTML = specialization.levels.map((level) => `
-    <section class="level-lane">
-      ${renderHexNode(level, {
-        kind: 'level',
-        title: level.title,
-        kicker: level.name,
-        subtitle: `${level.completion.completed}/${level.completion.total}`,
-        extraClass: 'level-node',
-      })}
-      <div class="topic-forest">
-        ${level.topics.map((topic) => `
-          <div class="topic-cluster">
-            ${renderHexNode(topic, {
-              kind: 'topic',
-              title: topic.name,
-              kicker: 'Topic',
-              subtitle: nodePercent(topic.completion),
-              extraClass: 'topic-node',
-            })}
-            <div class="skill-hex-grid">
-              ${topic.skills.map((skill) => renderHexNode(skill, {
-                kind: 'skill',
-                title: skill.name,
-                kicker: `${skill.points} pts`,
-                subtitle: skill.unlocked ? 'Done' : skill.available ? 'Ready' : 'Locked',
-                extraClass: 'skill-node',
-              })).join('')}
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    </section>
-  `).join('');
-
-  canvas.querySelectorAll('[data-node-kind]').forEach((button) => {
-    button.addEventListener('click', () => {
-      selectedNode = {
-        kind: button.getAttribute('data-node-kind'),
-        id: button.getAttribute('data-node-id'),
-      };
-      renderWorkspace();
-    });
+  board.querySelectorAll('[data-skill-id]').forEach((node) => {
+    const locked = node.getAttribute('data-disabled') === '1';
+    if (!locked) {
+      node.addEventListener('click', () => unlockSkill(node.getAttribute('data-skill-id')));
+    }
   });
-  renderInspector(inspector);
-}
-
-function renderHexNode(node, options) {
-  const selected = selectedNode && selectedNode.kind === options.kind && selectedNode.id === node.id;
-  const isSkill = options.kind === 'skill';
-  const stateClass = isSkill ? (node.unlocked ? 'complete' : node.available ? 'available' : 'locked') : (node.completion?.is_complete ? 'complete' : 'active');
-  return `
-    <button class="road-hex ${options.extraClass} ${stateClass} ${selected ? 'selected' : ''}" data-node-kind="${options.kind}" data-node-id="${esc(node.id)}">
-      <div class="road-hex-inner">
-        <div class="hex-kicker">${esc(options.kicker)}</div>
-        <div class="hex-title">${esc(options.title)}</div>
-        <div class="hex-subtitle">${esc(options.subtitle)}</div>
-      </div>
-    </button>
-  `;
-}
-
-function renderInspector(inspector) {
-  const node = selectedNode ? findNodeById(selectedNode.kind, selectedNode.id) : null;
-  if (!node) {
-    inspector.innerHTML = '<div class="workspace-intro">Click a hex to inspect it.</div>';
-    return;
-  }
-
-  let title = node.name || node.title;
-  let kicker = selectedNode.kind;
-  let summary = node.summary || '';
-  let meta = '';
-  let action = '';
-
-  if (selectedNode.kind === 'skill') {
-    meta = `${node.points} pts · ${node.unlocked ? 'Completed' : node.available ? 'Ready to complete' : 'Locked by previous node'}`;
-    action = `<button class="skill-action" id="inspectorAction" ${node.available && !node.unlocked ? '' : 'disabled'}>${node.unlocked ? 'Completed' : node.available ? 'Complete Skill' : 'Locked'}</button>`;
-  } else if (selectedNode.kind === 'topic' || selectedNode.kind === 'level') {
-    meta = `${node.completion.completed}/${node.completion.total} skills complete · ${nodePercent(node.completion)}`;
-  } else {
-    meta = `${node.completion?.completed || 0}/${node.completion?.total || 0} skills complete`;
-  }
-
-  inspector.innerHTML = `
-    <div class="inspector-card">
-      <div class="hex-kicker">${esc(kicker)}</div>
-      <div class="workspace-title">${esc(title)}</div>
-      <div class="workspace-stat">${esc(meta)}</div>
-      <p class="workspace-copy">${esc(summary)}</p>
-      ${action}
-    </div>
-  `;
-
-  const actionBtn = document.getElementById('inspectorAction');
-  if (actionBtn && selectedNode.kind === 'skill' && node.available && !node.unlocked) {
-    actionBtn.addEventListener('click', () => unlockSkill(node.id));
-  }
 }
 
 async function unlockSkill(skillId) {
@@ -536,7 +429,6 @@ async function unlockSkill(skillId) {
     return;
   }
   adventureState = await res.json();
-  pickDefaultSpecialization();
   renderAll();
   showToast('Skill completed', 'success');
   if (beforeSequence !== adventureState?.sequence?.sequence) {
@@ -554,7 +446,6 @@ function renderTasks() {
     month: 'short',
     day: 'numeric',
   });
-
   const pendingCount = tasks.filter((task) => task.status === 'pending').length;
   document.getElementById('taskCountTag').textContent = `${pendingCount} / 5 ACTIVE`;
   if (!tasks.length) {
@@ -576,7 +467,6 @@ function renderTasks() {
       </div>
     </article>
   `).join('');
-
   list.querySelectorAll('[data-complete-task]').forEach((button) => {
     button.addEventListener('click', () => mutateTask(`/api/research-adventure/daily-tasks/${button.getAttribute('data-complete-task')}/complete`, 'POST', 'Task completed'));
   });
@@ -592,7 +482,6 @@ async function mutateTask(url, method, successMessage) {
     return;
   }
   adventureState = await res.json();
-  pickDefaultSpecialization();
   renderAll();
   showToast(successMessage, 'success');
 }
@@ -626,7 +515,6 @@ async function loadAdventure() {
   const res = await authFetch('/api/research-adventure/me');
   if (!res.ok) throw new Error('adventure');
   adventureState = await res.json();
-  pickDefaultSpecialization();
 }
 
 function renderAll() {
@@ -634,8 +522,7 @@ function renderAll() {
   renderHero();
   renderJourney();
   renderLadder();
-  renderOverviewMap();
-  renderWorkspace();
+  renderDestinyBoard();
   renderTasks();
 }
 
@@ -687,7 +574,6 @@ document.addEventListener('submit', async (event) => {
   }
   adventureState = await res.json();
   document.getElementById('taskTitleInput').value = '';
-  pickDefaultSpecialization();
   renderAll();
   showToast('Daily task queued', 'success');
 });
