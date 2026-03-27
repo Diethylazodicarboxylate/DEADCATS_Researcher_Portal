@@ -18,6 +18,7 @@ let metaState = null;
 let adventureState = null;
 let currentUser = readCachedUser();
 let selectedSpecializationId = null;
+let selectedNode = null;
 
 function esc(s) {
   return String(s ?? '')
@@ -173,6 +174,38 @@ function pickDefaultSpecialization() {
   const specializations = adventureState?.specializations || [];
   const incomplete = specializations.find((item) => !item.completion?.is_complete);
   selectedSpecializationId = (incomplete || specializations[0] || {}).id || null;
+}
+
+function nodePercent(completion) {
+  return `${progressPercent(completion)}%`;
+}
+
+function chooseDefaultNode() {
+  const specialization = currentSpecialization();
+  if (!specialization) {
+    selectedNode = null;
+    return;
+  }
+  const skills = specialization.levels.flatMap((level) => level.topics.flatMap((topic) => topic.skills));
+  const available = skills.find((item) => item.available && !item.unlocked);
+  const first = available || skills.find((item) => item.unlocked) || specialization.levels[0]?.topics[0]?.skills[0] || specialization;
+  selectedNode = first ? { kind: first.kind || 'skill', id: first.id } : null;
+}
+
+function findNodeById(kind, id) {
+  const specialization = currentSpecialization();
+  if (!specialization) return null;
+  if (kind === 'specialization' && specialization.id === id) return specialization;
+  for (const level of specialization.levels) {
+    if (kind === 'level' && level.id === id) return level;
+    for (const topic of level.topics) {
+      if (kind === 'topic' && topic.id === id) return topic;
+      for (const skill of topic.skills) {
+        if (kind === 'skill' && skill.id === id) return skill;
+      }
+    }
+  }
+  return null;
 }
 
 function setTheme(pathwayKey) {
@@ -350,6 +383,7 @@ function renderOverviewMap() {
   wrap.querySelectorAll('[data-specialization]').forEach((button) => {
     button.addEventListener('click', () => {
       selectedSpecializationId = button.getAttribute('data-specialization');
+      chooseDefaultNode();
       renderOverviewMap();
       renderWorkspace();
     });
@@ -359,13 +393,19 @@ function renderOverviewMap() {
 function renderWorkspace() {
   const specialization = currentSpecialization();
   const header = document.getElementById('workspaceHeader');
-  const levels = document.getElementById('workspaceLevels');
+  const canvas = document.getElementById('workspaceCanvas');
+  const inspector = document.getElementById('nodeInspector');
   const tag = document.getElementById('workspaceTag');
   if (!specialization) {
     header.innerHTML = '<div class="workspace-intro">Select a specialization hex from the overview map.</div>';
-    levels.innerHTML = '';
+    canvas.innerHTML = '';
+    inspector.innerHTML = '';
     tag.textContent = 'SELECT A BRANCH';
     return;
+  }
+
+  if (!selectedNode || !findNodeById(selectedNode.kind, selectedNode.id)) {
+    chooseDefaultNode();
   }
 
   tag.textContent = specialization.name.toUpperCase();
@@ -385,83 +425,103 @@ function renderWorkspace() {
     </div>
   `;
 
-  levels.innerHTML = specialization.levels.map((level) => {
-    const levelPercent = progressPercent(level.completion);
-    return `
-      <section class="level-card">
-        <div class="level-head">
-          <div class="level-hex">
-            <div>
-              <div class="level-badge">${esc(level.name)}</div>
-              <div class="hex-title">${esc(level.title)}</div>
+  canvas.innerHTML = specialization.levels.map((level) => `
+    <section class="level-lane">
+      ${renderHexNode(level, {
+        kind: 'level',
+        title: level.title,
+        kicker: level.name,
+        subtitle: `${level.completion.completed}/${level.completion.total}`,
+        extraClass: 'level-node',
+      })}
+      <div class="topic-forest">
+        ${level.topics.map((topic) => `
+          <div class="topic-cluster">
+            ${renderHexNode(topic, {
+              kind: 'topic',
+              title: topic.name,
+              kicker: 'Topic',
+              subtitle: nodePercent(topic.completion),
+              extraClass: 'topic-node',
+            })}
+            <div class="skill-hex-grid">
+              ${topic.skills.map((skill) => renderHexNode(skill, {
+                kind: 'skill',
+                title: skill.name,
+                kicker: `${skill.points} pts`,
+                subtitle: skill.unlocked ? 'Done' : skill.available ? 'Ready' : 'Locked',
+                extraClass: 'skill-node',
+              })).join('')}
             </div>
           </div>
-          <div>
-            <div class="level-title">${esc(level.title)}</div>
-            <p class="level-copy">${esc(level.summary)}</p>
-          </div>
-          <div class="level-progress">
-            <div class="node-meta">${level.completion.completed}/${level.completion.total} skills</div>
-            <div class="mini-track"><div class="mini-bar" style="width:${levelPercent}%"></div></div>
-          </div>
-        </div>
-        <div class="topic-stack">
-          ${level.topics.map((topic) => renderTopic(topic)).join('')}
-        </div>
-      </section>
-    `;
-  }).join('');
+        `).join('')}
+      </div>
+    </section>
+  `).join('');
 
-  levels.querySelectorAll('[data-unlock-skill]').forEach((button) => {
-    button.addEventListener('click', () => unlockSkill(button.getAttribute('data-unlock-skill')));
+  canvas.querySelectorAll('[data-node-kind]').forEach((button) => {
+    button.addEventListener('click', () => {
+      selectedNode = {
+        kind: button.getAttribute('data-node-kind'),
+        id: button.getAttribute('data-node-id'),
+      };
+      renderWorkspace();
+    });
   });
+  renderInspector(inspector);
 }
 
-function renderTopic(topic) {
-  const percent = progressPercent(topic.completion);
+function renderHexNode(node, options) {
+  const selected = selectedNode && selectedNode.kind === options.kind && selectedNode.id === node.id;
+  const isSkill = options.kind === 'skill';
+  const stateClass = isSkill ? (node.unlocked ? 'complete' : node.available ? 'available' : 'locked') : (node.completion?.is_complete ? 'complete' : 'active');
   return `
-    <article class="topic-card">
-      <div class="topic-head">
-        <div class="topic-hex">
-          <div>
-            <div class="hex-kicker">Topic</div>
-            <div class="hex-title">${esc(topic.name)}</div>
-            <div class="hex-subtitle">${percent}% complete</div>
-          </div>
-        </div>
-        <div class="topic-summary">
-          <strong>${esc(topic.name)}</strong>
-          <p>${esc(topic.summary)}</p>
-        </div>
-        <div class="topic-progress">
-          <div class="node-meta">${topic.completion.completed}/${topic.completion.total} skills</div>
-          <div class="mini-track"><div class="mini-bar" style="width:${percent}%"></div></div>
-        </div>
+    <button class="road-hex ${options.extraClass} ${stateClass} ${selected ? 'selected' : ''}" data-node-kind="${options.kind}" data-node-id="${esc(node.id)}">
+      <div class="road-hex-inner">
+        <div class="hex-kicker">${esc(options.kicker)}</div>
+        <div class="hex-title">${esc(options.title)}</div>
+        <div class="hex-subtitle">${esc(options.subtitle)}</div>
       </div>
-      <div class="skill-grid">
-        ${topic.skills.map((skill) => renderSkillLeaf(skill)).join('')}
-      </div>
-    </article>
+    </button>
   `;
 }
 
-function renderSkillLeaf(skill) {
-  const status = skill.unlocked ? 'Unlocked' : skill.available ? 'Available' : 'Locked';
-  return `
-    <article class="skill-leaf ${skill.unlocked ? 'unlocked' : skill.available ? 'available' : 'locked'}">
-      <div class="skill-leaf-top">
-        <div>
-          <div class="skill-name">${esc(skill.name)}</div>
-          <div class="skill-meta">${skill.points} pts</div>
-        </div>
-        <span class="skill-status">${status}</span>
-      </div>
-      <p class="skill-summary">${esc(skill.summary)}</p>
-      <button class="skill-action" ${skill.available ? `data-unlock-skill="${esc(skill.id)}"` : 'disabled'}>
-        ${skill.unlocked ? 'Completed' : skill.available ? 'Complete Skill' : 'Locked'}
-      </button>
-    </article>
+function renderInspector(inspector) {
+  const node = selectedNode ? findNodeById(selectedNode.kind, selectedNode.id) : null;
+  if (!node) {
+    inspector.innerHTML = '<div class="workspace-intro">Click a hex to inspect it.</div>';
+    return;
+  }
+
+  let title = node.name || node.title;
+  let kicker = selectedNode.kind;
+  let summary = node.summary || '';
+  let meta = '';
+  let action = '';
+
+  if (selectedNode.kind === 'skill') {
+    meta = `${node.points} pts · ${node.unlocked ? 'Completed' : node.available ? 'Ready to complete' : 'Locked by previous node'}`;
+    action = `<button class="skill-action" id="inspectorAction" ${node.available && !node.unlocked ? '' : 'disabled'}>${node.unlocked ? 'Completed' : node.available ? 'Complete Skill' : 'Locked'}</button>`;
+  } else if (selectedNode.kind === 'topic' || selectedNode.kind === 'level') {
+    meta = `${node.completion.completed}/${node.completion.total} skills complete · ${nodePercent(node.completion)}`;
+  } else {
+    meta = `${node.completion?.completed || 0}/${node.completion?.total || 0} skills complete`;
+  }
+
+  inspector.innerHTML = `
+    <div class="inspector-card">
+      <div class="hex-kicker">${esc(kicker)}</div>
+      <div class="workspace-title">${esc(title)}</div>
+      <div class="workspace-stat">${esc(meta)}</div>
+      <p class="workspace-copy">${esc(summary)}</p>
+      ${action}
+    </div>
   `;
+
+  const actionBtn = document.getElementById('inspectorAction');
+  if (actionBtn && selectedNode.kind === 'skill' && node.available && !node.unlocked) {
+    actionBtn.addEventListener('click', () => unlockSkill(node.id));
+  }
 }
 
 async function unlockSkill(skillId) {
