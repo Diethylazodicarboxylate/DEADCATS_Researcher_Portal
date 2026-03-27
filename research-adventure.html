@@ -23,7 +23,7 @@
       <div class="gate-header">
         <div class="gate-kicker">Research Adventure</div>
         <h1>Choose Your Pathway</h1>
-        <p>Your first choice locks your progression track. You begin at Sequence 9 and advance by earning skill points across research disciplines.</p>
+        <p>Your first choice locks your progression track. You begin at Sequence 9 and rise by completing leaf skills across the roadmap.</p>
       </div>
       <div class="pathway-grid" id="pathwayChoices"></div>
     </div>
@@ -34,8 +34,8 @@
       <section class="adventure-hero">
         <div class="hero-copy">
           <div class="eyebrow">Research Adventure</div>
-          <h1>Forge your researcher pathway, branch by branch.</h1>
-          <p>Unlock domain skills, climb from Sequence 9 to Sequence 0, and manage daily tasks that sharpen your edge or cost you points when missed.</p>
+          <h1>Specialize through a real roadmap, not a vague checklist.</h1>
+          <p>Start at the center, branch into a specialization, clear each level, and complete leaf skills to bubble progress up through topics, levels, and the full specialization.</p>
         </div>
         <div class="hero-meta">
           <div class="hero-chip">
@@ -100,45 +100,6 @@
             <div class="sequence-ladder" id="sequenceLadder"></div>
           </article>
 
-          <article class="panel activity-panel">
-            <div class="panel-head">
-              <span class="panel-title">Recent Activity</span>
-              <span class="panel-tag">LIVE LOG</span>
-            </div>
-            <div class="activity-list" id="activityList"></div>
-          </article>
-        </div>
-
-        <div class="right-column">
-          <article class="panel tree-panel">
-            <div class="panel-head">
-              <span class="panel-title">Skill Nexus</span>
-              <span class="panel-tag">6 BRANCHES</span>
-            </div>
-            <div class="tree-board">
-              <div class="tree-hub">
-                <div class="tree-hub-copy">
-                  <div class="gate-kicker">Research Adventure Board</div>
-                  <h3>Choose a branch lane and climb it node by node.</h3>
-                  <p>Each discipline is now laid out as its own readable progression path. Start with root skills, then move down the lane as prerequisites unlock.</p>
-                </div>
-                <div class="tree-hub-stats">
-                  <div>
-                    <span>Total Branches</span>
-                    <strong>6</strong>
-                  </div>
-                  <div>
-                    <span>Total Nodes</span>
-                    <strong id="treeNodeCount">60</strong>
-                  </div>
-                </div>
-              </div>
-              <div class="tree-scroll">
-                <div class="branch-layout board-layout" id="branchLayout"></div>
-              </div>
-            </div>
-          </article>
-
           <article class="panel tasks-panel">
             <div class="panel-head">
               <span class="panel-title">Daily Task Ledger</span>
@@ -153,7 +114,7 @@
                 <div class="task-form-grid">
                   <label>
                     <span>Task</span>
-                    <input id="taskTitleInput" type="text" maxlength="140" placeholder="Example: Review SSRF lab notes">
+                    <input id="taskTitleInput" type="text" maxlength="140" placeholder="Example: Review event loop notes">
                   </label>
                   <label>
                     <span>Reward</span>
@@ -173,6 +134,29 @@
                 <button type="submit" class="task-submit">Queue Daily Task</button>
               </form>
               <div class="tasks-list" id="tasksList"></div>
+            </div>
+          </article>
+        </div>
+
+        <div class="right-column">
+          <article class="panel roadmap-panel">
+            <div class="panel-head">
+              <span class="panel-title">Roadmap Core</span>
+              <span class="panel-tag">HEX OVERVIEW</span>
+            </div>
+            <div class="overview-map-wrap">
+              <div class="overview-map" id="overviewMap"></div>
+            </div>
+          </article>
+
+          <article class="panel specialization-panel">
+            <div class="panel-head">
+              <span class="panel-title">Specialization Workspace</span>
+              <span class="panel-tag" id="workspaceTag">SELECT A BRANCH</span>
+            </div>
+            <div class="workspace-shell">
+              <div class="workspace-header" id="workspaceHeader"></div>
+              <div class="workspace-levels" id="workspaceLevels"></div>
             </div>
           </article>
         </div>

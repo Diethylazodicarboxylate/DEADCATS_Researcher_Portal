@@ -1,14 +1,23 @@
 const API = '';
-
 const PATHWAY_THEMES = {
   arcane_blade: 'arcane',
   ruin_artificer: 'ruin',
   shadow_conductor: 'shadow',
 };
 
+const OVERVIEW_POSITIONS = [
+  { left: 18, top: 28 },
+  { left: 50, top: 14 },
+  { left: 82, top: 28 },
+  { left: 18, top: 72 },
+  { left: 50, top: 86 },
+  { left: 82, top: 72 },
+];
+
 let metaState = null;
 let adventureState = null;
 let currentUser = readCachedUser();
+let selectedSpecializationId = null;
 
 function esc(s) {
   return String(s ?? '')
@@ -77,15 +86,6 @@ function showToast(message, kind = 'success') {
   setTimeout(() => toast.remove(), 2600);
 }
 
-function formatDate(isoDate) {
-  if (!isoDate) return 'Unknown';
-  return new Date(isoDate).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
 function formatDateTime(value) {
   if (!value) return 'Unknown';
   return new Date(value).toLocaleString('en-US', {
@@ -100,34 +100,19 @@ function pathwayPalette(pathwayKey, sequence) {
   const power = Math.max(0, 9 - Number(sequence || 9));
   const palettes = {
     arcane_blade: {
-      skin: '#f0c7a5',
-      cloth: power >= 6 ? '#d7a2ff' : '#7edcff',
-      trim: power >= 4 ? '#f4f0ff' : '#9be0ff',
-      glow: power >= 7 ? '#f7f2ff' : '#8be5ff',
-      accent: power >= 6 ? '#8b4fff' : '#00d4ff',
-      weapon: power >= 5 ? '#ffffff' : '#9be0ff',
-      shadow: '#25324f',
-      background: power >= 7 ? '#1a1244' : '#0a1a2e',
+      skin: '#f0c7a5', cloth: power >= 6 ? '#d7a2ff' : '#7edcff', trim: power >= 4 ? '#f4f0ff' : '#9be0ff',
+      glow: power >= 7 ? '#f7f2ff' : '#8be5ff', accent: power >= 6 ? '#8b4fff' : '#00d4ff', weapon: power >= 5 ? '#ffffff' : '#9be0ff',
+      shadow: '#25324f', background: power >= 7 ? '#1a1244' : '#0a1a2e',
     },
     ruin_artificer: {
-      skin: '#e3bc95',
-      cloth: power >= 6 ? '#ff8859' : '#cf5c42',
-      trim: power >= 4 ? '#ffd27c' : '#ffbb93',
-      glow: power >= 7 ? '#ffe591' : '#ffb65c',
-      accent: power >= 6 ? '#ff5d73' : '#ff9964',
-      weapon: power >= 4 ? '#fbd46f' : '#bac5d2',
-      shadow: '#35231f',
-      background: power >= 7 ? '#2d1316' : '#26130f',
+      skin: '#e3bc95', cloth: power >= 6 ? '#ff8859' : '#cf5c42', trim: power >= 4 ? '#ffd27c' : '#ffbb93',
+      glow: power >= 7 ? '#ffe591' : '#ffb65c', accent: power >= 6 ? '#ff5d73' : '#ff9964', weapon: power >= 4 ? '#fbd46f' : '#bac5d2',
+      shadow: '#35231f', background: power >= 7 ? '#2d1316' : '#26130f',
     },
     shadow_conductor: {
-      skin: '#d1b293',
-      cloth: power >= 6 ? '#6a7aff' : '#3d4a78',
-      trim: power >= 4 ? '#d6deff' : '#9db2e1',
-      glow: power >= 7 ? '#dfe8ff' : '#8fc6ff',
-      accent: power >= 6 ? '#a7b4ff' : '#7d9ac9',
-      weapon: power >= 5 ? '#e7efff' : '#a5b4d6',
-      shadow: '#1d2335',
-      background: power >= 7 ? '#0e1324' : '#111720',
+      skin: '#d1b293', cloth: power >= 6 ? '#6a7aff' : '#3d4a78', trim: power >= 4 ? '#d6deff' : '#9db2e1',
+      glow: power >= 7 ? '#dfe8ff' : '#8fc6ff', accent: power >= 6 ? '#a7b4ff' : '#7d9ac9', weapon: power >= 5 ? '#e7efff' : '#a5b4d6',
+      shadow: '#1d2335', background: power >= 7 ? '#0e1324' : '#111720',
     },
   };
   return palettes[pathwayKey] || palettes.arcane_blade;
@@ -143,62 +128,51 @@ function createPixelAvatar(pathwayKey, sequence, size = 128) {
   const auraColor = p.glow;
   const aura = [];
   const figure = [];
-
   for (let x = 2; x < 14; x += 1) {
-    aura.push(rect(x, 1, `${auraColor}20`));
-    aura.push(rect(x, 14, `${auraColor}20`));
+    aura.push(rect(x, 1, `${auraColor}20`), rect(x, 14, `${auraColor}20`));
   }
   for (let y = 2; y < 14; y += 1) {
-    aura.push(rect(1, y, `${auraColor}20`));
-    aura.push(rect(14, y, `${auraColor}20`));
+    aura.push(rect(1, y, `${auraColor}20`), rect(14, y, `${auraColor}20`));
   }
-
   const fill = (coords, color) => coords.map(([x, y]) => rect(x, y, color));
-  figure.push(...fill([[6, 3], [7, 3], [8, 3], [9, 3], [5, 4], [6, 4], [7, 4], [8, 4], [9, 4], [10, 4], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [6, 6], [7, 6], [8, 6], [9, 6]], p.skin));
-  figure.push(...fill([[5, 3], [10, 3], [4, 4], [11, 4], [4, 5], [11, 5], [5, 6], [10, 6]], p.shadow));
-  figure.push(...fill([[6, 7], [7, 7], [8, 7], [9, 7], [5, 8], [6, 8], [7, 8], [8, 8], [9, 8], [10, 8], [5, 9], [6, 9], [7, 9], [8, 9], [9, 9], [10, 9], [6, 10], [7, 10], [8, 10], [9, 10]], p.cloth));
-  figure.push(...fill([[4, 8], [11, 8], [4, 9], [11, 9]], p.trim));
-  figure.push(...fill([[6, 11], [7, 11], [8, 11], [9, 11], [6, 12], [9, 12], [5, 13], [6, 13], [9, 13], [10, 13]], p.shadow));
-  figure.push(...fill([[4, 10], [5, 10], [10, 10], [11, 10]], p.trim));
-
+  figure.push(...fill([[6,3],[7,3],[8,3],[9,3],[5,4],[6,4],[7,4],[8,4],[9,4],[10,4],[5,5],[6,5],[7,5],[8,5],[9,5],[10,5],[6,6],[7,6],[8,6],[9,6]], p.skin));
+  figure.push(...fill([[5,3],[10,3],[4,4],[11,4],[4,5],[11,5],[5,6],[10,6]], p.shadow));
+  figure.push(...fill([[6,7],[7,7],[8,7],[9,7],[5,8],[6,8],[7,8],[8,8],[9,8],[10,8],[5,9],[6,9],[7,9],[8,9],[9,9],[10,9],[6,10],[7,10],[8,10],[9,10]], p.cloth));
+  figure.push(...fill([[4,8],[11,8],[4,9],[11,9]], p.trim));
+  figure.push(...fill([[6,11],[7,11],[8,11],[9,11],[6,12],[9,12],[5,13],[6,13],[9,13],[10,13]], p.shadow));
+  figure.push(...fill([[4,10],[5,10],[10,10],[11,10]], p.trim));
   if (pathwayKey === 'arcane_blade') {
-    figure.push(...fill([[11, 5], [12, 4], [12, 5], [12, 6], [13, 3], [13, 4], [13, 5], [13, 6], [13, 7]], p.weapon));
-    figure.push(...fill([[10, 5], [11, 6], [12, 7]], p.accent));
-    if (seq <= 4) {
-      figure.push(...fill([[2, 4], [3, 3], [3, 4], [3, 5], [4, 2], [4, 3], [4, 4], [4, 5], [4, 6]], `${p.glow}aa`));
-    }
+    figure.push(...fill([[11,5],[12,4],[12,5],[12,6],[13,3],[13,4],[13,5],[13,6],[13,7]], p.weapon));
+    figure.push(...fill([[10,5],[11,6],[12,7]], p.accent));
   } else if (pathwayKey === 'ruin_artificer') {
-    figure.push(...fill([[11, 6], [12, 6], [13, 6], [12, 5], [12, 7], [13, 5], [13, 7]], p.weapon));
-    figure.push(...fill([[3, 10], [4, 10], [4, 11], [3, 11], [2, 10]], p.accent));
-    if (seq <= 4) {
-      figure.push(...fill([[12, 2], [13, 2], [11, 3], [12, 3], [13, 3], [12, 4]], `${p.glow}bb`));
-    }
+    figure.push(...fill([[11,6],[12,6],[13,6],[12,5],[12,7],[13,5],[13,7]], p.weapon));
+    figure.push(...fill([[3,10],[4,10],[4,11],[3,11],[2,10]], p.accent));
   } else {
-    figure.push(...fill([[3, 5], [4, 5], [5, 5], [2, 6], [3, 6], [4, 6], [5, 6], [3, 7], [4, 7], [5, 7], [4, 8]], `${p.shadow}ee`));
-    figure.push(...fill([[11, 5], [12, 5], [12, 6], [13, 6], [12, 7], [13, 7]], p.weapon));
-    if (seq <= 4) {
-      figure.push(...fill([[2, 3], [13, 3], [2, 12], [13, 12], [1, 7], [14, 7]], `${p.glow}99`));
-    }
+    figure.push(...fill([[3,5],[4,5],[5,5],[2,6],[3,6],[4,6],[5,6],[3,7],[4,7],[5,7],[4,8]], `${p.shadow}ee`));
+    figure.push(...fill([[11,5],[12,5],[12,6],[13,6],[12,7],[13,7]], p.weapon));
   }
-
   if (seq <= 2) {
-    figure.push(...fill([[5, 2], [6, 2], [9, 2], [10, 2], [5, 14], [10, 14]], p.glow));
+    figure.push(...fill([[5,2],[6,2],[9,2],[10,2],[5,14],[10,14]], p.glow));
   }
-
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 16 16" shape-rendering="crispEdges">
-      <rect width="16" height="16" fill="${p.background}"/>
-      ${aura.join('')}
-      ${figure.join('')}
-    </svg>
-  `;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 16 16" shape-rendering="crispEdges"><rect width="16" height="16" fill="${p.background}"/>${aura.join('')}${figure.join('')}</svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
-function getUnlockedSequences(state) {
-  if (!state.selected || !state.pathway) return [];
-  const current = Number(state.sequence?.sequence ?? 9);
-  return state.pathway.sequences.filter((entry) => entry.sequence >= current);
+function progressPercent(completion) {
+  if (!completion || !completion.total) return 0;
+  return Math.round((completion.completed / completion.total) * 100);
+}
+
+function currentSpecialization() {
+  const specializations = adventureState?.specializations || [];
+  return specializations.find((item) => item.id === selectedSpecializationId) || specializations[0] || null;
+}
+
+function pickDefaultSpecialization() {
+  if (selectedSpecializationId && currentSpecialization()) return;
+  const specializations = adventureState?.specializations || [];
+  const incomplete = specializations.find((item) => !item.completion?.is_complete);
+  selectedSpecializationId = (incomplete || specializations[0] || {}).id || null;
 }
 
 function setTheme(pathwayKey) {
@@ -214,27 +188,19 @@ function renderPathwayGate() {
     return;
   }
   gate.classList.remove('hidden');
-  list.innerHTML = metaState.pathways.map((pathway) => {
-    const theme = PATHWAY_THEMES[pathway.key] || 'arcane';
-    const preview = pathway.sequences.slice(0, 3).map((entry) => `
-      <li>Sequence ${entry.sequence} · ${esc(entry.title)}</li>
-    `).join('');
-    return `
-      <article class="pathway-card ${theme}">
-        <div class="pathway-top">
-          <div class="gate-kicker">${esc(pathway.crest)} ${theme.replace('_', ' ')}</div>
-          <h2 class="pathway-title">${esc(pathway.name)}</h2>
-          <p>${esc(pathway.core_concept)}</p>
-        </div>
-        <img class="pathway-icon" src="${createPixelAvatar(pathway.key, 0, 152)}" alt="${esc(pathway.name)} sequence 0 portrait">
-        <div class="pathway-summary">
-          <strong>Acting Method:</strong> ${esc(pathway.acting_method)}
-        </div>
-        <ul class="pathway-sequence-preview">${preview}</ul>
-        <button class="pathway-select-btn" data-pathway="${esc(pathway.key)}">Lock Pathway</button>
-      </article>
-    `;
-  }).join('');
+  list.innerHTML = metaState.pathways.map((pathway) => `
+    <article class="pathway-card ${esc(PATHWAY_THEMES[pathway.key] || 'arcane')}">
+      <div class="gate-kicker">${esc(pathway.crest)} pathway</div>
+      <h2 class="pathway-title">${esc(pathway.name)}</h2>
+      <p>${esc(pathway.core_concept)}</p>
+      <img class="pathway-icon" src="${createPixelAvatar(pathway.key, 0, 152)}" alt="${esc(pathway.name)} portrait">
+      <div class="pathway-summary"><strong>Acting Method:</strong> ${esc(pathway.acting_method)}</div>
+      <ul class="pathway-sequence-preview">
+        ${pathway.sequences.slice(0, 3).map((entry) => `<li>Sequence ${entry.sequence} · ${esc(entry.title)}</li>`).join('')}
+      </ul>
+      <button class="pathway-select-btn" data-pathway="${esc(pathway.key)}">Lock Pathway</button>
+    </article>
+  `).join('');
 
   list.querySelectorAll('[data-pathway]').forEach((button) => {
     button.addEventListener('click', async () => {
@@ -268,20 +234,16 @@ function renderJourney() {
   const sequence = state.sequence;
   const total = Number(state.points?.total || 0);
   const journeyAvatar = document.getElementById('journeyAvatar');
-  const nameEl = document.getElementById('journeyPathwayName');
-  const seqEl = document.getElementById('journeySequenceTitle');
-  const summaryEl = document.getElementById('journeySequenceSummary');
-  const lockEl = document.getElementById('journeyLockState');
   document.getElementById('skillPoints').textContent = String(state.points?.skills ?? 0);
   document.getElementById('dailyPoints').textContent = String(state.points?.daily_completed ?? 0);
   document.getElementById('penaltyPoints').textContent = String(state.points?.daily_penalties ?? 0);
 
   if (!pathway || !sequence) {
     journeyAvatar.src = createPixelAvatar('arcane_blade', 9, 128);
-    nameEl.textContent = 'Awaiting selection';
-    seqEl.textContent = 'Sequence 9';
-    summaryEl.textContent = 'Choose a pathway to start the progression ladder.';
-    lockEl.textContent = 'PATHWAY UNSET';
+    document.getElementById('journeyPathwayName').textContent = 'Awaiting selection';
+    document.getElementById('journeySequenceTitle').textContent = 'Sequence 9';
+    document.getElementById('journeySequenceSummary').textContent = 'Choose a pathway to start the progression ladder.';
+    document.getElementById('journeyLockState').textContent = 'PATHWAY UNSET';
     document.getElementById('sequenceBar').style.width = '0%';
     document.getElementById('sequenceMeta').textContent = 'Need 120 points for Sequence 8';
     return;
@@ -289,10 +251,10 @@ function renderJourney() {
 
   setTheme(pathway.key);
   journeyAvatar.src = createPixelAvatar(pathway.key, sequence.sequence, 128);
-  nameEl.textContent = pathway.name;
-  seqEl.textContent = `Sequence ${sequence.sequence} · ${sequence.title}`;
-  summaryEl.textContent = sequence.summary;
-  lockEl.textContent = 'PATHWAY LOCKED';
+  document.getElementById('journeyPathwayName').textContent = pathway.name;
+  document.getElementById('journeySequenceTitle').textContent = `Sequence ${sequence.sequence} · ${sequence.title}`;
+  document.getElementById('journeySequenceSummary').textContent = sequence.summary;
+  document.getElementById('journeyLockState').textContent = 'PATHWAY LOCKED';
 
   const progress = state.sequence_progress || {};
   const currentFloor = Number(progress.current_min_points || 0);
@@ -332,88 +294,194 @@ function renderLadder() {
   }).join('');
 }
 
-function renderBranches() {
-  const layout = document.getElementById('branchLayout');
-  if (!layout) return;
-  const branches = adventureState?.branches || metaState?.branches || [];
-  const totalNodes = branches.reduce((sum, branch) => sum + (Array.isArray(branch.skills) ? branch.skills.length : 0), 0);
-  const nodeCountEl = document.getElementById('treeNodeCount');
-  if (nodeCountEl) nodeCountEl.textContent = String(totalNodes);
+function renderOverviewMap() {
+  const wrap = document.getElementById('overviewMap');
+  if (!wrap) return;
+  const specializations = adventureState?.specializations || metaState?.specializations || [];
+  if (!specializations.length) {
+    wrap.innerHTML = '<div class="empty-state">No roadmap specializations loaded.</div>';
+    return;
+  }
 
-  layout.innerHTML = branches.map((branch) => `
-    <section class="branch-lane" style="--branch-color:${esc(branch.color || '#62d7ff')}">
-      <div class="branch-head">
-        <div class="gate-kicker">${esc(branch.icon)} branch</div>
-        <h3>${esc(branch.name)}</h3>
-        <p>${esc(branch.source_hint || '')}</p>
-        <div class="branch-progress">
-          <span>${Number(branch.skills_unlocked || 0)} / ${Array.isArray(branch.skills) ? branch.skills.length : 0} unlocked</span>
-          <span>${Number(branch.points_earned || 0)} pts</span>
+  const center = { left: 50, top: 50 };
+  const centerHex = `
+    <div class="overview-center" style="left:${center.left}%;top:${center.top}%;">
+      <div class="hex-shell center-hex">
+        <div class="hex-content">
+          <div class="hex-icon"><img src="${createPixelAvatar(adventureState?.pathway?.key || 'arcane_blade', adventureState?.sequence?.sequence || 9, 76)}" alt="Center avatar"></div>
+          <div class="hex-title">DEADCATS</div>
+          <div class="hex-subtitle">Research Core</div>
         </div>
       </div>
-      <div class="skill-path">
-        ${(branch.skills || []).map((skill) => renderSkillCard(skill)).join('')}
-      </div>
-    </section>
-  `).join('');
+    </div>
+  `;
 
-  layout.querySelectorAll('[data-unlock-skill]').forEach((button) => {
-    button.addEventListener('click', async (event) => {
-      const skillId = event.currentTarget.getAttribute('data-unlock-skill');
-      event.currentTarget.disabled = true;
-      const beforeSequence = adventureState?.sequence?.sequence;
-      const res = await authFetch('/api/research-adventure/unlock-skill', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ skill_id: skillId }),
-      });
-      if (!res.ok) {
-        event.currentTarget.disabled = false;
-        showToast((await safeDetail(res)) || 'Unlock failed', 'error');
-        return;
-      }
-      adventureState = await res.json();
-      showToast(`Unlocked ${skillId.replace(/-/g, ' ')}`, 'success');
-      renderAll();
-      if (beforeSequence !== adventureState?.sequence?.sequence) {
-        showToast(`Sequence advanced to ${adventureState.sequence.sequence}`, 'success');
-      }
+  const lines = specializations.map((spec, index) => {
+    const pos = OVERVIEW_POSITIONS[index];
+    const dx = pos.left - center.left;
+    const dy = pos.top - center.top;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    return `<div class="connector-line" style="left:${center.left}%;top:${center.top}%;width:${length}%;transform:rotate(${angle}deg);"></div>`;
+  }).join('');
+
+  const specsHtml = specializations.map((spec, index) => {
+    const pos = OVERVIEW_POSITIONS[index];
+    const percent = progressPercent(spec.completion);
+    const active = spec.id === selectedSpecializationId;
+    return `
+      <button class="overview-spec" data-specialization="${esc(spec.id)}" style="left:${pos.left}%;top:${pos.top}%;">
+        <div class="hex-shell spec-hex ${active ? 'active' : ''}" style="border-color:${esc(spec.color)};">
+          <div class="hex-content">
+            <div class="hex-icon">${esc(spec.icon)}</div>
+            <div class="hex-title">${esc(spec.name)}</div>
+            <div class="hex-subtitle">${percent}% complete</div>
+          </div>
+        </div>
+        <div class="overview-spec-label">
+          <strong>${esc(spec.name)}</strong>
+          <span>${spec.completion.completed}/${spec.completion.total} skills</span>
+        </div>
+      </button>
+    `;
+  }).join('');
+
+  wrap.innerHTML = `${lines}${centerHex}${specsHtml}`;
+  wrap.querySelectorAll('[data-specialization]').forEach((button) => {
+    button.addEventListener('click', () => {
+      selectedSpecializationId = button.getAttribute('data-specialization');
+      renderOverviewMap();
+      renderWorkspace();
     });
   });
 }
 
-function renderSkillCard(skill) {
-  let status = 'Locked';
-  let button = '<button disabled>Locked</button>';
-  let classes = 'skill-card branch-node locked';
-  if (skill.unlocked) {
-    status = 'Unlocked';
-    classes = 'skill-card branch-node unlocked';
-    button = '<button disabled>Unlocked</button>';
-  } else if (skill.available) {
-    status = 'Available';
-    classes = 'skill-card branch-node available';
-    button = `<button data-unlock-skill="${esc(skill.id)}">Claim ${Number(skill.points)} pts</button>`;
+function renderWorkspace() {
+  const specialization = currentSpecialization();
+  const header = document.getElementById('workspaceHeader');
+  const levels = document.getElementById('workspaceLevels');
+  const tag = document.getElementById('workspaceTag');
+  if (!specialization) {
+    header.innerHTML = '<div class="workspace-intro">Select a specialization hex from the overview map.</div>';
+    levels.innerHTML = '';
+    tag.textContent = 'SELECT A BRANCH';
+    return;
   }
-  return `
-    <article class="${classes}">
-      <div class="skill-top">
-        <div>
-          <small>Tier ${Number(skill.tier || 1)}</small>
-          <strong>${esc(skill.name)}</strong>
-        </div>
-        <div class="skill-side">
-          <span class="skill-points">${Number(skill.points)} pts</span>
-          <span class="skill-status">${status}</span>
+
+  tag.textContent = specialization.name.toUpperCase();
+  header.innerHTML = `
+    <div class="workspace-panel">
+      <div class="workspace-hex-mini">${esc(specialization.icon)}</div>
+      <div>
+        <div class="gate-kicker">Specialization</div>
+        <div class="workspace-title">${esc(specialization.name)}</div>
+        <p class="workspace-copy">${esc(specialization.summary)}</p>
+        <div class="workspace-stats">
+          <span class="workspace-stat">${specialization.completion.completed} / ${specialization.completion.total} skills</span>
+          <span class="workspace-stat">${progressPercent(specialization.completion)}% complete</span>
+          <span class="workspace-stat">${specialization.points_earned} pts earned</span>
         </div>
       </div>
-      <p>${esc(skill.summary)}</p>
-      <div class="skill-footer">
-        <small>${skill.prereqs?.length ? `Requires ${skill.prereqs.length} prerequisite${skill.prereqs.length > 1 ? 's' : ''}` : 'Root node'}</small>
-        ${button}
+    </div>
+  `;
+
+  levels.innerHTML = specialization.levels.map((level) => {
+    const levelPercent = progressPercent(level.completion);
+    return `
+      <section class="level-card">
+        <div class="level-head">
+          <div class="level-hex">
+            <div>
+              <div class="level-badge">${esc(level.name)}</div>
+              <div class="hex-title">${esc(level.title)}</div>
+            </div>
+          </div>
+          <div>
+            <div class="level-title">${esc(level.title)}</div>
+            <p class="level-copy">${esc(level.summary)}</p>
+          </div>
+          <div class="level-progress">
+            <div class="node-meta">${level.completion.completed}/${level.completion.total} skills</div>
+            <div class="mini-track"><div class="mini-bar" style="width:${levelPercent}%"></div></div>
+          </div>
+        </div>
+        <div class="topic-stack">
+          ${level.topics.map((topic) => renderTopic(topic)).join('')}
+        </div>
+      </section>
+    `;
+  }).join('');
+
+  levels.querySelectorAll('[data-unlock-skill]').forEach((button) => {
+    button.addEventListener('click', () => unlockSkill(button.getAttribute('data-unlock-skill')));
+  });
+}
+
+function renderTopic(topic) {
+  const percent = progressPercent(topic.completion);
+  return `
+    <article class="topic-card">
+      <div class="topic-head">
+        <div class="topic-hex">
+          <div>
+            <div class="hex-kicker">Topic</div>
+            <div class="hex-title">${esc(topic.name)}</div>
+            <div class="hex-subtitle">${percent}% complete</div>
+          </div>
+        </div>
+        <div class="topic-summary">
+          <strong>${esc(topic.name)}</strong>
+          <p>${esc(topic.summary)}</p>
+        </div>
+        <div class="topic-progress">
+          <div class="node-meta">${topic.completion.completed}/${topic.completion.total} skills</div>
+          <div class="mini-track"><div class="mini-bar" style="width:${percent}%"></div></div>
+        </div>
+      </div>
+      <div class="skill-grid">
+        ${topic.skills.map((skill) => renderSkillLeaf(skill)).join('')}
       </div>
     </article>
   `;
+}
+
+function renderSkillLeaf(skill) {
+  const status = skill.unlocked ? 'Unlocked' : skill.available ? 'Available' : 'Locked';
+  return `
+    <article class="skill-leaf ${skill.unlocked ? 'unlocked' : skill.available ? 'available' : 'locked'}">
+      <div class="skill-leaf-top">
+        <div>
+          <div class="skill-name">${esc(skill.name)}</div>
+          <div class="skill-meta">${skill.points} pts</div>
+        </div>
+        <span class="skill-status">${status}</span>
+      </div>
+      <p class="skill-summary">${esc(skill.summary)}</p>
+      <button class="skill-action" ${skill.available ? `data-unlock-skill="${esc(skill.id)}"` : 'disabled'}>
+        ${skill.unlocked ? 'Completed' : skill.available ? 'Complete Skill' : 'Locked'}
+      </button>
+    </article>
+  `;
+}
+
+async function unlockSkill(skillId) {
+  const beforeSequence = adventureState?.sequence?.sequence;
+  const res = await authFetch('/api/research-adventure/unlock-skill', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ skill_id: skillId }),
+  });
+  if (!res.ok) {
+    showToast((await safeDetail(res)) || 'Unlock failed', 'error');
+    return;
+  }
+  adventureState = await res.json();
+  pickDefaultSpecialization();
+  renderAll();
+  showToast('Skill completed', 'success');
+  if (beforeSequence !== adventureState?.sequence?.sequence) {
+    showToast(`Sequence advanced to ${adventureState.sequence.sequence}`, 'success');
+  }
 }
 
 function renderTasks() {
@@ -429,7 +497,6 @@ function renderTasks() {
 
   const pendingCount = tasks.filter((task) => task.status === 'pending').length;
   document.getElementById('taskCountTag').textContent = `${pendingCount} / 5 ACTIVE`;
-
   if (!tasks.length) {
     list.innerHTML = '<div class="empty-state">No daily tasks queued yet.</div>';
     return;
@@ -465,68 +532,9 @@ async function mutateTask(url, method, successMessage) {
     return;
   }
   adventureState = await res.json();
+  pickDefaultSpecialization();
   renderAll();
   showToast(successMessage, 'success');
-}
-
-function renderActivity() {
-  const list = document.getElementById('activityList');
-  if (!list) return;
-  const items = [];
-
-  for (const branch of adventureState?.branches || []) {
-    for (const skill of branch.skills || []) {
-      if (skill.unlocked_at) {
-        items.push({
-          ts: Date.parse(skill.unlocked_at) || 0,
-          title: skill.name,
-          summary: `${branch.name} unlocked for ${skill.points} points.`,
-          kicker: 'Skill unlock',
-        });
-      }
-    }
-  }
-  for (const task of adventureState?.daily_tasks || []) {
-    const sourceTime = task.completed_at || task.created_at;
-    if (sourceTime) {
-      items.push({
-        ts: Date.parse(sourceTime) || 0,
-        title: task.title,
-        summary: task.status === 'missed'
-          ? `Missed daily task. ${task.points} points were deducted.`
-          : task.status === 'completed'
-            ? `Completed daily task for ${task.points} points.`
-            : `Queued daily task for ${task.due_date}.`,
-        kicker: `Daily task · ${task.status}`,
-      });
-    }
-  }
-
-  const unlockedSequences = getUnlockedSequences(adventureState);
-  for (const entry of unlockedSequences) {
-    const milestone = metaState.sequence_milestones.find((item) => item.sequence === entry.sequence);
-    if (milestone) {
-      items.push({
-        ts: milestone.min_points,
-        title: entry.title,
-        summary: `Milestone available at ${milestone.min_points} total points.`,
-        kicker: `Sequence ${entry.sequence}`,
-      });
-    }
-  }
-
-  items.sort((a, b) => b.ts - a.ts);
-  if (!items.length) {
-    list.innerHTML = '<div class="empty-state">No unlocks or task activity yet.</div>';
-    return;
-  }
-  list.innerHTML = items.slice(0, 8).map((item) => `
-    <article class="activity-item">
-      <small>${esc(item.kicker)}</small>
-      <h3>${esc(item.title)}</h3>
-      <p>${esc(item.summary)}</p>
-    </article>
-  `).join('');
 }
 
 function setNavState() {
@@ -558,6 +566,7 @@ async function loadAdventure() {
   const res = await authFetch('/api/research-adventure/me');
   if (!res.ok) throw new Error('adventure');
   adventureState = await res.json();
+  pickDefaultSpecialization();
 }
 
 function renderAll() {
@@ -565,9 +574,9 @@ function renderAll() {
   renderHero();
   renderJourney();
   renderLadder();
-  renderBranches();
+  renderOverviewMap();
+  renderWorkspace();
   renderTasks();
-  renderActivity();
 }
 
 async function init() {
@@ -618,6 +627,7 @@ document.addEventListener('submit', async (event) => {
   }
   adventureState = await res.json();
   document.getElementById('taskTitleInput').value = '';
+  pickDefaultSpecialization();
   renderAll();
   showToast('Daily task queued', 'success');
 });
