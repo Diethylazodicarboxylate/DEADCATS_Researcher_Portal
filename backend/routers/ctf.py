@@ -5,6 +5,7 @@ from typing import Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
+from core.audit import log_audit_event
 from core.database import get_db
 from core.security import get_current_user, require_admin
 from core.config import CTFTIME_TEAM_ID
@@ -364,7 +365,20 @@ def create_event(
         operation_id     = operation_id,
         added_by         = admin.handle,
     )
-    db.add(ev); db.commit(); db.refresh(ev)
+    db.add(ev); db.flush()
+    log_audit_event(
+        db,
+        kind="ctf_event",
+        action="created",
+        title=f"CTF added: {ev.title}",
+        summary=ev.description or "",
+        actor=admin,
+        target_type="ctf_event",
+        target_id=ev.id,
+        operation_id=ev.operation_id,
+        href=f"ctf.html?operation_id={ev.operation_id}" if ev.operation_id else "ctf.html",
+    )
+    db.commit(); db.refresh(ev)
     now = datetime.now(timezone.utc)
     expires_at = start_dt if (start_dt and start_dt > now) else (now + timedelta(days=14))
     schedule_line = start_dt.strftime("%Y-%m-%d %H:%M UTC") if start_dt else "TBA"
@@ -412,6 +426,18 @@ def update_event(
         ev.end_time = _parse_dt(payload.end_time)
     if ev.start_time and ev.end_time and ev.end_time < ev.start_time:
         raise HTTPException(400, "end_time cannot be earlier than start_time.")
+    log_audit_event(
+        db,
+        kind="ctf_event",
+        action="updated",
+        title=f"CTF updated: {ev.title}",
+        summary=ev.description or "",
+        actor=admin,
+        target_type="ctf_event",
+        target_id=ev.id,
+        operation_id=ev.operation_id,
+        href=f"ctf.html?operation_id={ev.operation_id}" if ev.operation_id else "ctf.html",
+    )
     db.commit(); db.refresh(ev)
     return _event_full(ev, db)
 
@@ -426,6 +452,17 @@ def delete_event(
     if not ev:
         raise HTTPException(404, "Event not found.")
     # Cascade delete result + participants
+    log_audit_event(
+        db,
+        kind="ctf_event",
+        action="deleted",
+        title=f"CTF deleted: {ev.title}",
+        actor=admin,
+        target_type="ctf_event",
+        target_id=ev.id,
+        operation_id=ev.operation_id,
+        href=f"ctf.html?operation_id={ev.operation_id}" if ev.operation_id else "ctf.html",
+    )
     db.query(CTFResult).filter(CTFResult.event_id == event_id).delete()
     db.query(CTFParticipant).filter(CTFParticipant.event_id == event_id).delete()
     db.query(CTFParticipationMarker).filter(CTFParticipationMarker.event_id == event_id).delete()
@@ -487,6 +524,18 @@ def upsert_result(
         db.add(result)
     # Auto-mark event as completed when result is added
     ev.status = "completed"
+    log_audit_event(
+        db,
+        kind="ctf_event",
+        action="result_logged",
+        title=f"CTF result logged: {ev.title}",
+        summary=f"Place #{payload.place}",
+        actor=admin,
+        target_type="ctf_event",
+        target_id=ev.id,
+        operation_id=ev.operation_id,
+        href=f"ctf.html?operation_id={ev.operation_id}" if ev.operation_id else "ctf.html",
+    )
     db.commit(); db.refresh(result)
     return result.to_dict()
 

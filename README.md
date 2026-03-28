@@ -38,8 +38,12 @@ This README is the single source of truth for setup and deployment.
 - IOCs can also be linked to operations from `/ioc-tracker.html`
 - Vault files can be linked to operations from `/vault.html`
 - CTF events can be linked to operations from `/ctf.html`
+- Unified portal search is available at `/search.html`
 - Operation goals live inside the war room and the operation detail page
 - The dashboard and operation pages expose a live activity timeline across notes, indicators, evidence files, goals, and CTF events
+- Audit history is available from `/audit-log.html`
+- Dashboard notifications now include announcements plus workflow/activity events
+- Admin publication control is centralized in `/review-board.html`
 - Each operation can carry its own war room canvas and be opened directly in `/whiteboard.html?operation_id=<id>`
 - Admins now have a dedicated review board at `/review-board.html`
 - Authors can submit notes for review

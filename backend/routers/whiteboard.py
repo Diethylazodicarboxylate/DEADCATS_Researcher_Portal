@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 from typing import Optional
+from core.audit import log_audit_event
 from core.database import get_db
 from core.security import get_current_user, require_admin
 from core.validation import clean_text, reject_html
@@ -103,6 +104,18 @@ def create_goal(
         raise HTTPException(status_code=404, detail="Operation not found.")
     goal = TeamGoal(text=text, created_by=admin.handle, operation_id=operation_id)
     db.add(goal)
+    db.flush()
+    log_audit_event(
+        db,
+        kind="goal",
+        action="created",
+        title=f"Goal created: {goal.text[:120]}",
+        actor=admin,
+        target_type="goal",
+        target_id=goal.id,
+        operation_id=goal.operation_id,
+        href=f"whiteboard.html?operation_id={goal.operation_id}" if goal.operation_id else "whiteboard.html",
+    )
     db.commit()
     db.refresh(goal)
     return goal.to_dict()
@@ -134,6 +147,17 @@ def update_goal(
         goal.completed    = payload.completed
         goal.completed_at = datetime.now(timezone.utc) if payload.completed else None
         goal.completed_by = admin.handle if payload.completed else None
+    log_audit_event(
+        db,
+        kind="goal",
+        action="completed" if payload.completed else "updated",
+        title=f"Goal {'completed' if payload.completed else 'updated'}: {goal.text[:120]}",
+        actor=admin,
+        target_type="goal",
+        target_id=goal.id,
+        operation_id=goal.operation_id,
+        href=f"whiteboard.html?operation_id={goal.operation_id}" if goal.operation_id else "whiteboard.html",
+    )
     db.commit()
     db.refresh(goal)
     return goal.to_dict()
@@ -149,5 +173,16 @@ def delete_goal(
     goal = db.query(TeamGoal).filter(TeamGoal.id == goal_id).first()
     if not goal:
         raise HTTPException(status_code=404, detail="Goal not found.")
+    log_audit_event(
+        db,
+        kind="goal",
+        action="deleted",
+        title=f"Goal deleted: {goal.text[:120]}",
+        actor=admin,
+        target_type="goal",
+        target_id=goal.id,
+        operation_id=goal.operation_id,
+        href=f"whiteboard.html?operation_id={goal.operation_id}" if goal.operation_id else "whiteboard.html",
+    )
     db.delete(goal)
     db.commit()

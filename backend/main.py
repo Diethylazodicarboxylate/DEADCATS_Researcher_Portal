@@ -12,12 +12,13 @@ from core.security import hash_password
 from models.user import User
 from models.note import PublishFolder
 import models.operation
-from routers import auth, users, notes, operations, achievements, announcements, iocs, vault, bookmarks, whiteboard, ctf, pwnbox, ai_chat, research_adventure
+from routers import auth, users, notes, operations, achievements, announcements, iocs, vault, bookmarks, whiteboard, ctf, pwnbox, ai_chat, research_adventure, search, audit, notifications
 import models.bookmark
 import models.goal
 import models.whiteboard_config
 import models.ctf
 import models.note_comment
+import models.audit_event
 import models.chat_message
 import models.research_adventure
 from core.database import get_db
@@ -53,6 +54,16 @@ async def lifespan(app: FastAPI):
         conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS public_slug VARCHAR(220)"))
         conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS published_at TIMESTAMP"))
         conn.execute(text("ALTER TABLE ctf_events ADD COLUMN IF NOT EXISTS operation_id INTEGER"))
+        conn.execute(text("ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS summary TEXT"))
+        conn.execute(text("ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS actor_id INTEGER"))
+        conn.execute(text("ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS actor_handle VARCHAR(50) DEFAULT ''"))
+        conn.execute(text("ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS target_type VARCHAR(40) DEFAULT ''"))
+        conn.execute(text("ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS target_id INTEGER"))
+        conn.execute(text("ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS note_id INTEGER"))
+        conn.execute(text("ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS operation_id INTEGER"))
+        conn.execute(text("ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS recipient_id INTEGER"))
+        conn.execute(text("ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS href VARCHAR(500) DEFAULT ''"))
+        conn.execute(text("ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS visibility VARCHAR(20) DEFAULT 'team'"))
 
     from core.database import SessionLocal
     db = SessionLocal()
@@ -148,6 +159,9 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(notes.router)
+app.include_router(search.router)
+app.include_router(audit.router)
+app.include_router(notifications.router)
 app.include_router(operations.router)
 app.include_router(achievements.router)
 app.include_router(announcements.router)

@@ -70,6 +70,8 @@ body::before {
 .nav-page span { color: var(--red2); }
 .nav-back  { font-family: var(--mono); font-size:11px; color: var(--text-dim); text-decoration: none; letter-spacing: 0.1em; transition: color 0.2s; }
 .nav-back:hover { color: var(--text); }
+.nav-link  { font-family: var(--mono); font-size:11px; color: var(--text-dim); text-decoration: none; letter-spacing: 0.1em; transition: color 0.2s; }
+.nav-link:hover { color: var(--text); }
 .nav-btn {
   font-family: var(--mono); font-size:10px; letter-spacing: 0.15em;
   text-transform: uppercase; padding: 5px 12px;
@@ -382,6 +384,9 @@ a[class*="btn"]:focus-visible{
     <span class="nav-page" id="warRoomLabel">// <span>war room</span></span>
   </div>
   <div class="nav-right">
+    <a href="search.html" class="nav-link">Search</a>
+    <a href="operations.html" class="nav-link">Operations</a>
+    <a href="library.html" class="nav-link">Wiki</a>
     <a href="dashboard.html" class="nav-back">← Dashboard</a>
     <button class="nav-btn danger hidden" id="resetRoomBtn" onclick="openResetModal()">↺ Reset Room</button>
   </div>

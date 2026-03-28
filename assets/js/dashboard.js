@@ -271,6 +271,8 @@ async function initDashboard() {
             <span>${esc(String(operation.published_count || 0))} public</span>
             <span>${esc(String(operation.ioc_count || 0))} iocs</span>
             <span>${esc(String(operation.file_count || 0))} files</span>
+            <span>${esc(String(operation.goal_count || 0))} goals</span>
+            <span>${esc(String(operation.ctf_count || 0))} ctfs</span>
           </div>
           ${canEdit ? `<div class="note-meta" style="margin-top:10px;gap:8px">
             <a href="#" onclick="event.preventDefault();window.__openOperationModal(${operation.id})" class="panel-action">Edit</a>
@@ -292,11 +294,13 @@ async function initDashboard() {
         el.innerHTML = '<div style="padding:16px 18px;font-family:var(--mono);font-size:10px;color:var(--text-dim);">No activity yet.</div>';
         return;
       }
-      const iconMap = { note: '📖', ioc: '📌', vault_file: '📁' };
+      const iconMap = { note: '📖', ioc: '📌', vault_file: '📁', goal: '🎯', ctf_event: '🚩' };
       const hrefFor = (item) => {
         if (item.kind === 'note') return `library.html?note_id=${encodeURIComponent(item.id)}`;
         if (item.kind === 'ioc') return item.meta && item.meta.operation_id ? `ioc-tracker.html?operation_id=${encodeURIComponent(item.meta.operation_id)}` : 'ioc-tracker.html';
         if (item.kind === 'vault_file') return item.meta && item.meta.operation_id ? `operations.html?id=${encodeURIComponent(item.meta.operation_id)}` : 'vault.html';
+        if (item.kind === 'goal') return item.meta && item.meta.operation_id ? `whiteboard.html?operation_id=${encodeURIComponent(item.meta.operation_id)}` : 'whiteboard.html';
+        if (item.kind === 'ctf_event') return item.meta && item.meta.operation_id ? `ctf.html?operation_id=${encodeURIComponent(item.meta.operation_id)}` : 'ctf.html';
         return 'dashboard.html';
       };
       el.innerHTML = items.slice(0, 10).map((item) => `
@@ -544,6 +548,7 @@ async function initDashboard() {
           <div class="notif-item-title">${esc(a.title)}</div>
           <button class="notif-close-btn" data-notif-id="${a.id}" title="Dismiss">✕</button>
         </div>
+        ${a.summary ? `<div class="notif-item-content">${esc(a.summary)}</div>` : ''}
         <div class="notif-item-meta">
           <span class="notif-item-type-${esc(a.type)}">[${esc(a.type)}]</span>
           <span>${esc(a.author)}</span>
@@ -551,6 +556,12 @@ async function initDashboard() {
         </div>
       </div>`;
     }).join('');
+    body.querySelectorAll('.notif-item').forEach((itemEl, idx) => {
+      itemEl.addEventListener('click', () => {
+        const item = visibleNotifs[idx];
+        if (item && item.href) window.location.href = item.href;
+      });
+    });
     body.querySelectorAll('.notif-close-btn').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -575,11 +586,12 @@ async function initDashboard() {
   function pushDesktopNotification(ann) {
     if (!('Notification' in window)) return;
     if (Notification.permission !== 'granted') return;
-    const body = `${ann.type.toUpperCase()} • ${ann.author}`;
+    const body = `${ann.type.toUpperCase()} • ${ann.author}${ann.summary ? `\n${ann.summary.slice(0, 120)}` : ''}`;
     try {
       const n = new Notification(`DEADCATS: ${ann.title}`, { body, tag: `dc-ann-${ann.id}` });
       n.onclick = () => {
         window.focus();
+        if (ann.href) window.location.href = ann.href;
       };
     } catch (_) {}
   }
@@ -685,7 +697,7 @@ async function initDashboard() {
 
   async function loadNotifications() {
     try {
-      const res = await authFetch('/api/announcements/');
+      const res = await authFetch('/api/notifications/');
       if (!res.ok) return;
       _notifAll = await res.json();
       const dismissed = new Set(JSON.parse(localStorage.getItem('dc_dismissed_notifs') || '[]'));
@@ -802,8 +814,8 @@ async function deleteAnnouncement(id) {
   location.reload();
 }
 
-function openOperationModal() {
-  if (window.__openOperationModal) window.__openOperationModal();
+function openOperationModal(operationId = null) {
+  if (window.__openOperationModal) return window.__openOperationModal(operationId);
 }
 
 function closeOperationModal() {

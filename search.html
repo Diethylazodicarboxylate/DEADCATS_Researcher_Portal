@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEADCATS // Search</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#081119;--bg2:#0d1822;--panel:#132432;--panel2:#10202c;--border:#1c3445;--border2:#28485d;--text:#d6e8f5;--text-dim:#7e97aa;--text-soft:#a8c0d1;--white:#eef7ff;--cyan:#56d7ff;--gold:#f4b33c;--green:#42d392;--mono:'IBM Plex Mono',monospace;--body:'IBM Plex Sans',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:var(--body);color:var(--text);background:radial-gradient(circle at top left, rgba(86,215,255,.1), transparent 25%),linear-gradient(180deg,#081119,#050c12);min-height:100vh}
+body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);background-size:34px 34px;opacity:.2;pointer-events:none}
+.topnav{position:sticky;top:0;z-index:20;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;background:rgba(8,17,25,.92);backdrop-filter:blur(18px);border-bottom:1px solid var(--border)}
+.nav-left,.nav-right{display:flex;align-items:center;gap:16px}.nav-logo,.nav-link,.nav-page,.meta,.chip{font-family:var(--mono)}.nav-logo{font-size:12px;letter-spacing:.35em;text-transform:uppercase;text-decoration:none;color:var(--white)}.nav-logo span{color:var(--gold)}.nav-link,.nav-page{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);text-decoration:none}.nav-link:hover{color:var(--text)}
+.shell{max-width:1360px;margin:0 auto;padding:28px 20px 36px}
+.hero{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;margin-bottom:24px}
+.hero-card,.section{border:1px solid var(--border);border-radius:24px;background:linear-gradient(180deg,rgba(19,36,50,.94),rgba(10,19,28,.96));box-shadow:0 24px 38px rgba(0,0,0,.18)}
+.hero-card{padding:24px}.kicker{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px}.title{font-size:34px;font-weight:700;color:var(--white);letter-spacing:-.04em}.sub{margin-top:8px;font-size:14px;line-height:1.8;color:var(--text-dim);max-width:860px}
+.search-wrap{display:flex;gap:12px;align-items:center;margin-top:18px}.field{width:100%;padding:14px 16px;border-radius:16px;border:1px solid var(--border);background:rgba(7,14,20,.76);color:var(--text);font:inherit}.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 14px;border-radius:14px;border:1px solid var(--border2);background:transparent;color:var(--text-soft);font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.btn:hover{transform:translateY(-1px);border-color:var(--text-dim);color:var(--text)}
+.control-row{display:grid;grid-template-columns:1fr 220px auto;gap:12px;margin-top:12px}.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.chip-btn{display:inline-flex;padding:7px 10px;border-radius:999px;border:1px solid var(--border2);background:transparent;color:var(--text-soft);font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}.chip-btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(86,215,255,.08)}
+.sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.section{padding:18px}.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.section-title{font-size:16px;font-weight:700;color:var(--white)}.count{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim)}
+.result{display:block;padding:14px;border:1px solid var(--border);border-radius:18px;background:rgba(10,19,28,.74);text-decoration:none;color:inherit;margin-bottom:10px}.result:last-child{margin-bottom:0}.result:hover{border-color:rgba(86,215,255,.26)}.result.active{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(86,215,255,.25)}
+.result strong{display:block;color:var(--white);font-size:15px;margin-bottom:8px}.result p{font-size:13px;line-height:1.75;color:var(--text-dim)}.meta{display:flex;gap:8px;flex-wrap:wrap;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-top:10px}.chip{display:inline-flex;padding:5px 8px;border-radius:999px;border:1px solid var(--border2);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-soft)}
+.empty{padding:22px;border:1px dashed var(--border);border-radius:18px;text-align:center;color:var(--text-dim);font-size:13px}.hidden{display:none!important}
+@media (max-width:980px){.sections{grid-template-columns:1fr}.search-wrap{flex-direction:column;align-items:stretch}.control-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav class="topnav">
+  <div class="nav-left">
+    <a class="nav-logo" href="index.html">DEAD<span>CATS</span></a>
+    <div class="nav-page">Portal Search</div>
+  </div>
+  <div class="nav-right">
+    <a class="nav-link" href="dashboard.html">Dashboard</a>
+    <a class="nav-link" href="library.html">Wiki</a>
+    <a class="nav-link" href="operations.html">Operations</a>
+    <a class="nav-link" href="ctf.html">CTF</a>
+  </div>
+</nav>
+<div class="shell">
+  <section class="hero-card">
+    <div class="kicker">Unified Search</div>
+    <div class="title">Search The Whole Portal</div>
+    <div class="sub">Notes, discussion threads, operations, indicators, evidence files, and CTF work all in one place.</div>
+    <div class="search-wrap">
+      <input class="field" id="searchInput" type="text" placeholder="Search notes, comments, operations, IOCs, files, CTF events..." autocomplete="off">
+      <button class="btn" onclick="runSearch()">Search</button>
+    </div>
+    <div class="control-row">
+      <select class="field" id="typeFilter">
+        <option value="">All result types</option>
+        <option value="notes">Notes</option>
+        <option value="comments">Discussion</option>
+        <option value="operations">Operations</option>
+        <option value="iocs">Indicators</option>
+        <option value="files">Vault Files</option>
+        <option value="ctf_events">CTF Events</option>
+      </select>
+      <button class="btn" onclick="clearSearch()">Clear</button>
+      <div></div>
+    </div>
+    <div class="chips" id="recentSearches"></div>
+  </section>
+  <div class="sections" id="resultsRoot"></div>
+</div>
+<script>
+const API='';
+let activeFilter='';
+let navItems=[];
+let activeNavIndex=-1;
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function authFetch(url, opts = {}){return fetch(API+url,{...opts,credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json',...(opts.headers||{})}}).then((res)=>{if(res.status===401){localStorage.removeItem('dc_user');window.location.href='login.html';}return res;})}
+function timeAgo(value){if(!value)return'just now';const seconds=(Date.now()-new Date(value))/1000;if(seconds<60)return'just now';if(seconds<3600)return Math.floor(seconds/60)+'m ago';if(seconds<86400)return Math.floor(seconds/3600)+'h ago';return Math.floor(seconds/86400)+'d ago'}
+async function ensureSession(){const res=await authFetch('/api/auth/me');if(!res.ok)return false;const user=await res.json();localStorage.setItem('dc_user',JSON.stringify(user));return true}
+function sectionMarkup(title, items, emptyText, formatter){return `<section class="section"><div class="section-head"><div class="section-title">${esc(title)}</div><div class="count">${items.length} results</div></div>${items.length?items.map(formatter).join(''):`<div class="empty">${esc(emptyText)}</div>`}</section>`}
+function resultCard(item, kind){return `<a class="result" href="${esc(item.href||'#')}"><strong>${esc(item.title||'Untitled')}</strong><p>${esc(item.excerpt||'')}</p><div class="meta"><span>${esc(kind)}</span>${item.operation_name?`<span class="chip">${esc(item.operation_name)}</span>`:''}<span>${esc(item.author||'unknown')}</span><span>${esc(timeAgo(item.updated_at))}</span></div></a>`}
+function saveRecentSearch(q){if(!q)return;let items=[];try{items=JSON.parse(localStorage.getItem('dc_recent_searches')||'[]')}catch(_){items=[]}items=[q,...items.filter((item)=>item!==q)].slice(0,6);localStorage.setItem('dc_recent_searches',JSON.stringify(items));renderRecentSearches()}
+function renderRecentSearches(){let items=[];try{items=JSON.parse(localStorage.getItem('dc_recent_searches')||'[]')}catch(_){items=[]}const root=document.getElementById('recentSearches');root.innerHTML=items.map((item)=>`<button class="chip-btn" onclick="applyRecentSearch(${JSON.stringify(''+item)})">${esc(item)}</button>`).join('')}
+function applyRecentSearch(q){document.getElementById('searchInput').value=q;runSearch()}
+function clearSearch(){document.getElementById('searchInput').value='';document.getElementById('typeFilter').value='';activeFilter='';history.replaceState(null,'','search.html');document.getElementById('resultsRoot').innerHTML='<section class="section" style="grid-column:1/-1"><div class="empty">Search across notes, discussions, operations, IOCs, evidence files, and CTF work.</div></section>';navItems=[];activeNavIndex=-1}
+function refreshNavItems(){navItems=[...document.querySelectorAll('.result')];navItems.forEach((item,index)=>item.classList.toggle('active',index===activeNavIndex))}
+function renderResults(data){const sections=[['notes','Notes','No matching notes.','note'],['comments','Discussion','No matching comments.','comment'],['operations','Operations','No matching operations.','operation'],['iocs','Indicators','No matching indicators.','ioc'],['files','Vault Files','No matching files.','file'],['ctf_events','CTF Events','No matching CTF events.','ctf']];document.getElementById('resultsRoot').innerHTML=sections.filter(([key])=>!activeFilter||activeFilter===key).map(([key,title,emptyText,label])=>sectionMarkup(title,data[key]||[],emptyText,(item)=>resultCard(item,label))).join('');activeNavIndex=-1;refreshNavItems()}
+async function runSearch(){const q=document.getElementById('searchInput').value.trim();activeFilter=document.getElementById('typeFilter').value;const root=document.getElementById('resultsRoot');const params=new URLSearchParams(window.location.search);if(q)params.set('q',q);else params.delete('q');if(activeFilter)params.set('type',activeFilter);else params.delete('type');history.replaceState(null,'',params.toString()?`search.html?${params.toString()}`:'search.html');if(q.length<2){root.innerHTML='<section class="section" style="grid-column:1/-1"><div class="empty">Type at least 2 characters to search.</div></section>';return;}root.innerHTML='<section class="section" style="grid-column:1/-1"><div class="empty">Searching the portal...</div></section>';const res=await authFetch(`/api/search/?q=${encodeURIComponent(q)}`);if(!res.ok){root.innerHTML='<section class="section" style="grid-column:1/-1"><div class="empty">Unable to search right now.</div></section>';return;}const data=await res.json();saveRecentSearch(q);renderResults(data)}
+document.getElementById('searchInput').addEventListener('keydown',(event)=>{if(event.key==='Enter')runSearch()})
+document.getElementById('typeFilter').addEventListener('change',runSearch)
+document.addEventListener('keydown',(event)=>{if(event.key==='/'&&document.activeElement!==document.getElementById('searchInput')){event.preventDefault();document.getElementById('searchInput').focus();return}if(!navItems.length)return;if(event.key==='ArrowDown'){event.preventDefault();activeNavIndex=Math.min(navItems.length-1,activeNavIndex+1);refreshNavItems();navItems[activeNavIndex].scrollIntoView({block:'nearest'})}if(event.key==='ArrowUp'){event.preventDefault();activeNavIndex=Math.max(0,activeNavIndex-1);refreshNavItems();navItems[activeNavIndex].scrollIntoView({block:'nearest'})}if(event.key==='Enter'&&activeNavIndex>=0&&document.activeElement!==document.getElementById('searchInput')){window.location.href=navItems[activeNavIndex].href}})
+(async()=>{const ok=await ensureSession();if(!ok)return;renderRecentSearches();const params=new URLSearchParams(window.location.search);const q=params.get('q')||'';const type=params.get('type')||'';document.getElementById('searchInput').value=q;document.getElementById('typeFilter').value=type;if(q)runSearch();else document.getElementById('resultsRoot').innerHTML='<section class="section" style="grid-column:1/-1"><div class="empty">Search across notes, discussions, operations, IOCs, evidence files, and CTF work.</div></section>'})()
+</script>
+<script src="assets/js/lofi-player.js"></script>
+</body>
+</html>

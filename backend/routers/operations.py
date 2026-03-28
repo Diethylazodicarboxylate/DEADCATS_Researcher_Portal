@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, case
 from sqlalchemy.orm import Session
 
+from core.audit import log_audit_event
 from core.database import get_db
 from core.security import get_current_user
 from core.validation import clean_text, reject_html
@@ -390,6 +391,19 @@ def create_operation(
         created_by=current.id,
     )
     db.add(operation)
+    db.flush()
+    log_audit_event(
+        db,
+        kind="operation",
+        action="created",
+        title=f"Operation created: {operation.name}",
+        summary=operation.summary or "",
+        actor=current,
+        target_type="operation",
+        target_id=operation.id,
+        operation_id=operation.id,
+        href=f"operations.html?id={operation.id}",
+    )
     db.commit()
     db.refresh(operation)
     return _serialize_operation(operation)
@@ -420,6 +434,18 @@ def update_operation(
         operation.priority = _normalize_choice(changes["priority"], allowed=ALLOWED_PRIORITIES, field="priority", fallback="medium")
     if "lead_handle" in changes:
         operation.lead_handle = reject_html(clean_text(changes["lead_handle"] or "", field="lead_handle", max_len=50), field="lead_handle")
+    log_audit_event(
+        db,
+        kind="operation",
+        action="updated",
+        title=f"Operation updated: {operation.name}",
+        summary=operation.summary or "",
+        actor=current,
+        target_type="operation",
+        target_id=operation.id,
+        operation_id=operation.id,
+        href=f"operations.html?id={operation.id}",
+    )
     db.commit()
     db.refresh(operation)
     stats = _operation_stats_map(db).get(operation.id, {})
@@ -442,6 +468,17 @@ def delete_operation(
     db.query(VaultFile).filter(VaultFile.operation_id == operation_id).update({"operation_id": None})
     db.query(TeamGoal).filter(TeamGoal.operation_id == operation_id).update({"operation_id": None})
     db.query(CTFEvent).filter(CTFEvent.operation_id == operation_id).update({"operation_id": None})
+    log_audit_event(
+        db,
+        kind="operation",
+        action="deleted",
+        title=f"Operation deleted: {operation.name}",
+        actor=current,
+        target_type="operation",
+        target_id=operation.id,
+        operation_id=operation.id,
+        href="operations.html",
+    )
     db.delete(operation)
     db.commit()
     return {"message": "Operation deleted"}

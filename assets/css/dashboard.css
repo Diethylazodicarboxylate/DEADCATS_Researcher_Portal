@@ -85,6 +85,7 @@ body{
 .notif-item{
   padding:10px 14px;
   border-bottom:1px solid var(--border);
+  cursor:crosshair;
 }
 .notif-item:last-child{border-bottom:none}
 .notif-item.unread{background:var(--surface2)}
@@ -117,6 +118,13 @@ body{
   background:var(--red-glow);
 }
 .notif-item.unread .notif-item-title{color:var(--text-bright)}
+.notif-item-content{
+  font-size:12px;
+  line-height:1.65;
+  color:var(--text-dim);
+  margin:2px 0 8px;
+  white-space:pre-wrap;
+}
 .notif-item-meta{
   font-family:var(--mono);
   font-size:10px;
@@ -125,6 +133,12 @@ body{
 }
 .notif-item-type-notice{color:var(--cyan)}
 .notif-item-type-creds{color:var(--gold)}
+.notif-item-type-comment{color:var(--green)}
+.notif-item-type-review{color:var(--gold)}
+.notif-item-type-publication{color:var(--cyan)}
+.notif-item-type-operation{color:var(--text-bright)}
+.notif-item-type-goal{color:var(--green)}
+.notif-item-type-ctf_event{color:var(--gold)}
 .notif-empty{
   padding:20px 14px;
   font-family:var(--mono);

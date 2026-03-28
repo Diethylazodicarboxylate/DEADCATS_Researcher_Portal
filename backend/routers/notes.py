@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 from typing import Optional
 from core.database import get_db
+from core.audit import log_audit_event
 from core.security import get_current_user, require_admin
 from core.validation import clean_text, reject_html
 from models.note import Note, Folder, PublishFolder, NoteRevision
@@ -412,6 +413,19 @@ def create_note(
     db.add(note)
     db.flush()
     _create_revision(db, note, event_type="created", actor=current)
+    log_audit_event(
+        db,
+        kind="note",
+        action="created",
+        title=f"Note created: {note.title}",
+        summary=(note.content or "")[:300],
+        actor=current,
+        target_type="note",
+        target_id=note.id,
+        note_id=note.id,
+        operation_id=note.operation_id,
+        href=f"library.html?note_id={note.id}",
+    )
     db.commit()
     db.refresh(note)
     return _serialize_note(db, note)
@@ -543,6 +557,27 @@ def create_note_comment(
         content=clean_text(payload.content, field="comment", max_len=4000, strip=False),
     )
     db.add(comment)
+    db.flush()
+    recipient_id = note.author_id if note.author_id != current.id else None
+    if parent_id is not None:
+        parent = db.query(NoteComment).filter(NoteComment.id == parent_id).first()
+        if parent and parent.author_id != current.id:
+            recipient_id = parent.author_id
+    log_audit_event(
+        db,
+        kind="comment",
+        action="created",
+        title=f"Comment on {note.title}",
+        summary=(comment.content or "")[:300],
+        actor=current,
+        target_type="note_comment",
+        target_id=comment.id,
+        note_id=note.id,
+        operation_id=note.operation_id,
+        recipient_id=recipient_id,
+        href=f"library.html?note_id={note.id}",
+        visibility="recipient" if recipient_id else "team",
+    )
     db.commit()
     db.refresh(comment)
     return _serialize_comment(comment)
@@ -577,6 +612,20 @@ def update_note_comment(
         comment.resolved = payload.resolved
         comment.resolved_by = current.handle if payload.resolved else None
         comment.resolved_at = datetime.now(timezone.utc) if payload.resolved else None
+        log_audit_event(
+            db,
+            kind="comment",
+            action="resolved" if payload.resolved else "reopened",
+            title=f"Discussion {'resolved' if payload.resolved else 'reopened'} on {note.title}",
+            actor=current,
+            target_type="note_comment",
+            target_id=comment.id,
+            note_id=note.id,
+            operation_id=note.operation_id,
+            recipient_id=comment.author_id if comment.author_id != current.id else note.author_id,
+            href=f"library.html?note_id={note.id}",
+            visibility="recipient",
+        )
     db.commit()
     db.refresh(comment)
     return _serialize_comment(comment)
@@ -609,6 +658,18 @@ def delete_note_comment(
         for child in child_rows:
             to_delete.append(child.id)
             db.delete(child)
+    log_audit_event(
+        db,
+        kind="comment",
+        action="deleted",
+        title=f"Comment thread deleted on {note.title}",
+        actor=current,
+        target_type="note_comment",
+        target_id=comment.id,
+        note_id=note.id,
+        operation_id=note.operation_id,
+        href=f"library.html?note_id={note.id}",
+    )
     db.delete(comment)
     db.commit()
 
@@ -634,6 +695,7 @@ def update_note(
     changes = payload.model_dump(exclude_none=True, exclude={"base_updated_at"})
     if not changes:
         return _serialize_note(db, note)
+    original_title = note.title
     normalized_changes = {field: _normalize_note_field(field, value) for field, value in changes.items()}
     has_effective_changes = any(getattr(note, field) != value for field, value in normalized_changes.items())
     if payload.base_updated_at and has_effective_changes:
@@ -660,6 +722,19 @@ def update_note(
     if note.review_status == "changes_requested":
         note.review_status = "draft"
     _create_revision(db, note, event_type="updated", actor=current)
+    log_audit_event(
+        db,
+        kind="note",
+        action="updated",
+        title=f"Note updated: {note.title}",
+        summary=f"Previous title: {original_title}",
+        actor=current,
+        target_type="note",
+        target_id=note.id,
+        note_id=note.id,
+        operation_id=note.operation_id,
+        href=f"library.html?note_id={note.id}",
+    )
     db.commit()
     db.refresh(note)
     return _serialize_note(db, note)
@@ -678,6 +753,21 @@ def submit_note_for_review(
         raise HTTPException(status_code=400, detail="Add content before submitting for review")
     _set_review_state(note, status="in_review", review_notes=note.review_notes or "")
     _create_revision(db, note, event_type="submitted_for_review", actor=current)
+    log_audit_event(
+        db,
+        kind="review",
+        action="submitted",
+        title=f"Review requested: {note.title}",
+        summary=(note.review_notes or "")[:300],
+        actor=current,
+        target_type="note",
+        target_id=note.id,
+        note_id=note.id,
+        operation_id=note.operation_id,
+        recipient_id=note.author_id,
+        href=f"library.html?note_id={note.id}",
+        visibility="recipient",
+    )
     db.commit()
     db.refresh(note)
     return _serialize_note(db, note)
@@ -694,6 +784,21 @@ def approve_note_review(
         raise HTTPException(status_code=404, detail="Note not found")
     _set_review_state(note, status="approved", actor=admin, review_notes=payload.review_notes or "", stamp_reviewer=True)
     _create_revision(db, note, event_type="approved", actor=admin, reason=payload.review_notes or "")
+    log_audit_event(
+        db,
+        kind="review",
+        action="approved",
+        title=f"Note approved: {note.title}",
+        summary=(payload.review_notes or "")[:300],
+        actor=admin,
+        target_type="note",
+        target_id=note.id,
+        note_id=note.id,
+        operation_id=note.operation_id,
+        recipient_id=note.author_id,
+        href=f"library.html?note_id={note.id}",
+        visibility="recipient",
+    )
     db.commit()
     db.refresh(note)
     return _serialize_note(db, note)
@@ -710,6 +815,21 @@ def request_note_changes(
         raise HTTPException(status_code=404, detail="Note not found")
     _set_review_state(note, status="changes_requested", actor=admin, review_notes=payload.review_notes or "", stamp_reviewer=True)
     _create_revision(db, note, event_type="changes_requested", actor=admin, reason=payload.review_notes or "")
+    log_audit_event(
+        db,
+        kind="review",
+        action="changes_requested",
+        title=f"Changes requested: {note.title}",
+        summary=(payload.review_notes or "")[:300],
+        actor=admin,
+        target_type="note",
+        target_id=note.id,
+        note_id=note.id,
+        operation_id=note.operation_id,
+        recipient_id=note.author_id,
+        href=f"library.html?note_id={note.id}",
+        visibility="recipient",
+    )
     db.commit()
     db.refresh(note)
     return _serialize_note(db, note)
@@ -726,6 +846,18 @@ def revert_note_to_draft(
     _assert_can_edit(note, current)
     _set_review_state(note, status="draft", review_notes=note.review_notes or "")
     _create_revision(db, note, event_type="reverted_to_draft", actor=current)
+    log_audit_event(
+        db,
+        kind="review",
+        action="reverted_to_draft",
+        title=f"Review reverted to draft: {note.title}",
+        actor=current,
+        target_type="note",
+        target_id=note.id,
+        note_id=note.id,
+        operation_id=note.operation_id,
+        href=f"library.html?note_id={note.id}",
+    )
     db.commit()
     db.refresh(note)
     return _serialize_note(db, note)
@@ -762,6 +894,20 @@ def publish_note(
     if note.research_phase != "published":
         note.research_phase = "published"
     _create_revision(db, note, event_type="published", actor=admin, reason=clean_title)
+    log_audit_event(
+        db,
+        kind="publication",
+        action="published",
+        title=f"Public paper published: {clean_title}",
+        summary=published_by,
+        actor=admin,
+        target_type="note",
+        target_id=note.id,
+        note_id=note.id,
+        operation_id=note.operation_id,
+        recipient_id=note.author_id,
+        href=f"paper.html?slug={note.public_slug}",
+    )
     db.commit()
     db.refresh(note)
     return _serialize_note(db, note)
@@ -780,6 +926,19 @@ def unpublish_note(
     if note.review_status == "published":
         note.review_status = "approved"
     _create_revision(db, note, event_type="unpublished", actor=admin)
+    log_audit_event(
+        db,
+        kind="publication",
+        action="unpublished",
+        title=f"Public paper unpublished: {note.public_title or note.title}",
+        actor=admin,
+        target_type="note",
+        target_id=note.id,
+        note_id=note.id,
+        operation_id=note.operation_id,
+        recipient_id=note.author_id,
+        href=f"library.html?note_id={note.id}",
+    )
     db.commit()
     db.refresh(note)
     return _serialize_note(db, note)
