@@ -29,6 +29,19 @@ async def lifespan(app: FastAPI):
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE ctf_events ADD COLUMN IF NOT EXISTS description TEXT"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_status VARCHAR(40) DEFAULT 'available'"))
+        conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS note_type VARCHAR(50) DEFAULT 'research-note'"))
+        conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS research_phase VARCHAR(50) DEFAULT 'triage'"))
+        conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS target_name VARCHAR(200) DEFAULT ''"))
+        conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS severity VARCHAR(30) DEFAULT 'info'"))
+        conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS tlp VARCHAR(20) DEFAULT 'team'"))
+        conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS review_status VARCHAR(30) DEFAULT 'draft'"))
+        conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS review_notes TEXT DEFAULT ''"))
+        conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS reviewed_by VARCHAR(50) DEFAULT ''"))
+        conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP"))
+        conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMP"))
+        conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS public_title VARCHAR(200)"))
+        conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS public_slug VARCHAR(220)"))
+        conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS published_at TIMESTAMP"))
 
     from core.database import SessionLocal
     db = SessionLocal()

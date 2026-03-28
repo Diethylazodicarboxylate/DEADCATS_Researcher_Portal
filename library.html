@@ -4,615 +4,734 @@
 <meta charset="UTF-8">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐱</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DEADCATS // Research Library</title>
+<title>DEADCATS // Shared Wiki</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
 <style>
-:root {
-  --bg:        #05060a;
-  --bg2:       #090b12;
-  --bg3:       #0d1018;
-  --surface:   #111520;
-  --surface2:  #161b28;
-  --border:    #1a2030;
-  --border2:   #242e45;
-  --red:       #e8001e;
-  --red2:      #ff2040;
-  --red-dim:   #3a000a;
-  --red-glow:  rgba(232,0,30,0.12);
-  --cyan:      #00d4ff;
-  --cyan-dim:  #003a4d;
-  --gold:      #f0a500;
-  --green:     #00ff88;
-  --purple:    #9b5de5;
-  --text:      #b8c8e0;
-  --text-dim:  #445060;
-  --text-mid:  #6a7a95;
-  --text-bright:#ddeeff;
-  --nav-h:     52px;
-  --sidebar-w: 240px;
-  --list-w:    300px;
-  --mono:    'Share Tech Mono', monospace;
-  --display: 'Syncopate', sans-serif;
-  --body:    'Rajdhani', sans-serif;
+:root{
+  --bg:#071018;
+  --bg2:#0d1822;
+  --bg3:#101f2b;
+  --surface:#132432;
+  --surface-2:#182b3a;
+  --panel:#0a141d;
+  --border:#1c3243;
+  --border-2:#28475d;
+  --text:#d4e6f5;
+  --text-dim:#7e95a7;
+  --text-soft:#a9bfd0;
+  --cyan:#55d6ff;
+  --cyan-dim:#123c4f;
+  --gold:#f4b33c;
+  --green:#42d392;
+  --red:#ff5f74;
+  --red-dim:#4f1620;
+  --amber:#ff8a3d;
+  --white:#dce6ef;
+  --nav-h:58px;
+  --rail-w:84px;
+  --sidebar-w:290px;
+  --list-w:360px;
+  --tool-w:320px;
+  --mono:'IBM Plex Mono',monospace;
+  --body:'IBM Plex Sans',sans-serif;
 }
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; overflow: hidden; }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--body);
-  font-size: 15px;
-  cursor: crosshair;
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  overflow:hidden;
+  font-family:var(--body);
+  color:var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(85,214,255,0.12), transparent 26%),
+    radial-gradient(circle at top right, rgba(244,179,60,0.08), transparent 24%),
+    linear-gradient(180deg, #071018 0%, #050c13 100%);
 }
-
-body::before {
-  content: '';
-  position: fixed; inset: 0;
-  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px);
-  pointer-events: none; z-index: 9999;
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size:32px 32px;
+  opacity:.25;
+  pointer-events:none;
 }
-
-/* ── NAV ── */
-.topnav {
-  position: fixed; top:0; left:0; right:0; z-index: 100;
-  height: var(--nav-h);
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 24px;
-  background: rgba(5,6,10,0.97);
-  border-bottom: 1px solid var(--border);
+a{color:inherit}
+button,input,textarea,select{font:inherit}
+button,input,textarea,select{outline:none}
+button{cursor:pointer}
+.topnav{
+  position:fixed;top:0;left:0;right:0;z-index:50;height:var(--nav-h);
+  display:flex;align-items:center;justify-content:space-between;padding:0 22px;
+  background:rgba(6,12,18,.92);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);
 }
-.nav-left  { display: flex; align-items: center; gap: 16px; }
-.nav-right { display: flex; align-items: center; gap: 16px; }
-.nav-logo  { font-family: var(--display); font-size:11px; font-weight: 700; letter-spacing: 0.3em; color: var(--text-bright); text-decoration: none; }
-.nav-logo span { color: var(--red2); }
-.nav-sep   { width:1px; height:20px; background: var(--border2); }
-.nav-page  { font-family: var(--mono); font-size:11px; color: var(--text-dim); letter-spacing: 0.15em; }
-.nav-page span { color: var(--cyan); }
-.nav-btn {
-  font-family: var(--mono); font-size:10px; letter-spacing: 0.2em;
-  text-transform: uppercase; padding: 6px 14px;
-  border: 1px solid var(--border2); background: transparent;
-  color: var(--text-dim); cursor: crosshair; transition: all 0.2s;
+.nav-left,.nav-right{display:flex;align-items:center;gap:16px}
+.nav-logo{font-family:var(--mono);font-size:12px;letter-spacing:.35em;text-decoration:none;color:var(--white);text-transform:uppercase}
+.nav-logo span{color:var(--gold)}
+.nav-sep{width:1px;height:18px;background:var(--border-2)}
+.nav-page,.nav-link,.nav-status{
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim)
 }
-.nav-btn:hover  { color: var(--text); border-color: var(--text-dim); }
-.nav-btn.red    { border-color: var(--red-dim); color: var(--red2); background: var(--red-glow); }
-.nav-btn.red:hover { background: rgba(232,0,30,0.2); }
-.nav-back { font-family: var(--mono); font-size:11px; color: var(--text-dim); text-decoration: none; letter-spacing: 0.1em; transition: color 0.2s; }
-.nav-back:hover { color: var(--text); }
-
-/* ── LAYOUT ── */
-.layout {
-  display: grid;
-  grid-template-columns: var(--sidebar-w) var(--list-w) 1fr;
-  height: calc(100vh - var(--nav-h));
-  margin-top: var(--nav-h);
+.nav-page span{color:var(--cyan)}
+.nav-link{text-decoration:none}
+.nav-link:hover{color:var(--text)}
+.layout{
+  display:grid;
+  grid-template-columns:var(--rail-w) var(--sidebar-w) var(--list-w) 1fr;
+  height:calc(100vh - var(--nav-h));
+  margin-top:var(--nav-h);
 }
-
-/* ── FOLDER SIDEBAR ── */
-.folder-sidebar {
-  border-right: 1px solid var(--border);
-  background: rgba(9,11,18,0.97);
-  display: flex; flex-direction: column;
-  overflow: hidden;
+.activity-rail,.folder-sidebar,.note-list-panel,.workspace{min-height:0}
+.activity-rail{
+  border-right:1px solid var(--border);
+  background:rgba(8,15,22,.95);
+  padding:18px 12px;
+  display:flex;flex-direction:column;gap:14px;align-items:center;
 }
-.fs-head {
-  padding: 16px;
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
+.rail-badge{
+  width:52px;height:52px;border-radius:16px;border:1px solid var(--border-2);
+  background:linear-gradient(180deg, rgba(85,214,255,0.14), rgba(85,214,255,0.03));
+  display:grid;place-items:center;font-size:20px;box-shadow:0 16px 28px rgba(0,0,0,.28)
 }
-.fs-title {
-  font-family: var(--mono); font-size:10px;
-  letter-spacing: 0.25em; color: var(--text-dim);
-  text-transform: uppercase;
+.rail-label,.rail-count,.pill,.meta-label,.section-label,.subtle{
+  font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase
 }
-.fs-add {
-  width: 22px; height: 22px;
-  border: 1px solid var(--border2); background: transparent;
-  color: var(--text-dim); font-size: 14px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: crosshair; transition: all 0.2s;
+.rail-label{font-size:10px;color:var(--text-dim);text-align:center;line-height:1.5}
+.rail-action{
+  width:100%;padding:10px 6px;border:1px solid var(--border);background:var(--panel);
+  color:var(--text-soft);border-radius:14px;font-size:11px;transition:.18s ease
 }
-.fs-add:hover { color: var(--green); border-color: var(--green); }
-.folder-tree { flex:1; overflow-y: auto; padding: 8px 0; }
-
-.folder-item {
-  display: flex; align-items: center; gap: 8px;
-  padding: 7px 16px;
-  font-family: var(--body); font-size: 13px; font-weight: 500;
-  color: var(--text-mid); cursor: crosshair;
-  transition: all 0.15s; border: 1px solid transparent;
-  position: relative;
+.rail-action:hover,.btn:hover,.folder-item:hover,.note-row:hover,.template-card:hover,.backlink-row:hover{transform:translateY(-1px)}
+.rail-action.active,.btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(85,214,255,.08)}
+.rail-spacer{flex:1}
+.rail-count{font-size:10px;color:var(--text-soft)}
+.folder-sidebar,.note-list-panel,.workspace{
+  background:rgba(9,17,25,.88);backdrop-filter:blur(18px)
 }
-.folder-item:hover { color: var(--text); background: var(--surface); }
-.folder-item.active {
-  color: var(--text-bright); background: var(--surface);
-  border-color: var(--border);
+.folder-sidebar,.note-list-panel{border-right:1px solid var(--border)}
+.sidebar-head,.list-head,.workspace-head{
+  padding:18px;border-bottom:1px solid var(--border)
 }
-.folder-item.active::before {
-  content: '';
-  position: absolute; left:-1px; top:0; bottom:0;
-  width: 2px; background: var(--cyan);
+.sidebar-head{display:flex;flex-direction:column;gap:14px}
+.section-title{font-size:24px;font-weight:700;color:var(--white);letter-spacing:-.03em}
+.section-sub{font-size:13px;color:var(--text-dim);line-height:1.6}
+.search-shell{
+  display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--panel);
+  border:1px solid var(--border);border-radius:14px
 }
-.folder-ico { font-size: 13px; }
-.folder-count {
-  margin-left: auto;
-  font-family: var(--mono); font-size:9px;
-  color: var(--text-dim); letter-spacing: 0.1em;
+.search-shell input{
+  flex:1;background:transparent;border:none;color:var(--text);font-size:13px
 }
-.folder-del {
-  margin-left: 4px;
-  background: transparent; border: none;
-  color: var(--text-dim); font-size: 11px;
-  cursor: crosshair; opacity: 0; transition: opacity 0.15s;
-  padding: 0 2px;
+.search-shell span{font-size:13px;color:var(--text-dim)}
+.filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.select-field,.text-field,.title-field,.editor-textarea{
+  border:1px solid var(--border);background:rgba(6,12,18,.76);color:var(--text);border-radius:12px
 }
-.folder-item:hover .folder-del { opacity: 1; }
-.folder-del:hover { color: var(--red2); }
-
-/* ── NOTE LIST ── */
-.note-list-panel {
-  border-right: 1px solid var(--border);
-  background: var(--bg2);
-  display: flex; flex-direction: column;
-  overflow: hidden;
+.select-field,.text-field{padding:10px 12px;font-size:12px}
+.folder-tree,.note-items,.workspace-scroll,.tool-scroll{overflow:auto}
+.folder-tree{padding:10px}
+.folder-item{
+  display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid transparent;border-radius:14px;
+  color:var(--text-soft);transition:.18s ease
 }
-.nl-head {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
+.folder-item.active{background:rgba(85,214,255,.08);border-color:var(--cyan-dim);color:var(--white)}
+.folder-count{margin-left:auto;font-size:10px;color:var(--text-dim)}
+.folder-del{
+  border:none;background:transparent;color:var(--text-dim);padding:0 3px;font-size:12px;opacity:0
 }
-.nl-title {
-  font-family: var(--mono); font-size:10px;
-  letter-spacing: 0.2em; color: var(--text-dim);
-  text-transform: uppercase;
+.folder-item:hover .folder-del{opacity:1}
+.list-head{display:flex;flex-direction:column;gap:12px}
+.list-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.list-title{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-dim)}
+.btn{
+  border:1px solid var(--border-2);background:transparent;color:var(--text-soft);padding:9px 12px;border-radius:12px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;transition:.18s ease
 }
-.nl-new {
-  font-family: var(--mono); font-size:10px; letter-spacing: 0.15em;
-  background: transparent; border: 1px solid var(--border2);
-  color: var(--cyan); padding: 4px 10px;
-  cursor: crosshair; transition: all 0.2s;
+.btn.gold{color:var(--gold);border-color:rgba(244,179,60,.32)}
+.btn.green{color:var(--green);border-color:rgba(66,211,146,.32)}
+.btn.red{color:var(--red);border-color:rgba(255,95,116,.28)}
+.btn.small{padding:8px 10px;font-size:10px}
+.note-items{padding:8px 10px 20px}
+.note-row{
+  padding:16px;border:1px solid var(--border);background:linear-gradient(180deg, rgba(19,36,50,.92), rgba(10,20,29,.92));
+  border-radius:18px;margin-bottom:10px;transition:.18s ease;position:relative
 }
-.nl-new:hover { background: var(--cyan-dim); border-color: var(--cyan); }
-
-.note-items { flex:1; overflow-y: auto; }
-
-.note-item {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-  cursor: crosshair; transition: background 0.15s;
-  position: relative;
+.note-row.active{border-color:rgba(85,214,255,.35);box-shadow:0 14px 34px rgba(0,0,0,.24)}
+.note-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+.note-title{font-size:15px;font-weight:700;color:var(--white)}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:999px;font-size:9px;border:1px solid var(--border-2);color:var(--text-soft)}
+.pill.pub{color:var(--green);border-color:rgba(66,211,146,.32);background:rgba(66,211,146,.08)}
+.pill.draft{color:var(--gold);border-color:rgba(244,179,60,.3);background:rgba(244,179,60,.08)}
+.note-preview{font-size:13px;line-height:1.6;color:var(--text-dim);margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.note-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:10px;color:var(--text-dim);font-family:var(--mono)}
+.tag{
+  display:inline-flex;padding:4px 7px;border:1px solid var(--border);border-radius:999px;
+  color:var(--text-soft);font-size:10px;font-family:var(--mono)
 }
-.note-item:hover { background: var(--surface); }
-.note-item.active { background: var(--surface); border-left: 2px solid var(--red2); }
-.ni-title {
-  font-family: var(--body); font-size: 14px; font-weight: 600;
-  color: var(--text-bright); margin-bottom: 4px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+.note-star{
+  position:absolute;top:12px;right:12px;background:none;border:none;color:var(--text-dim);font-size:15px
 }
-.ni-preview {
-  font-family: var(--body); font-size: 12px; font-weight: 300;
-  color: var(--text-dim); margin-bottom: 6px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+.note-star.starred{color:var(--gold)}
+.workspace{
+  display:grid;
+  grid-template-rows:auto 1fr;
 }
-.ni-meta {
-  font-family: var(--mono); font-size:10px;
-  color: var(--text-dim); letter-spacing: 0.08em;
-  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+.workspace-head{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap
 }
-.ni-tag {
-  font-family: var(--mono); font-size:9px;
-  padding: 1px 5px; border: 1px solid var(--border2);
-  color: var(--text-mid); max-width: 100%;
-  overflow-wrap: anywhere; word-break: break-word; white-space: normal;
+.workspace-title h1{font-size:22px;color:var(--white);margin-bottom:4px}
+.workspace-title p{font-size:13px;color:var(--text-dim)}
+.workspace-actions{display:flex;gap:10px;flex-wrap:wrap}
+.workspace-grid{
+  display:grid;grid-template-columns:minmax(0,1fr) var(--tool-w);min-height:0
 }
-.note-empty {
-  padding: 40px 16px; text-align: center;
-  font-family: var(--mono); font-size:11px;
-  color: var(--text-dim); letter-spacing: 0.15em;
+.workspace-scroll{padding:18px 18px 22px}
+.tool-scroll{padding:18px 18px 22px;border-left:1px solid var(--border);background:rgba(8,15,22,.86)}
+.empty-state{
+  min-height:100%;display:grid;place-items:center;border:1px dashed var(--border);
+  border-radius:24px;background:rgba(10,20,29,.6);padding:30px;text-align:center
 }
-.ni-bm-btn {
-  position: absolute; top: 10px; right: 10px;
-  background: transparent; border: none;
-  color: var(--text-dim); font-size: 13px;
-  cursor: crosshair; padding: 2px 4px;
-  transition: color 0.15s; line-height: 1;
+.empty-state h2{font-size:28px;color:var(--white);margin-bottom:12px}
+.empty-state p{max-width:500px;line-height:1.7;color:var(--text-dim);margin:0 auto 18px}
+.empty-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.editor-shell{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:18px;min-height:100%}
+.panel{
+  border:1px solid var(--border);border-radius:24px;background:linear-gradient(180deg, rgba(12,24,34,.9), rgba(8,16,23,.95));
+  box-shadow:0 26px 44px rgba(0,0,0,.22)
 }
-.ni-bm-btn:hover { color: var(--gold); }
-.ni-bm-btn.starred { color: var(--gold); text-shadow: 0 0 8px rgba(240,165,0,.35); }
-.ni-bm-btn:disabled { opacity: .65; cursor: wait; }
-
-/* ── CONTENT PANE ── */
-.content-pane {
-  display: flex; flex-direction: column;
-  overflow: hidden; background: var(--bg);
+.panel-head{
+  padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px
 }
-
-/* toolbar */
-.content-toolbar {
-  padding: 10px 24px;
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; gap: 12px;
-  background: var(--bg2);
-  min-height: 44px;
+.panel-head h2{font-size:14px;letter-spacing:.02em;color:var(--white)}
+.panel-head p{font-size:12px;color:var(--text-dim)}
+.panel-body{padding:18px}
+.meta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.meta-block{display:flex;flex-direction:column;gap:7px}
+.meta-label,.section-label{font-size:10px;color:var(--text-dim)}
+.title-field{width:100%;padding:16px 18px;border-radius:16px;margin-bottom:14px;font-size:22px;font-weight:700;background:rgba(7,16,24,.82)}
+.editor-textarea{
+  width:100%;min-height:540px;padding:18px;border-radius:16px;resize:none;line-height:1.8;
+  font-family:var(--mono);font-size:13px
 }
-.ct-title {
-  font-family: var(--display); font-size: 11px; font-weight: 700;
-  letter-spacing: 0.15em; color: var(--text-bright); flex:1;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+.editor-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;flex-wrap:wrap}
+.note-stats{font-size:11px;color:var(--text-dim);font-family:var(--mono)}
+.status-row{display:flex;gap:8px;flex-wrap:wrap}
+.md-body{max-width:900px}
+.md-body h1,.md-body h2,.md-body h3,.md-body h4{color:var(--white);margin:0 0 16px}
+.md-body h1{font-size:30px;border-bottom:1px solid var(--border);padding-bottom:14px}
+.md-body h2{font-size:20px;margin-top:30px}
+.md-body h3{font-size:17px;margin-top:24px;color:var(--cyan)}
+.md-body p,.md-body li,.md-body blockquote,.md-body td{line-height:1.8;font-size:15px;color:var(--text-soft)}
+.md-body a{color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(85,214,255,.35)}
+.md-body code{background:rgba(85,214,255,.08);border:1px solid rgba(85,214,255,.18);padding:2px 6px;border-radius:8px;font-family:var(--mono);font-size:12px;color:var(--gold)}
+.md-body pre{background:#081119;border:1px solid var(--border);padding:16px;border-radius:18px;overflow:auto;margin:16px 0}
+.md-body pre code{padding:0;border:none;background:none}
+.md-body blockquote{border-left:3px solid var(--gold);padding:12px 16px;background:rgba(244,179,60,.08);border-radius:0 16px 16px 0;margin:18px 0}
+.md-body table{width:100%;border-collapse:collapse;margin:18px 0}
+.md-body th,.md-body td{border:1px solid var(--border);padding:10px 12px;text-align:left}
+.md-body th{font-family:var(--mono);font-size:11px;text-transform:uppercase;color:var(--text);background:rgba(85,214,255,.06)}
+.wikilink{color:var(--gold)!important;border-bottom-color:rgba(244,179,60,.3)!important}
+.tool-section{margin-bottom:18px}
+.tool-card,.template-card,.backlink-row{
+  border:1px solid var(--border);border-radius:18px;background:rgba(12,24,34,.74);padding:14px;transition:.18s ease
 }
-.ct-meta {
-  font-family: var(--mono); font-size:10px;
-  color: var(--text-dim); letter-spacing: 0.1em;
-  white-space: nowrap;
+.tool-card + .tool-card,.template-card + .template-card,.backlink-row + .backlink-row{margin-top:10px}
+.template-card h3,.tool-card h3{font-size:13px;color:var(--white);margin-bottom:6px}
+.template-card p,.tool-card p,.backlink-row p{font-size:12px;color:var(--text-dim);line-height:1.6}
+.template-card button,.tool-card button{margin-top:12px}
+.backlink-row h4{font-size:13px;color:var(--white);margin-bottom:4px}
+.backlink-row{cursor:pointer}
+.tool-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.tool-list .tag{cursor:pointer}
+.banner{
+  padding:12px 14px;border:1px solid var(--border);border-radius:16px;background:rgba(85,214,255,.07);
+  font-size:12px;color:var(--text-soft);line-height:1.6
 }
-.ct-btn {
-  font-family: var(--mono); font-size:10px; letter-spacing: 0.15em;
-  text-transform: uppercase; padding: 5px 12px;
-  border: 1px solid var(--border2); background: transparent;
-  color: var(--text-dim); cursor: crosshair; transition: all 0.2s;
-  white-space: nowrap;
+.banner strong{color:var(--white)}
+.modal-overlay{
+  position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:20px
 }
-.ct-btn:hover  { color: var(--text); border-color: var(--text-mid); }
-.ct-btn.active { color: var(--cyan); border-color: var(--cyan-dim); background: rgba(0,212,255,0.05); }
-.ct-btn.save   { color: var(--green); border-color: rgba(0,255,136,0.3); }
-.ct-btn.save:hover { background: rgba(0,255,136,0.08); }
-.ct-btn.danger { color: var(--red2); border-color: var(--red-dim); }
-.ct-btn.danger:hover { background: var(--red-glow); }
-
-/* viewer */
-.note-viewer {
-  flex:1; overflow-y: auto;
-  padding: 40px 48px;
+.modal-overlay.hidden{display:none}
+.modal{
+  width:min(520px,100%);border:1px solid var(--border-2);border-radius:26px;padding:22px;background:linear-gradient(180deg, #0b1620, #071119);
+  box-shadow:0 36px 90px rgba(0,0,0,.45)
 }
-.note-viewer.hidden { display: none; }
-
-/* markdown styles */
-.md-body { max-width: 800px; line-height: 1.8; overflow-wrap: anywhere; word-break: break-word; }
-.md-body h1 { font-family: var(--display); font-size: 22px; font-weight: 700; color: var(--text-bright); letter-spacing: 0.1em; margin: 0 0 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border2); }
-.md-body h2 { font-family: var(--display); font-size: 15px; font-weight: 700; color: var(--text-bright); letter-spacing: 0.1em; margin: 32px 0 16px; }
-.md-body h3 { font-family: var(--body); font-size: 16px; font-weight: 700; color: var(--cyan); margin: 24px 0 12px; }
-.md-body p  { color: var(--text); margin-bottom: 16px; font-size: 15px; }
-.md-body a  { color: var(--cyan); text-decoration: none; border-bottom: 1px solid var(--cyan-dim); }
-.md-body a:hover { border-color: var(--cyan); }
-.md-body strong { color: var(--text-bright); font-weight: 700; }
-.md-body em { color: var(--gold); font-style: italic; }
-.md-body code { font-family: var(--mono); font-size: 12px; background: var(--surface); color: var(--red2); padding: 2px 6px; border: 1px solid var(--border2); }
-.md-body pre { background: var(--bg3); border: 1px solid var(--border2); margin: 16px 0; overflow-x: auto; }
-.md-body pre code { background: none; border: none; color: inherit; padding: 0; font-size: 13px; }
-.md-body blockquote { border-left: 2px solid var(--red2); padding: 8px 16px; margin: 16px 0; background: rgba(232,0,30,0.04); color: var(--text-mid); }
-.md-body ul, .md-body ol { padding-left: 24px; margin-bottom: 16px; color: var(--text); }
-.md-body li { margin-bottom: 6px; }
-.md-body hr { border: none; border-top: 1px solid var(--border2); margin: 32px 0; }
-.md-body table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
-.md-body th { background: var(--surface); color: var(--text-bright); font-family: var(--mono); font-size:10px; letter-spacing: 0.15em; text-transform: uppercase; padding: 10px 14px; border: 1px solid var(--border2); text-align: left; }
-.md-body td { padding: 9px 14px; border: 1px solid var(--border); color: var(--text); }
-.md-body tr:hover td { background: var(--surface); }
-
-/* editor */
-.note-editor {
-  flex:1; display: flex; flex-direction: column;
-  overflow: hidden;
+.modal h2{font-size:20px;color:var(--white);margin-bottom:8px}
+.modal p{font-size:13px;color:var(--text-dim);line-height:1.7;margin-bottom:16px}
+.modal .meta-block{margin-bottom:12px}
+.hidden{display:none!important}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:999px}
+@media (max-width:1380px){
+  .layout{grid-template-columns:var(--rail-w) var(--sidebar-w) minmax(300px,340px) 1fr}
+  .workspace-grid{grid-template-columns:1fr}
+  .tool-scroll{border-left:none;border-top:1px solid var(--border)}
 }
-.note-editor.hidden { display: none; }
-
-.editor-title-input {
-  width: 100%; padding: 16px 24px;
-  background: transparent; border: none;
-  border-bottom: 1px solid var(--border);
-  font-family: var(--display); font-size: 16px;
-  font-weight: 700; letter-spacing: 0.1em;
-  color: var(--text-bright); outline: none;
-  cursor: text;
+@media (max-width:1100px){
+  body{overflow:auto}
+  .layout{grid-template-columns:1fr;height:auto}
+  .activity-rail{display:none}
+  .folder-sidebar,.note-list-panel,.workspace{border-right:none;border-bottom:1px solid var(--border)}
+  .editor-shell{grid-template-columns:1fr}
+  .title-field{font-size:18px}
+  .editor-textarea{min-height:340px}
 }
-.editor-title-input::placeholder { color: var(--text-dim); }
-
-.editor-tags-input {
-  width: 100%; padding: 8px 24px;
-  background: transparent; border: none;
-  border-bottom: 1px solid var(--border);
-  font-family: var(--mono); font-size:11px;
-  color: var(--text-mid); outline: none;
-  cursor: text; letter-spacing: 0.1em;
-}
-.editor-tags-input::placeholder { color: var(--text-dim); }
-
-.editor-textarea {
-  flex:1; padding: 24px;
-  background: transparent; border: none;
-  font-family: var(--mono); font-size: 13px;
-  color: var(--text); outline: none; resize: none;
-  line-height: 1.8; cursor: text;
-  tab-size: 2;
-}
-.editor-textarea::placeholder { color: var(--text-dim); }
-
-/* empty state */
-.empty-state {
-  flex:1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 16px;
-  color: var(--text-dim);
-}
-.empty-state.hidden { display: none; }
-.es-icon { font-size: 48px; opacity: 0.3; }
-.es-text { font-family: var(--mono); font-size:11px; letter-spacing: 0.2em; text-transform: uppercase; }
-
-/* modal */
-.modal-overlay {
-  position: fixed; inset: 0; z-index: 200;
-  background: rgba(0,0,0,0.7);
-  display: flex; align-items: center; justify-content: center;
-  backdrop-filter: blur(4px);
-}
-.modal-overlay.hidden { display: none; }
-.modal {
-  background: var(--bg2); border: 1px solid var(--border2);
-  padding: 28px; width: 380px;
-  box-shadow: 0 40px 80px rgba(0,0,0,0.6);
-}
-.modal-title {
-  font-family: var(--display); font-size: 11px; font-weight: 700;
-  letter-spacing: 0.2em; color: var(--text-bright); margin-bottom: 20px;
-}
-.modal-input {
-  width: 100%; padding: 10px 14px;
-  background: var(--bg); border: 1px solid var(--border2);
-  color: var(--text-bright); font-family: var(--mono); font-size: 12px;
-  outline: none; margin-bottom: 16px; cursor: text;
-  transition: border-color 0.2s;
-}
-.modal-input:focus { border-color: var(--cyan-dim); }
-.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
-.modal-btn {
-  font-family: var(--mono); font-size:10px; letter-spacing: 0.2em;
-  text-transform: uppercase; padding: 8px 16px;
-  border: 1px solid var(--border2); background: transparent;
-  color: var(--text-dim); cursor: crosshair; transition: all 0.2s;
-}
-.modal-btn:hover { color: var(--text); border-color: var(--text-mid); }
-.modal-btn.confirm { color: var(--green); border-color: rgba(0,255,136,0.3); }
-.modal-btn.confirm:hover { background: rgba(0,255,136,0.08); }
-
-/* scrollbars */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border2); }
-
-/* Smooth interactions */
-button,
-.btn,
-.act-btn,
-.ct-btn,
-.modal-btn,
-.panel-action,
-.form-submit,
-a[class*="btn"]{
-  transition: transform 160ms cubic-bezier(0.22,1,0.36,1), box-shadow 220ms ease, border-color 220ms ease, background-color 220ms ease, color 220ms ease, filter 220ms ease;
-  will-change: transform;
-}
-
-button:hover:not(:disabled),
-.btn:hover,
-.act-btn:hover,
-.ct-btn:hover,
-.modal-btn:hover,
-.panel-action:hover,
-.form-submit:hover,
-a[class*="btn"]:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.22);
-}
-
-button:active:not(:disabled),
-.btn:active,
-.act-btn:active,
-.ct-btn:active,
-.modal-btn:active,
-.panel-action:active,
-.form-submit:active,
-a[class*="btn"]:active{
-  transform: translateY(0) scale(0.99);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.18);
-}
-
-button:focus-visible,
-.btn:focus-visible,
-.act-btn:focus-visible,
-.ct-btn:focus-visible,
-.modal-btn:focus-visible,
-.panel-action:focus-visible,
-.form-submit:focus-visible,
-a[class*="btn"]:focus-visible{
-  outline: 1px solid rgba(0,212,255,0.7);
-  outline-offset: 2px;
-}
-
- (prefers-reduced-motion: reduce){
-  button,
-  .btn,
-  .act-btn,
-  .ct-btn,
-  .modal-btn,
-  .panel-action,
-  .form-submit,
-  a[class*="btn"]{
-    transition: none !important;
-  }
-  button:hover:not(:disabled),
-  .btn:hover,
-  .act-btn:hover,
-  .ct-btn:hover,
-  .modal-btn:hover,
-  .panel-action:hover,
-  .form-submit:hover,
-  a[class*="btn"]:hover,
-  button:active:not(:disabled),
-  .btn:active,
-  .act-btn:active,
-  .ct-btn:active,
-  .modal-btn:active,
-  .panel-action:active,
-  .form-submit:active,
-  a[class*="btn"]:active{
-    transform: none !important;
-    box-shadow: none !important;
-  }
-}
-
 </style>
 </head>
 <body>
-
-<!-- NAV -->
 <nav class="topnav">
   <div class="nav-left">
     <a href="index.html" class="nav-logo">DEAD<span>CATS</span></a>
     <div class="nav-sep"></div>
-    <span class="nav-page">// <span>research library</span></span>
+    <div class="nav-page">// <span>shared wiki</span></div>
   </div>
   <div class="nav-right">
-    <a href="dashboard.html" class="nav-back">← Dashboard</a>
-    <div id="adminControls" style="display:none;">
-      <button class="nav-btn" onclick="showNewFolderModal()">+ Folder</button>
-    </div>
+    <a class="nav-link" href="research-feed.html">Public Research</a>
+    <a class="nav-link" href="dashboard.html">Dashboard</a>
+    <div class="nav-status" id="sessionBadge">syncing session</div>
   </div>
 </nav>
 
-<!-- FOLDER MODAL -->
 <div class="modal-overlay hidden" id="folderModal">
   <div class="modal">
-    <div class="modal-title">New Folder</div>
-    <input class="modal-input" type="text" id="folderNameInput" placeholder="folder name" autocomplete="off">
-    <div class="modal-actions">
-      <button class="modal-btn" onclick="closeFolderModal()">Cancel</button>
-      <button class="modal-btn confirm" onclick="createFolder()">Create</button>
+    <h2>Create Folder</h2>
+    <p>Admins manage the shared folder taxonomy. Notes can still be drafted anywhere and moved later.</p>
+    <div class="meta-block">
+      <label class="meta-label" for="folderNameInput">Folder Name</label>
+      <input class="text-field" id="folderNameInput" type="text" placeholder="web-auth-findings">
+    </div>
+    <div class="workspace-actions">
+      <button class="btn" onclick="closeFolderModal()">Cancel</button>
+      <button class="btn green" onclick="createFolder()">Create Folder</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="publishModal">
+  <div class="modal">
+    <h2>Export To Publish</h2>
+    <p>Only admins can move a note into the public research feed. The note stays editable internally and the public paper keeps the author attribution from the original note.</p>
+    <div class="meta-block">
+      <label class="meta-label" for="publishTitle">Public Title</label>
+      <input class="text-field" id="publishTitle" type="text" placeholder="Same as note title">
+    </div>
+    <div class="meta-block">
+      <label class="meta-label" for="publishSlug">Public Slug</label>
+      <input class="text-field" id="publishSlug" type="text" placeholder="ssrf-on-example-gateway">
+    </div>
+    <div class="workspace-actions">
+      <button class="btn" onclick="closePublishModal()">Cancel</button>
+      <button class="btn red hidden" id="unpublishBtn" onclick="unpublishCurrentNote()">Unpublish</button>
+      <button class="btn green" onclick="publishCurrentNote()">Publish Publicly</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="reviewModal">
+  <div class="modal">
+    <h2 id="reviewModalTitle">Review Action</h2>
+    <p id="reviewModalText">Add reviewer context for this workflow step.</p>
+    <div class="meta-block">
+      <label class="meta-label" for="reviewNotesInput">Review Notes</label>
+      <textarea class="text-field" id="reviewNotesInput" rows="6" placeholder="Approval notes, requested changes, or review context"></textarea>
+    </div>
+    <div class="workspace-actions">
+      <button class="btn" onclick="closeReviewModal()">Cancel</button>
+      <button class="btn green" id="reviewModalConfirmBtn" onclick="confirmReviewAction()">Apply</button>
     </div>
   </div>
 </div>
 
 <div class="layout">
-
-  <!-- FOLDER SIDEBAR -->
-  <aside class="folder-sidebar">
-    <div class="fs-head">
-      <span class="fs-title">Folders</span>
-    </div>
-    <div class="folder-tree" id="folderTree">
-      <div class="folder-item active" data-id="null" onclick="selectFolder(null, this)">
-        <span class="folder-ico">📂</span>
-        All Notes
-        <span class="folder-count" id="count-all">0</span>
-      </div>
-    </div>
+  <aside class="activity-rail">
+    <div class="rail-badge">🕸️</div>
+    <div class="rail-label">Web App Research Wiki</div>
+    <button class="rail-action active" type="button" onclick="newNote()">New Draft</button>
+    <button class="rail-action" type="button" onclick="setEditorTemplate('recon')">Recon</button>
+    <button class="rail-action" type="button" onclick="setEditorTemplate('finding')">Finding</button>
+    <button class="rail-action" type="button" onclick="setEditorTemplate('paper')">Paper</button>
+    <div class="rail-spacer"></div>
+    <div class="rail-count" id="railCounts">0 notes</div>
   </aside>
 
-  <!-- NOTE LIST -->
-  <div class="note-list-panel">
-    <div class="nl-head">
-      <span class="nl-title" id="currentFolderName">All Notes</span>
-      <button class="nl-new" onclick="newNote()">+ New</button>
+  <aside class="folder-sidebar">
+    <div class="sidebar-head">
+      <div>
+        <div class="section-title">Shared Wiki</div>
+        <div class="section-sub">Obsidian-style drafting for recon notes, findings, methodology, and publication-ready research papers.</div>
+      </div>
+      <div class="search-shell">
+        <span>⌕</span>
+        <input id="globalSearch" type="text" placeholder="Search titles, tags, targets, content..." oninput="renderNoteList()">
+      </div>
+      <div class="filter-grid">
+        <select class="select-field" id="phaseFilter" onchange="renderNoteList()">
+          <option value="">All phases</option>
+          <option value="triage">Triage</option>
+          <option value="recon">Recon</option>
+          <option value="analysis">Analysis</option>
+          <option value="validation">Validation</option>
+          <option value="drafting">Drafting</option>
+          <option value="published">Published</option>
+        </select>
+        <select class="select-field" id="severityFilter" onchange="renderNoteList()">
+          <option value="">All severity</option>
+          <option value="info">Info</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="critical">Critical</option>
+        </select>
+      </div>
+      <div class="workspace-actions" id="adminControls" style="display:none">
+        <button class="btn small" type="button" onclick="showFolderModal()">+ Folder</button>
+      </div>
     </div>
-    <div class="note-items" id="noteItems">
-      <div class="note-empty">No notes yet — create one</div>
+    <div class="folder-tree" id="folderTree"></div>
+  </aside>
+
+  <section class="note-list-panel">
+    <div class="list-head">
+      <div class="list-top">
+        <div>
+          <div class="list-title" id="currentFolderName">All Notes</div>
+        </div>
+        <button class="btn gold small" type="button" onclick="newNote()">+ New</button>
+      </div>
+      <div class="banner">
+        <strong>Workflow:</strong> authors draft and submit notes for review. Admins approve or request changes. Only approved notes can be exported into the public research feed.
+      </div>
     </div>
-  </div>
+    <div class="note-items" id="noteItems"></div>
+  </section>
 
-  <!-- CONTENT PANE -->
-  <div class="content-pane">
-
-    <!-- toolbar -->
-    <div class="content-toolbar" id="toolbar" style="display:none;">
-      <span class="ct-title" id="toolbarTitle">Untitled</span>
-      <span class="ct-meta" id="toolbarMeta"></span>
-      <button class="ct-btn" id="btnPreview" onclick="setMode('view')">Preview</button>
-      <button class="ct-btn active" id="btnEdit" onclick="setMode('edit')">Edit</button>
-      <button class="ct-btn save" onclick="saveNote()">Save</button>
-      <button class="ct-btn danger" id="btnDelete" onclick="deleteNote()" style="display:none;">Delete</button>
-    </div>
-
-    <!-- empty state -->
-    <div class="empty-state" id="emptyState">
-      <div class="es-icon">📖</div>
-      <div class="es-text">Select or create a note</div>
-    </div>
-
-    <!-- viewer -->
-    <div class="note-viewer hidden" id="noteViewer">
-      <div class="md-body" id="mdBody"></div>
-    </div>
-
-    <!-- editor -->
-    <div class="note-editor hidden" id="noteEditor">
-      <input class="editor-title-input" type="text" id="editorTitle" placeholder="Note title...">
-      <input class="editor-tags-input" type="text" id="editorTags" placeholder="tags: malware, c2, windows (comma separated)">
-      <textarea class="editor-textarea" id="editorContent" placeholder="Write in Markdown...
-
-# Heading
-## Subheading
-**bold**, *italic*, `code`
-
-\`\`\`python
-# code block with syntax highlighting
-print('hello')
-\`\`\`
-
-| Col 1 | Col 2 |
-|-------|-------|
-| IOC   | value |
-"></textarea>
+  <main class="workspace">
+    <div class="workspace-head">
+      <div class="workspace-title">
+        <h1 id="workspaceHeading">Select or create a note</h1>
+        <p id="workspaceSubheading">Use markdown, wikilinks like <code>[[Broken Access Control Study]]</code>, tags, and security metadata to keep research publication-ready.</p>
+      </div>
+      <div class="workspace-actions hidden" id="workspaceActions">
+        <button class="btn active" id="editModeBtn" onclick="setMode('edit')">Edit</button>
+        <button class="btn" id="previewModeBtn" onclick="setMode('preview')">Preview</button>
+        <button class="btn green" onclick="saveNote()">Save</button>
+        <button class="btn" id="submitReviewBtn" onclick="submitForReview()">Submit For Review</button>
+        <button class="btn hidden" id="revertDraftBtn" onclick="revertToDraft()">Move To Draft</button>
+        <button class="btn hidden" id="approveReviewBtn" onclick="showReviewModal('approve')">Approve</button>
+        <button class="btn hidden" id="changesReviewBtn" onclick="showReviewModal('changes')">Request Changes</button>
+        <button class="btn gold hidden" id="publishActionBtn" onclick="showPublishModal()">Export To Publish</button>
+        <button class="btn red hidden" id="deleteActionBtn" onclick="deleteNote()">Delete</button>
+      </div>
     </div>
 
-  </div>
+    <div class="workspace-grid">
+      <div class="workspace-scroll">
+        <div class="empty-state" id="emptyState">
+          <div>
+            <h2>Build the team knowledge base.</h2>
+            <p>Draft recon logs, turn them into structured findings, and export finished work into a public paper stream without leaving the portal.</p>
+            <div class="empty-actions">
+              <button class="btn green" onclick="newNote()">Start New Note</button>
+              <button class="btn" onclick="setEditorTemplate('paper')">Load Paper Template</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="editor-shell hidden" id="editorShell">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Editor</h2>
+                <p>Research metadata, markdown, and structured publication prep.</p>
+              </div>
+              <div class="status-row" id="statusPills"></div>
+            </div>
+            <div class="panel-body">
+              <input id="editorTitle" class="title-field" type="text" placeholder="Untitled research note">
+              <div class="meta-grid">
+                <div class="meta-block">
+                  <label class="meta-label" for="editorType">Note Type</label>
+                  <select class="select-field" id="editorType">
+                    <option value="research-note">Research Note</option>
+                    <option value="finding">Finding</option>
+                    <option value="playbook">Playbook</option>
+                    <option value="paper-draft">Paper Draft</option>
+                    <option value="methodology">Methodology</option>
+                  </select>
+                </div>
+                <div class="meta-block">
+                  <label class="meta-label" for="editorPhase">Research Phase</label>
+                  <select class="select-field" id="editorPhase">
+                    <option value="triage">Triage</option>
+                    <option value="recon">Recon</option>
+                    <option value="analysis">Analysis</option>
+                    <option value="validation">Validation</option>
+                    <option value="drafting">Drafting</option>
+                    <option value="published">Published</option>
+                  </select>
+                </div>
+                <div class="meta-block">
+                  <label class="meta-label" for="editorTarget">Target / Program</label>
+                  <input class="text-field" id="editorTarget" type="text" placeholder="app.example.com / Bug bounty / Client portal">
+                </div>
+                <div class="meta-block">
+                  <label class="meta-label" for="editorSeverity">Severity</label>
+                  <select class="select-field" id="editorSeverity">
+                    <option value="info">Info</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </div>
+                <div class="meta-block">
+                  <label class="meta-label" for="editorTlp">Visibility</label>
+                  <select class="select-field" id="editorTlp">
+                    <option value="team">Team</option>
+                    <option value="amber">Amber</option>
+                    <option value="green">Green</option>
+                    <option value="white">White</option>
+                  </select>
+                </div>
+                <div class="meta-block">
+                  <label class="meta-label" for="editorTags">Tags</label>
+                  <input class="text-field" id="editorTags" type="text" placeholder="idor, authz, recon, ffuf">
+                </div>
+              </div>
+              <textarea id="editorContent" class="editor-textarea" placeholder="# Executive Summary&#10;&#10;Describe the research outcome, the attack path, and what still needs validation."></textarea>
+              <div class="editor-foot">
+                <div class="note-stats" id="editorStats">0 words · 0 min read</div>
+                <div class="note-stats" id="saveStatus">Not saved yet</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" id="previewPanel">
+            <div class="panel-head">
+              <div>
+                <h2>Rendered Preview</h2>
+                <p>Markdown, code blocks, and wikilinks render here.</p>
+              </div>
+              <div class="status-row">
+                <span class="pill" id="authorPill">author</span>
+                <span class="pill" id="publishPill">internal</span>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="md-body" id="mdBody"></div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <aside class="tool-scroll">
+        <div class="tool-section">
+          <div class="section-label">Research Aids</div>
+          <div class="tool-card">
+            <h3>Quick Templates</h3>
+            <p>Seed a note with structure for web app recon, exploit validation, or publication-ready writeups.</p>
+            <div class="workspace-actions">
+              <button class="btn small" onclick="setEditorTemplate('recon')">Recon</button>
+              <button class="btn small" onclick="setEditorTemplate('finding')">Finding</button>
+              <button class="btn small" onclick="setEditorTemplate('paper')">Paper</button>
+            </div>
+          </div>
+          <div class="tool-card">
+            <h3>Attack Surface Checklist</h3>
+            <p>Capture web application test coverage without opening a second tool.</p>
+            <div class="tool-list">
+              <span class="tag" onclick="insertSnippet('- Auth flow mapping: login, registration, password reset, MFA\\n')">Auth</span>
+              <span class="tag" onclick="insertSnippet('- Access control review: object refs, tenant isolation, admin actions\\n')">Access</span>
+              <span class="tag" onclick="insertSnippet('- Input vectors: query, path, headers, JSON, multipart, websockets\\n')">Inputs</span>
+              <span class="tag" onclick="insertSnippet('- Client-side review: source maps, secrets, hidden routes, feature flags\\n')">Client</span>
+              <span class="tag" onclick="insertSnippet('- SSRF / desync / cache behavior / proxy trust assumptions\\n')">Infra</span>
+              <span class="tag" onclick="insertSnippet('- Impact chain, reproducibility, mitigations, and safe disclosure notes\\n')">Impact</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tool-section">
+          <div class="section-label">Templates</div>
+          <div class="template-card">
+            <h3>Recon Note</h3>
+            <p>Structured notes for surface mapping, endpoints, parameters, and auth boundaries.</p>
+            <button class="btn small gold" onclick="setEditorTemplate('recon')">Load Template</button>
+          </div>
+          <div class="template-card">
+            <h3>Validated Finding</h3>
+            <p>Turn raw observations into a reproducible security finding with impact and remediation.</p>
+            <button class="btn small gold" onclick="setEditorTemplate('finding')">Load Template</button>
+          </div>
+          <div class="template-card">
+            <h3>Public Paper Draft</h3>
+            <p>Use for long-form writeups that will be exported into the public research feed.</p>
+            <button class="btn small gold" onclick="setEditorTemplate('paper')">Load Template</button>
+          </div>
+        </div>
+
+        <div class="tool-section">
+          <div class="section-label">Backlinks</div>
+          <div id="backlinksPanel">
+            <div class="tool-card">
+              <h3>No active note</h3>
+              <p>Select a note to see incoming wikilinks and related research threads.</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
 </div>
 
 <script>
-const API     = '';
-let user      = JSON.parse(localStorage.getItem('dc_user') || 'null');
+const API = '';
+let user = readCachedUser();
+let folders = [];
+let notes = [];
+let currentFolder = null;
+let currentNote = null;
+let isNew = false;
+let mode = 'edit';
+let bookmarkedNotes = new Set();
+let bookmarkIdMap = {};
+let pendingReviewAction = null;
 
-// Show admin controls
-if (user && user.is_admin) {
-  document.getElementById('adminControls').style.display = 'flex';
-  document.getElementById('btnDelete').style.display = 'block';
-}
+const templates = {
+  recon: {
+    title: 'Recon Session',
+    note_type: 'research-note',
+    research_phase: 'recon',
+    severity: 'info',
+    tlp: 'team',
+    content: `# Scope Snapshot
 
-// ── State ─────────────────────────────────────────────────────────
-let folders        = [];
-let notes          = [];
-let currentFolder  = null;
-let currentNote    = null;
-let mode           = 'edit'; // 'edit' | 'view'
-let isNew          = false;
-let bookmarkedNotes = new Set(); // item_id values the user has bookmarked
-let bookmarkIdMap   = {};        // item_id → bookmark.id (for DELETE)
+## Target
+- Program:
+- Assets:
+- Access level:
 
-function esc(s) {
+## Surface Map
+- Entry points:
+- Interesting routes:
+- API hosts:
+- Third-party integrations:
+
+## Authentication And Session Notes
+- Login flow:
+- MFA / recovery paths:
+- Cookies / tokens:
+
+## Parameter Discovery
+- Path params:
+- Query params:
+- JSON bodies:
+- File upload / multipart:
+
+## Next Experiments
+- [ ] Forced browsing
+- [ ] IDOR / BOLA
+- [ ] Cache poisoning / deception
+- [ ] SSRF / redirect abuse
+- [ ] WebSocket review
+`
+  },
+  finding: {
+    title: 'Validated Finding',
+    note_type: 'finding',
+    research_phase: 'validation',
+    severity: 'medium',
+    tlp: 'team',
+    content: `# Summary
+
+Describe the issue in one paragraph.
+
+## Affected Target
+- Host / app:
+- Role required:
+- Test account:
+
+## Root Cause
+- Trust boundary:
+- Broken assumption:
+
+## Reproduction
+1. 
+2. 
+3. 
+
+## Evidence
+\`\`\`http
+GET /endpoint HTTP/1.1
+Host: target
+\`\`\`
+
+## Impact
+- Confidentiality:
+- Integrity:
+- Availability:
+
+## Remediation
+- Short term:
+- Long term:
+`
+  },
+  paper: {
+    title: 'Research Paper Draft',
+    note_type: 'paper-draft',
+    research_phase: 'drafting',
+    severity: 'info',
+    tlp: 'white',
+    content: `# Title
+
+## Executive Summary
+
+## Background
+
+## Methodology
+
+## Attack Narrative
+
+## Technical Deep Dive
+
+## Detection And Defense
+
+## Responsible Disclosure Timeline
+
+## Credits
+- Researcher:
+- Supporting team:
+`
+  }
+};
+
+function esc(s){
   return String(s ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
 }
 
-// ── Marked config ─────────────────────────────────────────────────
-marked.setOptions({ breaks: true, gfm: true });
+function readCachedUser(){
+  try{
+    const raw = localStorage.getItem('dc_user');
+    return raw ? JSON.parse(raw) : null;
+  }catch(_){
+    localStorage.removeItem('dc_user');
+    return null;
+  }
+}
 
-// ── API helpers ───────────────────────────────────────────────────
-function authFetch(url, opts = {}) {
-  return fetch(API + url, {
-    ...opts,
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(opts.headers || {}),
-    },
-  }).then((res) => {
-    if (res.status === 401) {
+function authFetch(url, opts = {}){
+  const headers = opts.body instanceof FormData ? (opts.headers || {}) : { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  return fetch(API + url, { ...opts, headers, credentials:'include', cache:'no-store' }).then((res) => {
+    if(res.status === 401){
       localStorage.removeItem('dc_user');
       window.location.href = 'login.html';
     }
@@ -620,369 +739,678 @@ function authFetch(url, opts = {}) {
   });
 }
 
-async function ensureSession() {
-  try {
-    const res = await fetch(`${API}/api/auth/me`, { credentials: 'include' });
-    if (!res.ok) {
+async function ensureSession(){
+  try{
+    const res = await fetch(API + '/api/auth/me', { credentials:'include', cache:'no-store' });
+    if(!res.ok){
       localStorage.removeItem('dc_user');
       window.location.replace('login.html');
       return false;
     }
     user = await res.json();
     localStorage.setItem('dc_user', JSON.stringify(user));
+    document.getElementById('sessionBadge').textContent = user.is_admin ? 'admin session active' : 'team session active';
+    if(user.is_admin){
+      document.getElementById('adminControls').style.display = 'flex';
+      document.getElementById('publishActionBtn').classList.remove('hidden');
+      document.getElementById('deleteActionBtn').classList.remove('hidden');
+    }
     return true;
-  } catch (_) {
-    if (user) return true;
+  }catch(_){
+    if(user) return true;
     window.location.replace('login.html');
     return false;
   }
 }
 
-function timeAgo(d) {
-  if (!d) return '';
-  const s = (Date.now() - new Date(d)) / 1000;
-  if (s < 60)    return 'just now';
-  if (s < 3600)  return `${Math.floor(s/60)}m ago`;
-  if (s < 86400) return `${Math.floor(s/3600)}h ago`;
-  return `${Math.floor(s/86400)}d ago`;
+function timeAgo(d){
+  if(!d) return 'just now';
+  const seconds = (Date.now() - new Date(d)) / 1000;
+  if(seconds < 60) return 'just now';
+  if(seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+  if(seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+  return Math.floor(seconds / 86400) + 'd ago';
 }
 
-// ── Load folders ──────────────────────────────────────────────────
-async function loadFolders() {
-  const res  = await authFetch('/api/notes/folders');
-  folders    = await res.json();
+function reviewLabel(status){
+  const labels = {
+    draft: 'draft',
+    in_review: 'in review',
+    changes_requested: 'changes requested',
+    approved: 'approved',
+    published: 'published',
+  };
+  return labels[status] || status || 'draft';
+}
+
+function wordStats(text){
+  const words = String(text || '').trim().split(/\s+/).filter(Boolean);
+  const count = words.length;
+  return { words: count, minutes: Math.max(1, Math.ceil(count / 220)) };
+}
+
+function findFolderName(id){
+  if(id === null) return 'All Notes';
+  return folders.find((f) => f.id === id)?.name || 'Notes';
+}
+
+async function loadFolders(){
+  const res = await authFetch('/api/notes/folders');
+  folders = res.ok ? await res.json() : [];
   renderFolderTree();
 }
 
-function renderFolderTree() {
+async function loadNotes(folderId = null){
+  const url = folderId !== null ? `/api/notes/?folder_id=${folderId}` : '/api/notes/';
+  const res = await authFetch(url);
+  notes = res.ok ? await res.json() : [];
+  document.getElementById('railCounts').textContent = notes.length + ' notes';
+  renderFolderTree();
+  renderNoteList();
+}
+
+function renderFolderTree(){
   const tree = document.getElementById('folderTree');
-  const allCount = notes.length;
-
   let html = `
-    <div class="folder-item ${currentFolder === null ? 'active' : ''}" data-id="null" onclick="selectFolder(null, this)">
-      <span class="folder-ico">📂</span> All Notes
-      <span class="folder-count">${allCount}</span>
-    </div>`;
+    <button class="folder-item ${currentFolder === null ? 'active' : ''}" type="button" onclick="selectFolder(null)">
+      <span>📂</span>
+      <span>All Notes</span>
+      <span class="folder-count">${notes.length}</span>
+    </button>`;
 
-  folders.forEach(f => {
-    const count = notes.filter(n => n.folder_id === f.id).length;
-    const delBtn = user.is_admin
-      ? `<button class="folder-del" onclick="deleteFolder(event,${f.id})">✕</button>`
+  folders.forEach((folder) => {
+    const count = notes.filter((note) => note.folder_id === folder.id).length;
+    const delBtn = user && user.is_admin
+      ? `<button class="folder-del" type="button" onclick="deleteFolder(event, ${folder.id})">✕</button>`
       : '';
     html += `
-      <div class="folder-item ${currentFolder === f.id ? 'active' : ''}" data-id="${f.id}" onclick="selectFolder(${f.id}, this)">
-        <span class="folder-ico">📁</span> ${esc(f.name)}
+      <button class="folder-item ${currentFolder === folder.id ? 'active' : ''}" type="button" onclick="selectFolder(${folder.id})">
+        <span>🗂️</span>
+        <span>${esc(folder.name)}</span>
         <span class="folder-count">${count}</span>
         ${delBtn}
-      </div>`;
+      </button>`;
   });
-
   tree.innerHTML = html;
 }
 
-// ── Load notes ────────────────────────────────────────────────────
-async function loadNotes(folderId = null) {
-  const url = folderId !== null
-    ? `/api/notes/?folder_id=${folderId}`
-    : '/api/notes/';
-  const res = await authFetch(url);
-  notes     = await res.json();
-  renderNoteList();
-  renderFolderTree();
+function getFilteredNotes(){
+  const query = document.getElementById('globalSearch').value.trim().toLowerCase();
+  const phase = document.getElementById('phaseFilter').value;
+  const severity = document.getElementById('severityFilter').value;
+
+  return notes.filter((note) => {
+    const haystack = [
+      note.title,
+      note.content,
+      note.author_handle,
+      note.target_name,
+      ...(Array.isArray(note.tags) ? note.tags : []),
+    ].join(' ').toLowerCase();
+    if(query && !haystack.includes(query)) return false;
+    if(phase && note.research_phase !== phase) return false;
+    if(severity && note.severity !== severity) return false;
+    return true;
+  });
 }
 
-function renderNoteList() {
+function renderNoteList(){
+  const items = getFilteredNotes();
   const el = document.getElementById('noteItems');
-  const folderName = currentFolder === null
-    ? 'All Notes'
-    : (folders.find(f => f.id === currentFolder)?.name || 'Notes');
-
-  document.getElementById('currentFolderName').textContent = folderName;
-
-  if (!notes.length) {
-    el.innerHTML = '<div class="note-empty">No notes here yet</div>';
+  document.getElementById('currentFolderName').textContent = findFolderName(currentFolder);
+  if(!items.length){
+    el.innerHTML = '<div class="tool-card"><h3>No notes match this view</h3><p>Try another filter, create a new draft, or switch folders.</p></div>';
     return;
   }
-
-  el.innerHTML = notes.map(n => {
-    const tags = n.tags.length ? n.tags.filter(Boolean).map(t =>
-      `<span class="ni-tag">${esc(t.trim())}</span>`).join('') : '';
-    const starred = bookmarkedNotes.has(n.id);
+  el.innerHTML = items.map((note) => {
+    const tags = (Array.isArray(note.tags) ? note.tags : []).filter(Boolean).slice(0, 3).map((tag) => `<span class="tag">${esc(String(tag).trim())}</span>`).join('');
+    const starred = bookmarkedNotes.has(note.id);
+    const status = note.published
+      ? '<span class="pill pub">public</span>'
+      : `<span class="pill draft">${esc(reviewLabel(note.review_status))}</span>`;
     return `
-      <div class="note-item ${currentNote?.id === n.id ? 'active' : ''}"
-           onclick="openNote(${n.id})">
-        <button class="ni-bm-btn ${starred ? 'starred' : ''}" data-noteid="${n.id}" title="${starred ? 'Remove bookmark' : 'Bookmark this note'}"
-                onclick="event.stopPropagation(); toggleBookmark(this, ${n.id})">${starred ? '★' : '☆'}</button>
-        <div class="ni-title">${esc(n.title)}</div>
-        <div class="ni-preview">${esc(n.content || 'No content')}</div>
-        <div class="ni-meta">
-          <span>${esc(n.author_handle)}</span>
-          <span>${timeAgo(n.updated_at || n.created_at)}</span>
-          ${tags}
+      <article class="note-row ${currentNote && currentNote.id === note.id ? 'active' : ''}" onclick="openNote(${note.id})">
+        <button class="note-star ${starred ? 'starred' : ''}" type="button" data-noteid="${note.id}" onclick="event.stopPropagation();toggleBookmark(this, ${note.id})">${starred ? '★' : '☆'}</button>
+        <div class="note-top">
+          <div>
+            <div class="note-title">${esc(note.title)}</div>
+          </div>
+          ${status}
         </div>
-      </div>`;
+        <div class="note-preview">${esc(note.content || 'No preview yet.')}</div>
+        <div class="note-meta">
+          <span>${esc(note.author_handle || 'unknown')}</span>
+          <span>${esc(note.note_type || 'research-note')}</span>
+          <span>${esc(note.research_phase || 'triage')}</span>
+          <span>${esc(note.target_name || 'no target')}</span>
+          <span>${esc(reviewLabel(note.review_status))}</span>
+          <span>${timeAgo(note.updated_at || note.created_at)}</span>
+        </div>
+        ${tags ? `<div class="tool-list" style="margin-top:10px">${tags}</div>` : ''}
+      </article>`;
   }).join('');
 }
 
-// ── Select folder ─────────────────────────────────────────────────
-function selectFolder(id, el) {
-  currentFolder = id;
-  currentNote   = null;
-  isNew         = false;
-  showEmpty();
-  loadNotes(id);
-}
-
-// ── Open note ─────────────────────────────────────────────────────
-async function openNote(id) {
-  const res  = await authFetch(`/api/notes/${id}`);
-  currentNote= await res.json();
-  isNew      = false;
-
-  // Check if current user can edit
-  const canEdit = user.is_admin || currentNote.author_id === user.id;
-
-  document.getElementById('toolbar').style.display    = 'flex';
-  document.getElementById('emptyState').classList.add('hidden');
-  document.getElementById('toolbarTitle').textContent = currentNote.title;
-  document.getElementById('toolbarMeta').textContent  =
-    `by ${currentNote.author_handle} · ${timeAgo(currentNote.updated_at || currentNote.created_at)}`;
-
-  // Show/hide edit button based on permission
-  document.getElementById('btnEdit').style.display = canEdit ? 'block' : 'none';
-  if (user.is_admin) document.getElementById('btnDelete').style.display = 'block';
-
-  // Populate editor
-  document.getElementById('editorTitle').value   = currentNote.title;
-  document.getElementById('editorTags').value    = currentNote.tags.join(', ');
-  document.getElementById('editorContent').value = currentNote.content;
-
-  setMode('view');
-  renderNoteList();
-}
-
-// ── New note ──────────────────────────────────────────────────────
-function newNote() {
+function selectFolder(folderId){
+  currentFolder = folderId;
   currentNote = null;
-  isNew       = true;
+  isNew = false;
+  hideWorkspace();
+  loadNotes(folderId);
+}
 
-  document.getElementById('toolbar').style.display    = 'flex';
+async function openNote(id){
+  const res = await authFetch(`/api/notes/${id}`);
+  if(!res.ok) return;
+  currentNote = await res.json();
+  isNew = false;
+  showWorkspace();
+  populateEditor(currentNote);
+  renderNoteList();
+  renderBacklinks();
+  renderMarkdownPreview();
+}
+
+function populateEditor(note){
+  document.getElementById('workspaceHeading').textContent = note.title;
+  document.getElementById('workspaceSubheading').textContent = `by ${note.author_handle} · ${timeAgo(note.updated_at || note.created_at)} · ${note.note_type}`;
+  document.getElementById('editorTitle').value = note.title || '';
+  document.getElementById('editorType').value = note.note_type || 'research-note';
+  document.getElementById('editorPhase').value = note.research_phase || 'triage';
+  document.getElementById('editorTarget').value = note.target_name || '';
+  document.getElementById('editorSeverity').value = note.severity || 'info';
+  document.getElementById('editorTlp').value = note.tlp || 'team';
+  document.getElementById('editorTags').value = Array.isArray(note.tags) ? note.tags.join(', ') : '';
+  document.getElementById('editorContent').value = note.content || '';
+  const canEdit = user && (user.is_admin || note.author_id === user.id);
+  document.getElementById('editModeBtn').style.display = canEdit ? 'inline-flex' : 'none';
+  document.getElementById('deleteActionBtn').style.display = user && user.is_admin ? 'inline-flex' : 'none';
+  document.getElementById('publishActionBtn').style.display = user && user.is_admin ? 'inline-flex' : 'none';
+  document.getElementById('editorTitle').disabled = !canEdit;
+  document.getElementById('editorType').disabled = !canEdit;
+  document.getElementById('editorPhase').disabled = !canEdit;
+  document.getElementById('editorTarget').disabled = !canEdit;
+  document.getElementById('editorSeverity').disabled = !canEdit;
+  document.getElementById('editorTlp').disabled = !canEdit;
+  document.getElementById('editorTags').disabled = !canEdit;
+  document.getElementById('editorContent').disabled = !canEdit;
+  document.querySelector('#workspaceActions .btn.green').style.display = canEdit ? 'inline-flex' : 'none';
+  syncWorkflowButtons(note, canEdit);
+  updateStatusPills(note);
+  updateStats();
+  setMode(canEdit ? 'edit' : 'preview');
+}
+
+function updateStatusPills(note){
+  const wrapper = document.getElementById('statusPills');
+  wrapper.innerHTML = `
+    <span class="pill">${esc(note.note_type || 'research-note')}</span>
+    <span class="pill">${esc(note.research_phase || 'triage')}</span>
+    <span class="pill">${esc((note.severity || 'info').toUpperCase())}</span>
+    <span class="pill">${esc((note.tlp || 'team').toUpperCase())}</span>
+    <span class="pill">${esc(reviewLabel(note.review_status))}</span>`;
+  document.getElementById('authorPill').textContent = note.author_handle || 'unknown';
+  document.getElementById('publishPill').textContent = note.published ? 'public paper' : reviewLabel(note.review_status);
+}
+
+function showWorkspace(){
   document.getElementById('emptyState').classList.add('hidden');
-  document.getElementById('toolbarTitle').textContent = 'New Note';
-  document.getElementById('toolbarMeta').textContent  = '';
-  document.getElementById('btnDelete').style.display  = 'none';
-  document.getElementById('btnEdit').style.display    = 'block';
+  document.getElementById('editorShell').classList.remove('hidden');
+  document.getElementById('workspaceActions').classList.remove('hidden');
+}
 
-  document.getElementById('editorTitle').value   = '';
-  document.getElementById('editorTags').value    = '';
+function hideWorkspace(){
+  document.getElementById('workspaceHeading').textContent = 'Select or create a note';
+  document.getElementById('workspaceSubheading').textContent = 'Use markdown, wikilinks like [[Broken Access Control Study]], tags, and security metadata to keep research publication-ready.';
+  document.getElementById('emptyState').classList.remove('hidden');
+  document.getElementById('editorShell').classList.add('hidden');
+  document.getElementById('workspaceActions').classList.add('hidden');
+  document.getElementById('backlinksPanel').innerHTML = '<div class="tool-card"><h3>No active note</h3><p>Select a note to see incoming wikilinks and related research threads.</p></div>';
+}
+
+function newNote(){
+  currentNote = null;
+  isNew = true;
+  showWorkspace();
+  document.getElementById('workspaceHeading').textContent = 'New note';
+  document.getElementById('workspaceSubheading').textContent = 'Create an internal draft first. Admins can export finished work later.';
+  document.getElementById('editorTitle').value = '';
+  document.getElementById('editorType').value = 'research-note';
+  document.getElementById('editorPhase').value = 'triage';
+  document.getElementById('editorTarget').value = '';
+  document.getElementById('editorSeverity').value = 'info';
+  document.getElementById('editorTlp').value = 'team';
+  document.getElementById('editorTags').value = '';
   document.getElementById('editorContent').value = '';
-
+  ['editorTitle','editorType','editorPhase','editorTarget','editorSeverity','editorTlp','editorTags','editorContent'].forEach((id) => {
+    document.getElementById(id).disabled = false;
+  });
+  document.getElementById('deleteActionBtn').style.display = 'none';
+  document.getElementById('publishActionBtn').style.display = user && user.is_admin ? 'inline-flex' : 'none';
+  document.querySelector('#workspaceActions .btn.green').style.display = 'inline-flex';
+  syncWorkflowButtons({ review_status:'draft', published:false, author_id:user ? user.id : null }, true);
+  updateStatusPills({
+    author_handle: user ? user.handle : 'unknown',
+    note_type: 'research-note',
+    research_phase: 'triage',
+    severity: 'info',
+    tlp: 'team',
+    review_status: 'draft',
+    published: false,
+  });
+  renderMarkdownPreview();
+  renderBacklinks();
+  updateStats();
   setMode('edit');
+  document.getElementById('editorTitle').focus();
 }
 
-// ── Mode toggle ───────────────────────────────────────────────────
-function setMode(m) {
-  mode = m;
-  const viewer = document.getElementById('noteViewer');
-  const editor = document.getElementById('noteEditor');
-  const btnP   = document.getElementById('btnPreview');
-  const btnE   = document.getElementById('btnEdit');
+function currentDraft(){
+  return {
+    title: document.getElementById('editorTitle').value.trim(),
+    content: document.getElementById('editorContent').value,
+    tags: document.getElementById('editorTags').value.trim(),
+    folder_id: currentFolder,
+    note_type: document.getElementById('editorType').value,
+    research_phase: document.getElementById('editorPhase').value,
+    target_name: document.getElementById('editorTarget').value.trim(),
+    severity: document.getElementById('editorSeverity').value,
+    tlp: document.getElementById('editorTlp').value,
+  };
+}
 
-  if (m === 'view') {
-    const content = currentNote
-      ? currentNote.content
-      : document.getElementById('editorContent').value;
-    const safe = String(content || '*No content yet.*').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    document.getElementById('mdBody').innerHTML = marked.parse(safe);
-    document.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
-    viewer.classList.remove('hidden');
-    editor.classList.add('hidden');
-    btnP.classList.add('active');
-    btnE.classList.remove('active');
-  } else {
-    viewer.classList.add('hidden');
-    editor.classList.remove('hidden');
-    btnP.classList.remove('active');
-    btnE.classList.add('active');
-    document.getElementById('editorContent').focus();
+function syncWorkflowButtons(note, canEdit){
+  const isAdmin = !!(user && user.is_admin);
+  const isAuthor = !!(user && note && note.author_id === user.id);
+  const status = note && note.review_status ? note.review_status : 'draft';
+  document.getElementById('submitReviewBtn').style.display = canEdit && (isAuthor || isAdmin) && !note.published && (status === 'draft' || status === 'changes_requested') ? 'inline-flex' : 'none';
+  document.getElementById('revertDraftBtn').style.display = canEdit && (isAuthor || isAdmin) && !note.published && status === 'in_review' ? 'inline-flex' : 'none';
+  document.getElementById('approveReviewBtn').style.display = isAdmin && !note.published && status === 'in_review' ? 'inline-flex' : 'none';
+  document.getElementById('changesReviewBtn').style.display = isAdmin && !note.published && status === 'in_review' ? 'inline-flex' : 'none';
+  document.getElementById('publishActionBtn').style.display = isAdmin && status === 'approved' ? 'inline-flex' : 'none';
+}
+
+function setMode(nextMode){
+  mode = nextMode;
+  document.getElementById('editModeBtn').classList.toggle('active', nextMode === 'edit');
+  document.getElementById('previewModeBtn').classList.toggle('active', nextMode === 'preview');
+  document.getElementById('previewPanel').style.opacity = nextMode === 'preview' ? '1' : '.92';
+  document.getElementById('editorContent').focus();
+}
+
+function slugify(value){
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0,220);
+}
+
+function buildWikiTitleMap(){
+  const map = new Map();
+  notes.forEach((note) => {
+    map.set(String(note.title || '').trim().toLowerCase(), note);
+  });
+  if(currentNote){
+    map.set(String(currentNote.title || '').trim().toLowerCase(), currentNote);
   }
+  return map;
 }
 
-// ── Save note ─────────────────────────────────────────────────────
-async function saveNote() {
-  const title   = document.getElementById('editorTitle').value.trim();
-  const content = document.getElementById('editorContent').value;
-  const tags    = document.getElementById('editorTags').value;
+function renderMarkdownWithWikiLinks(raw){
+  const titleMap = buildWikiTitleMap();
+  const source = String(raw || '').replace(/\[\[([^\]]+)\]\]/g, (_, label) => {
+    const key = String(label || '').trim().toLowerCase();
+    const match = titleMap.get(key);
+    if(match){
+      return `[${label}](#note-${match.id})`;
+    }
+    return `\`${label}\``;
+  });
+  const safe = source.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return marked.parse(safe);
+}
 
-  if (!title) {
+function renderMarkdownPreview(){
+  const draft = currentDraft();
+  const title = draft.title || 'Untitled research note';
+  const content = draft.content || '*No content yet.*';
+  document.getElementById('workspaceHeading').textContent = currentNote ? (draft.title || currentNote.title) : title;
+  document.getElementById('mdBody').innerHTML = renderMarkdownWithWikiLinks(`# ${title}\n\n${content}`);
+  document.querySelectorAll('#mdBody pre code').forEach((el) => hljs.highlightElement(el));
+  Array.from(document.querySelectorAll('#mdBody a[href^="#note-"]')).forEach((link) => {
+    link.classList.add('wikilink');
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      const id = Number(link.getAttribute('href').replace('#note-', ''));
+      if(id) openNote(id);
+    });
+  });
+  document.getElementById('authorPill').textContent = currentNote ? currentNote.author_handle : (user ? user.handle : 'unknown');
+  document.getElementById('publishPill').textContent = currentNote && currentNote.published ? 'public paper' : reviewLabel(currentNote ? currentNote.review_status : 'draft');
+}
+
+function updateStats(){
+  const stats = wordStats(document.getElementById('editorContent').value);
+  document.getElementById('editorStats').textContent = `${stats.words} words · ${stats.minutes} min read`;
+}
+
+async function saveNote(){
+  const payload = currentDraft();
+  if(!payload.title){
     alert('Please add a title.');
     return;
   }
-
-  const body = JSON.stringify({
-    title,
-    content,
-    tags,
-    folder_id: currentFolder,
-  });
-
-  let res;
-  if (isNew) {
-    res = await authFetch('/api/notes/', { method: 'POST', body });
-  } else {
-    res = await authFetch(`/api/notes/${currentNote.id}`, { method: 'PATCH', body });
-  }
-
-  if (res.ok) {
-    currentNote = await res.json();
-    isNew       = false;
-    document.getElementById('toolbarTitle').textContent = currentNote.title;
-    document.getElementById('toolbarMeta').textContent  =
-      `by ${currentNote.author_handle} · just now`;
-    if (user.is_admin) document.getElementById('btnDelete').style.display = 'block';
-    await loadNotes(currentFolder);
-    setMode('view');
-  } else {
-    const err = await res.json();
+  const res = isNew
+    ? await authFetch('/api/notes/', { method:'POST', body:JSON.stringify(payload) })
+    : await authFetch(`/api/notes/${currentNote.id}`, { method:'PATCH', body:JSON.stringify(payload) });
+  if(!res.ok){
+    const err = await res.json().catch(() => ({}));
     alert(err.detail || 'Failed to save note.');
+    return;
   }
+  currentNote = await res.json();
+  isNew = false;
+  document.getElementById('saveStatus').textContent = 'Saved just now';
+  await loadNotes(currentFolder);
+  populateEditor(currentNote);
+  renderBacklinks();
+  renderMarkdownPreview();
 }
 
-// ── Delete note ───────────────────────────────────────────────────
-async function deleteNote() {
-  if (!currentNote) return;
-  if (!confirm(`Delete "${currentNote.title}"? This cannot be undone.`)) return;
-  const res = await authFetch(`/api/notes/${currentNote.id}`, { method: 'DELETE' });
-  if (res.ok) {
+async function submitForReview(){
+  if(!currentNote){
+    await saveNote();
+  }
+  if(!currentNote) return;
+  const res = await authFetch(`/api/notes/${currentNote.id}/submit-review`, { method:'POST' });
+  if(!res.ok){
+    const err = await res.json().catch(() => ({}));
+    alert(err.detail || 'Failed to submit note for review.');
+    return;
+  }
+  currentNote = await res.json();
+  await loadNotes(currentFolder);
+  populateEditor(currentNote);
+}
+
+async function revertToDraft(){
+  if(!currentNote) return;
+  const res = await authFetch(`/api/notes/${currentNote.id}/review/revert-draft`, { method:'POST' });
+  if(!res.ok){
+    const err = await res.json().catch(() => ({}));
+    alert(err.detail || 'Failed to revert note to draft.');
+    return;
+  }
+  currentNote = await res.json();
+  await loadNotes(currentFolder);
+  populateEditor(currentNote);
+}
+
+async function deleteNote(){
+  if(!currentNote) return;
+  if(!confirm(`Delete "${currentNote.title}"? This cannot be undone.`)) return;
+  const res = await authFetch(`/api/notes/${currentNote.id}`, { method:'DELETE' });
+  if(res.ok){
     currentNote = null;
-    showEmpty();
+    hideWorkspace();
     await loadNotes(currentFolder);
   }
 }
 
-// ── Folder modals ─────────────────────────────────────────────────
-function showNewFolderModal() {
+function showFolderModal(){
   document.getElementById('folderModal').classList.remove('hidden');
   document.getElementById('folderNameInput').value = '';
   document.getElementById('folderNameInput').focus();
 }
-function closeFolderModal() {
+
+function closeFolderModal(){
   document.getElementById('folderModal').classList.add('hidden');
 }
-async function createFolder() {
+
+async function createFolder(){
   const name = document.getElementById('folderNameInput').value.trim();
-  if (!name) return;
-  const res = await authFetch('/api/notes/folders', {
-    method: 'POST',
-    body: JSON.stringify({ name }),
-  });
-  if (res.ok) {
+  if(!name) return;
+  const res = await authFetch('/api/notes/folders', { method:'POST', body:JSON.stringify({ name }) });
+  if(res.ok){
     closeFolderModal();
     await loadFolders();
   }
 }
-async function deleteFolder(e, id) {
-  e.stopPropagation();
-  if (!confirm('Delete this folder? Notes inside will be moved to root.')) return;
-  const res = await authFetch(`/api/notes/folders/${id}`, { method: 'DELETE' });
-  if (res.ok) {
-    if (currentFolder === id) currentFolder = null;
+
+async function deleteFolder(event, folderId){
+  event.stopPropagation();
+  if(!confirm('Delete this folder? Notes inside will be moved to root.')) return;
+  const res = await authFetch(`/api/notes/folders/${folderId}`, { method:'DELETE' });
+  if(res.ok){
+    if(currentFolder === folderId) currentFolder = null;
     await loadFolders();
     await loadNotes(currentFolder);
   }
 }
 
-function showEmpty() {
-  document.getElementById('toolbar').style.display = 'none';
-  document.getElementById('emptyState').classList.remove('hidden');
-  document.getElementById('noteViewer').classList.add('hidden');
-  document.getElementById('noteEditor').classList.add('hidden');
+function showPublishModal(){
+  if(!user || !user.is_admin || !currentNote){
+    return;
+  }
+  document.getElementById('publishTitle').value = currentNote.public_title || currentNote.title || '';
+  document.getElementById('publishSlug').value = currentNote.public_slug || slugify(currentNote.title);
+  document.getElementById('unpublishBtn').classList.toggle('hidden', !currentNote.published);
+  document.getElementById('publishModal').classList.remove('hidden');
 }
 
-// Enter key in folder modal
-document.getElementById('folderNameInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') createFolder();
-  if (e.key === 'Escape') closeFolderModal();
-});
+function closePublishModal(){
+  document.getElementById('publishModal').classList.add('hidden');
+}
 
-// Ctrl+S to save
-document.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-    e.preventDefault();
-    if (!document.getElementById('noteEditor').classList.contains('hidden')) saveNote();
+function showReviewModal(action){
+  pendingReviewAction = action;
+  document.getElementById('reviewModalTitle').textContent = action === 'approve' ? 'Approve Review' : 'Request Changes';
+  document.getElementById('reviewModalText').textContent = action === 'approve'
+    ? 'Record reviewer notes and mark this note as approved for publication.'
+    : 'Explain what must change before this note can be approved.';
+  document.getElementById('reviewNotesInput').value = currentNote ? (currentNote.review_notes || '') : '';
+  document.getElementById('reviewModalConfirmBtn').textContent = action === 'approve' ? 'Approve Note' : 'Request Changes';
+  document.getElementById('reviewModalConfirmBtn').className = action === 'approve' ? 'btn green' : 'btn red';
+  document.getElementById('reviewModal').classList.remove('hidden');
+}
+
+function closeReviewModal(){
+  pendingReviewAction = null;
+  document.getElementById('reviewModal').classList.add('hidden');
+}
+
+async function confirmReviewAction(){
+  if(!currentNote || !pendingReviewAction) return;
+  const endpoint = pendingReviewAction === 'approve'
+    ? `/api/notes/${currentNote.id}/review/approve`
+    : `/api/notes/${currentNote.id}/review/request-changes`;
+  const res = await authFetch(endpoint, {
+    method:'POST',
+    body:JSON.stringify({ review_notes: document.getElementById('reviewNotesInput').value.trim() }),
+  });
+  if(!res.ok){
+    const err = await res.json().catch(() => ({}));
+    alert(err.detail || 'Failed to update review state.');
+    return;
   }
-});
+  currentNote = await res.json();
+  closeReviewModal();
+  await loadNotes(currentFolder);
+  populateEditor(currentNote);
+}
 
-// ── Bookmarks ─────────────────────────────────────────────────────
-async function loadBookmarks() {
-  try {
+async function publishCurrentNote(){
+  if(!currentNote) return;
+  const publicTitle = document.getElementById('publishTitle').value.trim();
+  const slug = document.getElementById('publishSlug').value.trim();
+  const res = await authFetch(`/api/notes/${currentNote.id}/publish`, {
+    method:'POST',
+    body:JSON.stringify({ public_title: publicTitle || undefined, slug: slug || undefined }),
+  });
+  if(!res.ok){
+    const err = await res.json().catch(() => ({}));
+    alert(err.detail || 'Failed to publish note.');
+    return;
+  }
+  currentNote = await res.json();
+  closePublishModal();
+  await loadNotes(currentFolder);
+  populateEditor(currentNote);
+  renderNoteList();
+}
+
+async function unpublishCurrentNote(){
+  if(!currentNote) return;
+  const res = await authFetch(`/api/notes/${currentNote.id}/unpublish`, { method:'POST' });
+  if(!res.ok){
+    const err = await res.json().catch(() => ({}));
+    alert(err.detail || 'Failed to unpublish note.');
+    return;
+  }
+  currentNote = await res.json();
+  closePublishModal();
+  await loadNotes(currentFolder);
+  populateEditor(currentNote);
+}
+
+function setEditorTemplate(kind){
+  const template = templates[kind];
+  if(!template) return;
+  if(!isNew && currentNote){
+    const content = document.getElementById('editorContent').value.trim();
+    if(content && !confirm('Replace the current draft body with this template?')) return;
+  }
+  if(!isNew && !currentNote) newNote();
+  if(!currentNote && !isNew) newNote();
+  document.getElementById('editorTitle').value = template.title;
+  document.getElementById('editorType').value = template.note_type;
+  document.getElementById('editorPhase').value = template.research_phase;
+  document.getElementById('editorSeverity').value = template.severity;
+  document.getElementById('editorTlp').value = template.tlp;
+  document.getElementById('editorContent').value = template.content;
+  document.getElementById('saveStatus').textContent = 'Template loaded';
+  updateStats();
+  renderMarkdownPreview();
+}
+
+function insertSnippet(snippet){
+  const textarea = document.getElementById('editorContent');
+  if(!textarea || textarea.disabled) return;
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const value = textarea.value;
+  textarea.value = value.slice(0, start) + snippet + value.slice(end);
+  textarea.selectionStart = textarea.selectionEnd = start + snippet.length;
+  textarea.focus();
+  updateStats();
+  renderMarkdownPreview();
+}
+
+function renderBacklinks(){
+  const panel = document.getElementById('backlinksPanel');
+  if(!currentNote || !currentNote.title){
+    panel.innerHTML = '<div class="tool-card"><h3>No active note</h3><p>Select a note to see incoming wikilinks and related research threads.</p></div>';
+    return;
+  }
+  const needle = `[[${currentNote.title}]]`.toLowerCase();
+  const backlinks = notes.filter((note) => note.id !== currentNote.id && String(note.content || '').toLowerCase().includes(needle));
+  if(!backlinks.length){
+    panel.innerHTML = '<div class="tool-card"><h3>No backlinks yet</h3><p>Use wikilinks like [[Note Title]] across notes to create an Obsidian-style knowledge graph.</p></div>';
+    return;
+  }
+  panel.innerHTML = backlinks.map((note) => `
+    <div class="backlink-row" onclick="openNote(${note.id})">
+      <h4>${esc(note.title)}</h4>
+      <p>${esc(note.content || '').slice(0, 140)}${(note.content || '').length > 140 ? '...' : ''}</p>
+    </div>`).join('');
+}
+
+async function loadBookmarks(){
+  try{
     const res = await authFetch('/api/bookmarks/');
-    if (!res.ok) return;
-    const bms = await res.json();
+    if(!res.ok) return;
+    const items = await res.json();
     bookmarkedNotes = new Set();
-    bookmarkIdMap   = {};
-    bms.forEach(bm => {
-      if (bm.item_type === 'note') {
-        bookmarkedNotes.add(bm.item_id);
-        bookmarkIdMap[bm.item_id] = bm.id;
+    bookmarkIdMap = {};
+    items.forEach((item) => {
+      if(item.item_type === 'note'){
+        bookmarkedNotes.add(item.item_id);
+        bookmarkIdMap[item.item_id] = item.id;
       }
     });
-  } catch (e) { console.error('Bookmark load error:', e); }
+  }catch(_){}
 }
 
-function _freshNoteBtn(noteId) {
-  return document.querySelector(`.ni-bm-btn[data-noteid="${noteId}"]`);
-}
-
-async function toggleBookmark(btn, noteId) {
+async function toggleBookmark(btn, noteId){
   btn.disabled = true;
-  try {
-    if (bookmarkedNotes.has(noteId)) {
-      let bmId = bookmarkIdMap[noteId];
-      if (!bmId) {
+  try{
+    if(bookmarkedNotes.has(noteId)){
+      let bookmarkId = bookmarkIdMap[noteId];
+      if(!bookmarkId){
         await loadBookmarks();
-        bmId = bookmarkIdMap[noteId];
+        bookmarkId = bookmarkIdMap[noteId];
       }
-      if (bmId) {
-        const res = await authFetch(`/api/bookmarks/${bmId}`, { method: 'DELETE' });
-        if (!res.ok && res.status !== 204) throw new Error('Failed to remove bookmark');
-      }
+      if(bookmarkId) await authFetch(`/api/bookmarks/${bookmarkId}`, { method:'DELETE' });
       bookmarkedNotes.delete(noteId);
       delete bookmarkIdMap[noteId];
-    } else {
+    }else{
       const res = await authFetch('/api/bookmarks/', {
-        method: 'POST',
-        body: JSON.stringify({ item_type: 'note', item_id: noteId }),
+        method:'POST',
+        body:JSON.stringify({ item_type:'note', item_id:noteId }),
       });
-      if (res.ok) {
-        const bm = await res.json();
+      if(res.ok){
+        const bookmark = await res.json();
         bookmarkedNotes.add(noteId);
-        bookmarkIdMap[noteId] = bm.id;
-      } else if (res.status === 409) {
-        // Already bookmarked server-side; sync local state.
-        await loadBookmarks();
-      } else {
-        throw new Error('Failed to add bookmark');
+        bookmarkIdMap[noteId] = bookmark.id;
       }
     }
-  } catch (e) {
-    await loadBookmarks();
-  } finally {
+  }finally{
     renderNoteList();
-    const b = _freshNoteBtn(noteId);
-    if (b) b.disabled = false;
   }
 }
 
-// ── Init ──────────────────────────────────────────────────────────
-(async () => {
+['editorTitle','editorType','editorPhase','editorTarget','editorSeverity','editorTlp','editorTags','editorContent'].forEach((id) => {
+  document.addEventListener('input', (event) => {
+    if(event.target && event.target.id === id){
+      updateStats();
+      renderMarkdownPreview();
+      document.getElementById('saveStatus').textContent = 'Unsaved changes';
+      updateStatusPills({
+        author_handle: currentNote ? currentNote.author_handle : (user ? user.handle : 'unknown'),
+        note_type: document.getElementById('editorType').value,
+        research_phase: document.getElementById('editorPhase').value,
+        severity: document.getElementById('editorSeverity').value,
+        tlp: document.getElementById('editorTlp').value,
+        review_status: currentNote ? currentNote.review_status : 'draft',
+        published: currentNote ? currentNote.published : false,
+      });
+    }
+  });
+});
+
+document.getElementById('folderNameInput').addEventListener('keydown', (event) => {
+  if(event.key === 'Enter') createFolder();
+  if(event.key === 'Escape') closeFolderModal();
+});
+
+document.addEventListener('keydown', (event) => {
+  if((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's'){
+    event.preventDefault();
+    if(!document.getElementById('editorShell').classList.contains('hidden')) saveNote();
+  }
+  if(event.key === 'Escape'){
+    closeFolderModal();
+    closePublishModal();
+    closeReviewModal();
+  }
+});
+
+(async function init(){
+  marked.setOptions({ breaks:true, gfm:true });
   const ok = await ensureSession();
-  if (!ok) return;
+  if(!ok) return;
   await loadBookmarks();
   await loadFolders();
   await loadNotes(null);
 })();
 </script>
-  <script src="assets/js/lofi-player.js"></script>
+<script src="assets/js/lofi-player.js"></script>
 </body>
 </html>

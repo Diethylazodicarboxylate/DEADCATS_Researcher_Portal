@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEADCATS // Paper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<style>
+:root{
+  --bg:#071018;--surface:#10212d;--border:#1b3142;--text:#d7e7f4;--text-dim:#89a1b4;--white:#f2f8fd;--cyan:#55d6ff;--gold:#f4b33c;--mono:'IBM Plex Mono',monospace;--body:'IBM Plex Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  min-height:100vh;font-family:var(--body);color:var(--text);
+  background:radial-gradient(circle at top left, rgba(85,214,255,.12), transparent 28%),linear-gradient(180deg,#071018,#050c12)
+}
+.shell{max-width:980px;margin:0 auto;padding:26px 20px 70px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:26px}
+.brand,.nav-link,.meta{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.16em}
+.brand,.nav-link{text-decoration:none;color:var(--text-dim)}
+.brand span,.article h1 span{color:var(--gold)}
+.article{
+  border:1px solid var(--border);border-radius:30px;background:linear-gradient(180deg,rgba(16,33,45,.96),rgba(7,16,24,.96));
+  padding:30px;box-shadow:0 30px 60px rgba(0,0,0,.24)
+}
+.meta{display:flex;gap:10px;flex-wrap:wrap;color:var(--text-dim);margin-bottom:16px}
+.meta span{padding:5px 8px;border:1px solid var(--border);border-radius:999px}
+.article h1{font-size:42px;line-height:1.08;color:var(--white);margin-bottom:12px;letter-spacing:-.04em}
+.lede{font-size:15px;line-height:1.8;color:var(--text-dim);margin-bottom:20px}
+.content{font-size:16px;line-height:1.85}
+.content h1,.content h2,.content h3,.content h4{color:var(--white);margin:28px 0 14px}
+.content h2{font-size:24px}
+.content h3{font-size:18px;color:var(--cyan)}
+.content p,.content li,.content td,.content blockquote{color:var(--text);line-height:1.85}
+.content code{background:rgba(85,214,255,.08);border:1px solid rgba(85,214,255,.16);padding:2px 6px;border-radius:8px;font-family:var(--mono);font-size:12px;color:var(--gold)}
+.content pre{padding:18px;border-radius:18px;background:#081119;border:1px solid var(--border);overflow:auto;margin:16px 0}
+.content pre code{padding:0;border:none;background:none}
+.content blockquote{border-left:3px solid var(--gold);padding:12px 16px;background:rgba(244,179,60,.08);border-radius:0 16px 16px 0;margin:18px 0}
+.content a{color:var(--cyan)}
+.content table{width:100%;border-collapse:collapse;margin:20px 0}
+.content th,.content td{border:1px solid var(--border);padding:10px 12px;text-align:left}
+.content th{color:var(--white);background:rgba(85,214,255,.05)}
+.empty{padding:60px;text-align:center;color:var(--text-dim);border:1px dashed var(--border);border-radius:28px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="top">
+    <a class="brand" href="index.html">DEAD<span>CATS</span></a>
+    <div style="display:flex;gap:16px">
+      <a class="nav-link" href="research-feed.html">Back To Feed</a>
+      <a class="nav-link" href="library.html">Internal Wiki</a>
+    </div>
+  </div>
+  <div id="paperRoot" class="empty">Loading paper...</div>
+</div>
+<script>
+marked.setOptions({ breaks:true, gfm:true });
+function esc(s){return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function getSlug(){return new URLSearchParams(window.location.search).get('slug') || ''}
+function dateLabel(value){if(!value) return 'unpublished'; return new Date(value).toLocaleDateString()}
+async function loadPaper(){
+  const slug = getSlug();
+  const root = document.getElementById('paperRoot');
+  if(!slug){root.outerHTML = '<div class="empty">Missing paper slug.</div>';return;}
+  const res = await fetch('/api/notes/public/' + encodeURIComponent(slug), { cache:'no-store' });
+  if(!res.ok){root.outerHTML = '<div class="empty">This paper is not available.</div>';return;}
+  const note = await res.json();
+  const html = marked.parse(String(note.content || '').replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+  root.outerHTML = `
+    <article class="article">
+      <div class="meta">
+        <span>${esc(note.author_handle || 'unknown')}</span>
+        <span>${esc(note.note_type || 'paper')}</span>
+        <span>${esc((note.severity || 'info').toUpperCase())}</span>
+        <span>${dateLabel(note.published_at)}</span>
+      </div>
+      <h1>${esc(note.title)}</h1>
+      <div class="lede">Published from the DEADCATS shared research wiki. Internal publication approval is admin controlled; public authorship is preserved from the original note.</div>
+      <div class="content">${html}</div>
+    </article>
+  `;
+  document.querySelectorAll('.content pre code').forEach((el) => hljs.highlightElement(el));
+  document.title = 'DEADCATS // ' + note.title;
+}
+loadPaper();
+</script>
+</body>
+</html>
