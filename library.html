@@ -368,6 +368,7 @@ button{cursor:pointer}
       <div class="btn-row" style="margin-top:12px">
         <button class="btn green" onclick="newNote()">New Note</button>
         <button class="btn hidden" id="adminFolderBtn" onclick="showFolderModal()">New Folder</button>
+        <button class="btn red hidden" id="adminDeleteFolderBtn" onclick="deleteCurrentFolder()">Delete Folder</button>
         <button class="btn hidden" id="adminPublishFolderBtn" onclick="showPublishFolderModal()">Publish Folders</button>
       </div>
     </div>
@@ -814,6 +815,10 @@ async function loadNoteComments(noteId){
 
 function renderFolderTree(){
   const tree = document.getElementById('folderTree');
+  const deleteFolderBtn = document.getElementById('adminDeleteFolderBtn');
+  if(deleteFolderBtn){
+    deleteFolderBtn.classList.toggle('hidden', !(user && user.is_admin && currentFolder !== null));
+  }
   let html = `
     <button class="folder-item ${currentFolder === null ? 'active' : ''}" type="button" onclick="selectFolder(null)">
       <span>📂</span>
@@ -1673,6 +1678,18 @@ async function deleteFolder(event, folderId){
   const res = await authFetch(`/api/notes/folders/${folderId}`, { method:'DELETE' });
   if(res.ok){
     if(currentFolder === folderId) currentFolder = null;
+    await loadFolders();
+    await loadNotes();
+    showBlank();
+  }
+}
+
+async function deleteCurrentFolder(){
+  if(currentFolder === null) return;
+  if(!confirm('Delete this folder? Notes inside will be moved to root.')) return;
+  const res = await authFetch(`/api/notes/folders/${currentFolder}`, { method:'DELETE' });
+  if(res.ok){
+    currentFolder = null;
     await loadFolders();
     await loadNotes();
     showBlank();
