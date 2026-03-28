@@ -2,7 +2,7 @@ import time
 import httpx
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Any
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 from core.database import get_db
@@ -11,6 +11,7 @@ from core.config import CTFTIME_TEAM_ID
 from core.validation import clean_text, reject_html
 from models.user import User
 from models.ctf import CTFEvent, CTFResult, CTFParticipant, CTFParticipationMarker
+from models.operation import Operation
 from models.announcement import Announcement
 
 router = APIRouter(prefix="/api/ctf", tags=["ctf"])
@@ -187,6 +188,7 @@ class EventCreate(BaseModel):
     format:           Optional[str] = Field(default=None, max_length=100)
     weight:           Optional[float] = None
     description:      Optional[str] = Field(default=None, max_length=4000)
+    operation_id:     Optional[int] = None
 
 class EventUpdate(BaseModel):
     title:            Optional[str]   = Field(default=None, min_length=1, max_length=200)
@@ -197,6 +199,7 @@ class EventUpdate(BaseModel):
     weight:           Optional[float] = None
     description:      Optional[str]   = Field(default=None, max_length=4000)
     status:           Optional[str]   = Field(default=None, max_length=20)
+    operation_id:     Optional[int]   = None
 
 class ResultUpsert(BaseModel):
     place:         int
@@ -225,6 +228,7 @@ def _parse_dt(s: Optional[str]) -> Optional[datetime]:
 def _event_full(ev: CTFEvent, db: Session) -> dict:
     """Return event dict enriched with result + participants."""
     d = ev.to_dict()
+    d["operation_name"] = db.query(Operation).filter(Operation.id == ev.operation_id).first().name if ev.operation_id else ""
     result = db.query(CTFResult).filter(CTFResult.event_id == ev.id).first()
     d["result"] = result.to_dict() if result else None
     participants = db.query(CTFParticipant).filter(CTFParticipant.event_id == ev.id).all()
@@ -242,10 +246,17 @@ def _event_full(ev: CTFEvent, db: Session) -> dict:
 # ── Event endpoints ───────────────────────────────────────────────
 
 @router.get("/events")
-def list_events(db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def list_events(
+    operation_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
     """All tracked CTF events with nested result + participants."""
     now = datetime.now(timezone.utc)
-    events = db.query(CTFEvent).order_by(CTFEvent.start_time.asc().nullslast()).all()
+    query = db.query(CTFEvent)
+    if operation_id is not None:
+        query = query.filter(CTFEvent.operation_id == operation_id)
+    events = query.order_by(CTFEvent.start_time.asc().nullslast()).all()
     dirty = False
     for ev in events:
         if ev.status == "upcoming" and ev.end_time and ev.end_time < now:
@@ -337,6 +348,9 @@ def create_event(
     end_dt = _parse_dt(payload.end_time)
     if start_dt and end_dt and end_dt < start_dt:
         raise HTTPException(400, "end_time cannot be earlier than start_time.")
+    operation_id = payload.operation_id
+    if operation_id is not None and not db.query(Operation).filter(Operation.id == operation_id).first():
+        raise HTTPException(404, "Operation not found.")
     ev = CTFEvent(
         title            = title,
         url              = clean_text(payload.url, field="url", max_len=500),
@@ -347,6 +361,7 @@ def create_event(
         weight           = payload.weight,
         description      = clean_text(payload.description, field="description", max_len=4000),
         status           = "upcoming",
+        operation_id     = operation_id,
         added_by         = admin.handle,
     )
     db.add(ev); db.commit(); db.refresh(ev)
@@ -383,6 +398,10 @@ def update_event(
     if payload.format is not None: ev.format      = clean_text(payload.format, field="format", max_len=100)
     if payload.weight is not None: ev.weight      = payload.weight
     if payload.description is not None: ev.description = clean_text(payload.description, field="description", max_len=4000)
+    if payload.operation_id is not None:
+        if payload.operation_id and not db.query(Operation).filter(Operation.id == payload.operation_id).first():
+            raise HTTPException(404, "Operation not found.")
+        ev.operation_id = payload.operation_id
     if payload.status is not None:
         if payload.status not in ("upcoming", "completed"):
             raise HTTPException(400, "status must be 'upcoming' or 'completed'.")

@@ -27,6 +27,12 @@ body{
 .card{
   border:1px solid var(--border);border-radius:22px;background:rgba(12,24,34,.9);padding:18px;box-shadow:0 20px 40px rgba(0,0,0,.22)
 }
+.published-by{
+  margin-bottom:14px;padding:12px 14px;border:1px solid rgba(85,214,255,.18);border-radius:16px;
+  background:rgba(85,214,255,.06)
+}
+.published-by-label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px}
+.published-by-name{font-size:16px;font-weight:700;color:var(--white)}
 .meta,.tags{display:flex;gap:8px;flex-wrap:wrap}
 .meta{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-dim);margin-bottom:12px}
 .tag{padding:4px 8px;border:1px solid var(--border);border-radius:999px;font-family:var(--mono);font-size:10px;color:var(--text-dim)}
@@ -47,8 +53,8 @@ body{
   </div>
   <section class="hero">
     <div class="brand">Public Research Feed</div>
-    <h1>Published web application security research from <span>DEADCATS</span>.</h1>
-    <p>Admin-reviewed internal notes can be exported into this public feed without exposing the private wiki. Each paper preserves the original author attribution and publication timestamp.</p>
+    <h1>Published research from <span>DEADCATS</span>.</h1>
+    <p>Admin-reviewed internal notes can be exported into this public feed without exposing the private wiki. Each paper preserves the selected public byline, collaborators, publish folder, and publication timestamp.</p>
   </section>
   <section class="feed" id="feed">
     <div class="empty">Loading public research...</div>
@@ -66,9 +72,13 @@ async function loadFeed(){
   feed.innerHTML = items.map((item) => `
     <article class="card">
       <div class="meta">
-        <span>${esc(item.author_handle || 'unknown')}</span>
+        <span>${esc(item.publish_folder_name || 'Unfiled')}</span>
         <span>${esc(item.note_type || 'paper')}</span>
         <span>${timeLabel(item.published_at)}</span>
+      </div>
+      <div class="published-by">
+        <div class="published-by-label">Published By</div>
+        <div class="published-by-name">${esc(item.published_by || item.author_handle || 'unknown')}</div>
       </div>
       <h2>${esc(item.title)}</h2>
       <p>${esc(item.excerpt || 'No summary available.')}</p>

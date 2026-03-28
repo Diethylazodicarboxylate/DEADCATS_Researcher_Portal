@@ -27,6 +27,8 @@ async function fetchMeWithRetry() {
 
 async function initDashboard() {
   let user = readCachedUser();
+  let operations = [];
+  let editingOperationId = null;
   const liveUser = await fetchMeWithRetry();
   if (liveUser) {
     user = liveUser;
@@ -179,6 +181,170 @@ async function initDashboard() {
     } catch (e) { console.error('Stats error:', e); }
   }
 
+  function priorityLabel(priority) {
+    return String(priority || 'medium').replace(/_/g, ' ');
+  }
+
+  function statusLabel(status) {
+    return String(status || 'active').replace(/_/g, ' ');
+  }
+
+  function openOperationModal(operation = null) {
+    editingOperationId = operation ? operation.id : null;
+    document.getElementById('operationModalTitle').textContent = operation ? 'Edit Operation' : 'Create Operation';
+    document.getElementById('operationConfirmBtn').textContent = operation ? 'Save' : 'Create';
+    document.getElementById('operationName').value = operation?.name || '';
+    document.getElementById('operationLead').value = operation?.lead_handle || user.handle || '';
+    document.getElementById('operationStatus').value = operation?.status || 'active';
+    document.getElementById('operationPriority').value = operation?.priority || 'medium';
+    document.getElementById('operationSummary').value = operation?.summary || '';
+    document.getElementById('operationModal').classList.remove('hidden');
+  }
+
+  function closeOperationModal() {
+    editingOperationId = null;
+    document.getElementById('operationModal').classList.add('hidden');
+  }
+
+  async function submitOperation() {
+    const payload = {
+      name: document.getElementById('operationName').value.trim(),
+      lead_handle: document.getElementById('operationLead').value.trim() || user.handle,
+      status: document.getElementById('operationStatus').value,
+      priority: document.getElementById('operationPriority').value,
+      summary: document.getElementById('operationSummary').value.trim(),
+    };
+    if (!payload.name) {
+      alert('Operation name required.');
+      return;
+    }
+    const url = editingOperationId ? `/api/operations/${editingOperationId}` : '/api/operations/';
+    const method = editingOperationId ? 'PATCH' : 'POST';
+    const res = await authFetch(url, { method, body: JSON.stringify(payload) });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(err.detail || 'Failed to save operation.');
+      return;
+    }
+    closeOperationModal();
+    await loadOperations();
+  }
+
+  async function deleteOperation(operationId) {
+    if (!confirm('Delete this operation? Attached notes will remain but lose the operation link.')) return;
+    const res = await authFetch(`/api/operations/${operationId}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(err.detail || 'Failed to delete operation.');
+      return;
+    }
+    await loadOperations();
+  }
+
+  async function loadOperations() {
+    try {
+      const res = await authFetch('/api/operations/');
+      if (!res.ok) return;
+      operations = await res.json();
+      const el = document.getElementById('operations-list');
+      if (!el) return;
+      if (!operations.length) {
+        el.innerHTML = '<div style="padding:16px 18px;font-family:var(--mono);font-size:10px;color:var(--text-dim);">No operations yet. Create one to tie notes into shared investigations.</div>';
+        return;
+      }
+      const statusScore = { active: 0, planning: 1, on_hold: 2, closed: 3, archived: 4 };
+      const priorityScore = { critical: 0, high: 1, medium: 2, low: 3 };
+      const ordered = [...operations].sort((a, b) =>
+        (statusScore[a.status] ?? 9) - (statusScore[b.status] ?? 9)
+        || (priorityScore[a.priority] ?? 9) - (priorityScore[b.priority] ?? 9)
+      );
+      el.innerHTML = ordered.slice(0, 6).map((operation) => {
+        const canEdit = user.is_admin || operation.created_by === user.id;
+        return `<div class="note-item">
+          <div class="note-title"><a href="operations.html?id=${encodeURIComponent(operation.id)}" style="color:inherit;text-decoration:none;">${esc(operation.name)}</a></div>
+          <div class="note-preview">${esc(operation.summary || 'No summary yet.')}</div>
+          <div class="note-meta">
+            <span>${esc(statusLabel(operation.status))}</span>
+            <span>${esc(priorityLabel(operation.priority))}</span>
+            <span>${esc(operation.lead_handle || 'unassigned')}</span>
+            <span>${esc(String(operation.note_count || 0))} notes</span>
+            <span>${esc(String(operation.published_count || 0))} public</span>
+            <span>${esc(String(operation.ioc_count || 0))} iocs</span>
+            <span>${esc(String(operation.file_count || 0))} files</span>
+          </div>
+          ${canEdit ? `<div class="note-meta" style="margin-top:10px;gap:8px">
+            <a href="#" onclick="event.preventDefault();window.__openOperationModal(${operation.id})" class="panel-action">Edit</a>
+            <a href="#" onclick="event.preventDefault();window.__deleteOperation(${operation.id})" class="panel-action" style="color:var(--red2)">Delete</a>
+          </div>` : ''}
+        </div>`;
+      }).join('');
+    } catch (e) { console.error('Operations error:', e); }
+  }
+
+  async function loadActivityTimeline() {
+    try {
+      const res = await authFetch('/api/operations/activity');
+      if (!res.ok) return;
+      const items = await res.json();
+      const el = document.getElementById('activity-timeline');
+      if (!el) return;
+      if (!items.length) {
+        el.innerHTML = '<div style="padding:16px 18px;font-family:var(--mono);font-size:10px;color:var(--text-dim);">No activity yet.</div>';
+        return;
+      }
+      const iconMap = { note: '📖', ioc: '📌', vault_file: '📁' };
+      const hrefFor = (item) => {
+        if (item.kind === 'note') return `library.html?note_id=${encodeURIComponent(item.id)}`;
+        if (item.kind === 'ioc') return item.meta && item.meta.operation_id ? `ioc-tracker.html?operation_id=${encodeURIComponent(item.meta.operation_id)}` : 'ioc-tracker.html';
+        if (item.kind === 'vault_file') return item.meta && item.meta.operation_id ? `operations.html?id=${encodeURIComponent(item.meta.operation_id)}` : 'vault.html';
+        return 'dashboard.html';
+      };
+      el.innerHTML = items.slice(0, 10).map((item) => `
+        <div class="note-item" onclick="window.location='${hrefFor(item)}'" style="cursor:crosshair;">
+          <div class="note-title">${iconMap[item.kind] || '•'} ${esc(item.title || 'Untitled')}</div>
+          <div class="note-preview">${esc(item.operation_name || (item.kind === 'vault_file' ? 'Vault evidence update' : item.kind === 'ioc' ? 'Indicator activity' : 'Research note activity'))}</div>
+          <div class="note-meta">
+            <span>${esc(item.kind.replace('_', ' '))}</span>
+            <span>${esc(item.author || 'unknown')}</span>
+            <span>${timeAgo(item.created_at)}</span>
+          </div>
+        </div>
+      `).join('');
+    } catch (e) { console.error('Activity timeline error:', e); }
+  }
+
+  async function loadReviewQueuePreview() {
+    try {
+      const panel = document.getElementById('review-board-panel');
+      const root = document.getElementById('review-queue-preview');
+      if (!panel || !root || !user.is_admin) return;
+      panel.style.display = 'block';
+      const res = await authFetch('/api/notes/review-queue');
+      if (!res.ok) {
+        root.innerHTML = '<div style="padding:16px 18px;font-family:var(--mono);font-size:10px;color:var(--text-dim);">Unable to load review queue.</div>';
+        return;
+      }
+      const data = await res.json();
+      const pending = (data.in_review || []).slice(0, 4);
+      const approved = (data.approved || []).slice(0, 2);
+      const items = pending.concat(approved);
+      if (!items.length) {
+        root.innerHTML = '<div style="padding:16px 18px;font-family:var(--mono);font-size:10px;color:var(--text-dim);">No items waiting.</div>';
+        return;
+      }
+      root.innerHTML = items.map((item) => `
+        <div class="note-item" onclick="window.location='library.html?note_id=${encodeURIComponent(item.id)}'" style="cursor:crosshair;">
+          <div class="note-title">${esc(item.title)}</div>
+          <div class="note-preview">${esc(item.operation_name || 'No operation')} · ${esc(item.review_status || 'draft')}</div>
+          <div class="note-meta">
+            <span>${esc(item.author_handle || 'unknown')}</span>
+            <span>${timeAgo(item.updated_at || item.created_at)}</span>
+          </div>
+        </div>
+      `).join('');
+    } catch (e) { console.error('Review queue preview error:', e); }
+  }
+
   async function loadAnnouncements() {
     try {
       const res     = await authFetch('/api/announcements/');
@@ -223,12 +389,13 @@ async function initDashboard() {
         return;
       }
       el.innerHTML = notes.slice(0, 5).map(n => `
-        <div class="note-item" onclick="window.location='library.html'" style="cursor:crosshair;">
+        <div class="note-item" onclick="window.location='library.html?note_id=${encodeURIComponent(n.id)}'" style="cursor:crosshair;">
           <div class="note-title">${esc(n.title)}</div>
           <div class="note-preview">${esc(n.content || 'No preview')}</div>
           <div class="note-meta">
             <span>${esc(n.author_handle)}</span>
             <span>${timeAgo(n.updated_at || n.created_at)}</span>
+            ${n.operation_name ? `<span class="note-tag">${esc(n.operation_name)}</span>` : ''}
             ${(Array.isArray(n.tags) ? n.tags : []).filter(Boolean).map(t => `<span class="note-tag">${esc(String(t).trim())}</span>`).join('')}
           </div>
         </div>`).join('');
@@ -276,16 +443,23 @@ async function initDashboard() {
   if (user.is_admin) {
     const noticeBtn = document.getElementById('noticePostBtn');
     const credsBtn  = document.getElementById('credsPostBtn');
+    const operationBtn = document.getElementById('operationCreateBtn');
     if (noticeBtn) noticeBtn.style.display = 'block';
     if (credsBtn)  credsBtn.style.display  = 'block';
+    if (operationBtn) operationBtn.style.display = 'inline-flex';
+  } else {
+    const operationBtn = document.getElementById('operationCreateBtn');
+    if (operationBtn) operationBtn.style.display = 'inline-flex';
   }
 
   if (!user.is_admin) {
     setTimeout(() => {
       const label = document.getElementById('admin-sidebar-section');
       const link  = document.getElementById('admin-sidebar-link');
+      const reviewLink = document.getElementById('review-sidebar-link');
       if (label) label.style.display = 'none';
       if (link)  link.style.display  = 'none';
+      if (reviewLink) reviewLink.style.display = 'none';
     }, 500);
   }
 
@@ -558,9 +732,24 @@ async function initDashboard() {
     });
   }
 
+  window.__openOperationModal = (operationId) => {
+    if (typeof operationId === 'number') {
+      const operation = operations.find((item) => item.id === operationId);
+      openOperationModal(operation || null);
+      return;
+    }
+    openOperationModal(null);
+  };
+  window.__closeOperationModal = closeOperationModal;
+  window.__submitOperation = submitOperation;
+  window.__deleteOperation = deleteOperation;
+
   populateNav();
   loadMembers();
   loadStats();
+  loadOperations();
+  loadActivityTimeline();
+  loadReviewQueuePreview();
   loadAnnouncements();
   loadRecentNotes();
   loadNotifications();
@@ -611,6 +800,18 @@ async function deleteAnnouncement(id) {
     credentials: 'include',
   });
   location.reload();
+}
+
+function openOperationModal() {
+  if (window.__openOperationModal) window.__openOperationModal();
+}
+
+function closeOperationModal() {
+  if (window.__closeOperationModal) window.__closeOperationModal();
+}
+
+function submitOperation() {
+  if (window.__submitOperation) return window.__submitOperation();
 }
 
 // ── Boot ──────────────────────────────────────────────────────────

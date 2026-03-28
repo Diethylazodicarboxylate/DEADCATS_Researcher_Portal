@@ -1,6 +1,6 @@
 import secrets
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 from typing import Optional
@@ -9,6 +9,7 @@ from core.security import get_current_user, require_admin
 from core.validation import clean_text, reject_html
 from models.user import User
 from models.goal import TeamGoal
+from models.operation import Operation
 from models.whiteboard_config import WhiteboardConfig
 
 router = APIRouter(prefix="/api/whiteboard", tags=["whiteboard"])
@@ -61,23 +62,27 @@ def reset_room(
 
 class GoalCreate(BaseModel):
     text: str = Field(min_length=1, max_length=500)
+    operation_id: Optional[int] = None
 
 class GoalUpdate(BaseModel):
     text:      Optional[str]  = Field(default=None, min_length=1, max_length=500)
     completed: Optional[bool] = None
+    operation_id: Optional[int] = None
 
 
 @router.get("/goals")
 def list_goals(
+    operation_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     _:  User    = Depends(get_current_user),
 ):
-    """List all team goals — visible to all members."""
-    goals = (
-        db.query(TeamGoal)
-        .order_by(TeamGoal.completed.asc(), TeamGoal.created_at.asc())
-        .all()
-    )
+    """List team goals or operation goals — visible to all members."""
+    query = db.query(TeamGoal)
+    if operation_id is None:
+        query = query.filter(TeamGoal.operation_id.is_(None))
+    else:
+        query = query.filter(TeamGoal.operation_id == operation_id)
+    goals = query.order_by(TeamGoal.completed.asc(), TeamGoal.created_at.asc()).all()
     return [g.to_dict() for g in goals]
 
 
@@ -93,7 +98,10 @@ def create_goal(
         raise HTTPException(status_code=400, detail="Goal text cannot be empty.")
     if len(text) > 500:
         raise HTTPException(status_code=400, detail="Goal text too long (max 500 chars).")
-    goal = TeamGoal(text=text, created_by=admin.handle)
+    operation_id = payload.operation_id
+    if operation_id is not None and not db.query(Operation).filter(Operation.id == operation_id).first():
+        raise HTTPException(status_code=404, detail="Operation not found.")
+    goal = TeamGoal(text=text, created_by=admin.handle, operation_id=operation_id)
     db.add(goal)
     db.commit()
     db.refresh(goal)
@@ -118,6 +126,10 @@ def update_goal(
         if len(text) > 500:
             raise HTTPException(status_code=400, detail="Goal text too long (max 500 chars).")
         goal.text = text
+    if payload.operation_id is not None:
+        if payload.operation_id and not db.query(Operation).filter(Operation.id == payload.operation_id).first():
+            raise HTTPException(status_code=404, detail="Operation not found.")
+        goal.operation_id = payload.operation_id
     if payload.completed is not None:
         goal.completed    = payload.completed
         goal.completed_at = datetime.now(timezone.utc) if payload.completed else None

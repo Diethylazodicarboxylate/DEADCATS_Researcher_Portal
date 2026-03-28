@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 import re
+import time
 from core.database import get_db
 from core.security import verify_password, hash_password, create_token, get_current_user
 from core.config import (
@@ -20,6 +21,11 @@ from core.logger import log_auth, log_new_user, log_alert, read_log
 HANDLE_RE = re.compile(r'^[a-zA-Z0-9_]{2,50}$')
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+_FAILED_LOGIN_WINDOW_SECONDS = 15 * 60
+_FAILED_LOGIN_LOCK_SECONDS = 10 * 60
+_FAILED_LOGIN_LIMIT = 5
+_LOGIN_ATTEMPTS: dict[str, dict[str, float | int]] = {}
 
 # ── Schemas ───────────────────────────────────────────────────────
 
@@ -59,6 +65,54 @@ def _check_brute_force(ip: str):
     fails  = [e for e in recent if not e.get("success") and e.get("ip") == ip]
     if len(fails) >= 3:
         log_alert("critical", "brute_force", f"3+ failed logins from {ip}")
+
+
+def _login_throttle_key(ip: str, handle: str) -> str:
+    return f"{ip}:{handle.lower()}"
+
+
+def _purge_stale_attempts(now: float):
+    stale_keys = [
+        key for key, data in _LOGIN_ATTEMPTS.items()
+        if now - float(data.get("last", 0)) > _FAILED_LOGIN_WINDOW_SECONDS
+        and float(data.get("blocked_until", 0)) <= now
+    ]
+    for key in stale_keys:
+        _LOGIN_ATTEMPTS.pop(key, None)
+
+
+def _enforce_login_throttle(ip: str, handle: str):
+    now = time.time()
+    _purge_stale_attempts(now)
+    key = _login_throttle_key(ip, handle)
+    data = _LOGIN_ATTEMPTS.get(key)
+    if not data:
+        return
+    blocked_until = float(data.get("blocked_until", 0))
+    if blocked_until > now:
+        retry_after = max(1, int(blocked_until - now))
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Too many failed login attempts. Try again in {retry_after} seconds.",
+        )
+
+
+def _record_failed_login(ip: str, handle: str):
+    now = time.time()
+    key = _login_throttle_key(ip, handle)
+    data = _LOGIN_ATTEMPTS.get(key, {"count": 0, "last": now, "blocked_until": 0})
+    if now - float(data.get("last", 0)) > _FAILED_LOGIN_WINDOW_SECONDS:
+        data = {"count": 0, "last": now, "blocked_until": 0}
+    data["count"] = int(data.get("count", 0)) + 1
+    data["last"] = now
+    if int(data["count"]) >= _FAILED_LOGIN_LIMIT:
+        data["blocked_until"] = now + _FAILED_LOGIN_LOCK_SECONDS
+        log_alert("high", "login_throttle", f"Temporarily blocked login attempts for {handle} from {ip}")
+    _LOGIN_ATTEMPTS[key] = data
+
+
+def _clear_failed_login(ip: str, handle: str):
+    _LOGIN_ATTEMPTS.pop(_login_throttle_key(ip, handle), None)
 
 # ── Routes ────────────────────────────────────────────────────────
 
@@ -102,10 +156,12 @@ def login(payload: LoginRequest, request: Request, response: Response, db: Sessi
     handle   = clean_text(payload.handle, field="Handle", max_len=50)
     password = clean_text(payload.password, field="Password", max_len=128, strip=False)
     ip       = request.client.host if request.client else "unknown"
+    _enforce_login_throttle(ip, handle)
     user     = db.query(User).filter(User.handle == handle).first()
 
     if not user or not verify_password(password, user.password):
         log_auth(handle, ip, False, "invalid credentials")
+        _record_failed_login(ip, handle)
         _check_brute_force(ip)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -123,6 +179,7 @@ def login(payload: LoginRequest, request: Request, response: Response, db: Sessi
     db.commit()
 
     log_auth(user.handle, ip, True)
+    _clear_failed_login(ip, handle)
 
     token = create_token({"sub": user.handle, "is_admin": user.is_admin})
     _set_auth_cookie(response, token)

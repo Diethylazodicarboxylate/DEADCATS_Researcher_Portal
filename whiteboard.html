@@ -379,7 +379,7 @@ a[class*="btn"]:focus-visible{
   <div class="nav-left">
     <a href="index.html" class="nav-logo">DEAD<span>CATS</span></a>
     <div class="nav-sep"></div>
-    <span class="nav-page">// <span>war room</span></span>
+    <span class="nav-page" id="warRoomLabel">// <span>war room</span></span>
   </div>
   <div class="nav-right">
     <a href="dashboard.html" class="nav-back">← Dashboard</a>
@@ -432,6 +432,7 @@ a[class*="btn"]:focus-visible{
 <script>
 const API   = '';
 let me      = JSON.parse(localStorage.getItem('dc_user') || 'null');
+const OPERATION_ID = new URLSearchParams(window.location.search).get('operation_id');
 
 const RANK_COLORS = {
   'Founding Circle': '#f0a500',
@@ -550,10 +551,16 @@ function applyRoom(roomUrl, forceReload = false) {
 
 async function loadRoom(forceReload = false) {
   try {
-    const res = await authFetch('/api/whiteboard/config');
+    const url = OPERATION_ID ? `/api/operations/${OPERATION_ID}/war-room` : '/api/whiteboard/config';
+    const res = await authFetch(url);
     if (!res.ok) return;
-    const { room_url } = await res.json();
-    applyRoom(room_url, forceReload);
+    const data = await res.json();
+    const roomUrl = data.room_url;
+    if (OPERATION_ID && data.operation_name) {
+      document.getElementById('warRoomLabel').innerHTML = `// <span>${esc(data.operation_name)} war room</span>`;
+      document.title = `DEADCATS // ${data.operation_name} War Room`;
+    }
+    applyRoom(roomUrl, forceReload);
   } catch (e) { console.error('Room load error:', e); }
 }
 
@@ -562,10 +569,11 @@ function closeResetModal() { document.getElementById('resetModal').classList.add
 
 async function confirmReset() {
   closeResetModal();
-  const res = await authFetch('/api/whiteboard/config/reset', { method: 'POST' });
+  const url = OPERATION_ID ? `/api/operations/${OPERATION_ID}/war-room/reset` : '/api/whiteboard/config/reset';
+  const res = await authFetch(url, { method: 'POST' });
   if (res.ok) {
-    const { room_url } = await res.json();
-    applyRoom(room_url, true);
+    const data = await res.json();
+    applyRoom(data.room_url, true);
   }
 }
 
@@ -606,7 +614,8 @@ async function loadMembers() {
 
 async function loadGoals(forceRender = false) {
   try {
-    const res = await authFetch('/api/whiteboard/goals');
+    const suffix = OPERATION_ID ? `?operation_id=${encodeURIComponent(OPERATION_ID)}` : '';
+    const res = await authFetch('/api/whiteboard/goals' + suffix);
     if (!res.ok) return;
     const goals = await res.json();
     const sig = goalsSignature(goals);
@@ -621,7 +630,7 @@ function renderGoals(goals) {
   document.getElementById('goal-count').textContent = goals.length;
 
   if (!goals.length) {
-    el.innerHTML = '<div class="goals-empty">No team goals yet.</div>';
+    el.innerHTML = `<div class="goals-empty">${OPERATION_ID ? 'No operation goals yet.' : 'No team goals yet.'}</div>`;
     return;
   }
 
@@ -652,7 +661,7 @@ async function addGoal() {
   if (!text) return;
   const res = await authFetch('/api/whiteboard/goals', {
     method: 'POST',
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, operation_id: OPERATION_ID ? Number(OPERATION_ID) : null }),
   });
   if (res.ok) {
     input.value = '';

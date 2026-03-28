@@ -16,6 +16,7 @@ class CTFEvent(Base):
     weight            = Column(Float, nullable=True)
     description       = Column(Text, nullable=True)
     status            = Column(String(20), nullable=False, default="upcoming")  # upcoming | completed
+    operation_id      = Column(Integer, ForeignKey("operations.id"), nullable=True)
     added_by          = Column(String(50), nullable=False)
     created_at        = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -31,6 +32,7 @@ class CTFEvent(Base):
             "weight":           self.weight,
             "description":      self.description,
             "status":           self.status,
+            "operation_id":     self.operation_id,
             "added_by":         self.added_by,
             "created_at":       self.created_at.isoformat() if self.created_at else None,
         }

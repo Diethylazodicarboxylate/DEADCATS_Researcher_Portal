@@ -168,6 +168,7 @@ a[class*="btn"]:focus-visible{
     <div class="modal-row"><label class="modal-label">Severity</label>
       <select class="modal-select" id="iocSeverity"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="critical">Critical</option></select></div>
     <div class="modal-row"><label class="modal-label">Tags (comma separated)</label><input class="modal-input" type="text" id="iocTags" placeholder="c2, agenttesla, ransomware"></div>
+    <div class="modal-row"><label class="modal-label">Operation</label><select class="modal-select" id="iocOperation"><option value="">No operation</option></select></div>
     <div class="modal-row"><label class="modal-label">Notes</label><textarea class="modal-textarea" id="iocNotes" placeholder="Context, source, related campaign..."></textarea></div>
     <div class="modal-actions">
       <button class="modal-btn" onclick="closeModal()">Cancel</button>
@@ -201,14 +202,15 @@ a[class*="btn"]:focus-visible{
   </div>
   <div class="filters">
     <input class="filter-input" type="text" id="searchInput" placeholder="Search IOCs..." oninput="applyFilters()">
+    <select class="filter-select" id="operationFilter" onchange="applyFilters()"><option value="">All Operations</option></select>
     <select class="filter-select" id="sevFilter" onchange="applyFilters()">
       <option value="">All Severities</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option>
     </select>
   </div>
   <div class="ioc-table-wrap">
     <table class="ioc-table">
-      <thead><tr><th>Type</th><th>Value</th><th>Severity</th><th>Tags</th><th>Author</th><th>Added</th><th></th></tr></thead>
-      <tbody id="iocTableBody"><tr><td colspan="7" class="table-empty">Loading...</td></tr></tbody>
+      <thead><tr><th>Type</th><th>Value</th><th>Operation</th><th>Severity</th><th>Tags</th><th>Author</th><th>Added</th><th></th></tr></thead>
+      <tbody id="iocTableBody"><tr><td colspan="8" class="table-empty">Loading...</td></tr></tbody>
     </table>
   </div>
 </div>
@@ -216,32 +218,35 @@ a[class*="btn"]:focus-visible{
 const API=''
 let me=JSON.parse(localStorage.getItem('dc_user')||'null')
 let allIOCs=[],activeType=null
+let operations=[]
 let bookmarkedIOCs=new Set(),bmIdMapIOC={}
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 function authFetch(url,opts={}){return fetch(API+url,{...opts,credentials:'include',headers:{'Content-Type':'application/json',...(opts.headers||{})}}).then(res=>{if(res.status===401){localStorage.removeItem('dc_user');window.location.href='login.html';}return res;})}
 async function ensureSession(){try{const res=await fetch(API+'/api/auth/me',{credentials:'include'});if(!res.ok){localStorage.removeItem('dc_user');window.location.replace('login.html');return false;}me=await res.json();localStorage.setItem('dc_user',JSON.stringify(me));return true;}catch(_){if(me)return true;window.location.replace('login.html');return false;}}
 async function loadBookmarks(){try{const res=await authFetch('/api/bookmarks/');if(!res.ok)return;const bms=await res.json();bookmarkedIOCs=new Set();bmIdMapIOC={};bms.forEach(bm=>{if(bm.item_type==='ioc'){bookmarkedIOCs.add(bm.item_id);bmIdMapIOC[bm.item_id]=bm.id;}});}catch(e){console.error('Bookmark load error:',e);}}
 async function toggleBmIOC(btn,iocId){if(bookmarkedIOCs.has(iocId)){const res=await authFetch('/api/bookmarks/'+bmIdMapIOC[iocId],{method:'DELETE'});if(res.ok||res.status===204){bookmarkedIOCs.delete(iocId);delete bmIdMapIOC[iocId];btn.textContent='☆';btn.title='Bookmark this IOC';btn.style.color='';}}else{const res=await authFetch('/api/bookmarks/',{method:'POST',body:JSON.stringify({item_type:'ioc',item_id:iocId})});if(res.ok){const bm=await res.json();bookmarkedIOCs.add(iocId);bmIdMapIOC[iocId]=bm.id;btn.textContent='★';btn.title='Remove bookmark';btn.style.color='var(--gold)';}}}
+async function loadOperations(){const res=await authFetch('/api/operations/');operations=res.ok?await res.json():[];const options=operations.map(op=>'<option value="'+op.id+'">'+op.name+'</option>').join('');document.getElementById('operationFilter').innerHTML='<option value="">All Operations</option>'+options;document.getElementById('iocOperation').innerHTML='<option value="">No operation</option>'+options;}
 
 function timeAgo(d){if(!d)return '';const s=(Date.now()-new Date(d))/1000;if(s<60)return 'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
 async function loadIOCs(){const res=await authFetch('/api/iocs/');allIOCs=res.ok?await res.json():[];updateCounts();renderTable(allIOCs);}
-async function initPage(){await loadBookmarks();await loadIOCs();}
+async function initPage(){await loadBookmarks();await loadOperations();await loadIOCs();const operationParam=new URLSearchParams(window.location.search).get('operation_id');if(operationParam){document.getElementById('operationFilter').value=operationParam;applyFilters();}}
 function updateCounts(){document.getElementById('count-all').textContent=allIOCs.length;['ip','domain','hash','url','cve'].forEach(t=>document.getElementById('count-'+t).textContent=allIOCs.filter(i=>i.type===t).length);}
 function renderTable(iocs){
   const tbody=document.getElementById('iocTableBody')
-  if(!iocs.length){tbody.innerHTML='<tr><td colspan="7" class="table-empty">No IOCs found.</td></tr>';return;}
+  if(!iocs.length){tbody.innerHTML='<tr><td colspan="8" class="table-empty">No IOCs found.</td></tr>';return;}
   tbody.innerHTML=iocs.map(i=>{
-    const tags=i.tags.filter(Boolean).map(t=>'<span class="ioc-tag">'+t.trim()+'</span>').join('')
+    const tags=i.tags.filter(Boolean).map(t=>'<span class="ioc-tag">'+esc(t.trim())+'</span>').join('')
     const canDel=me.is_admin||me.id===i.author_id
     const val=i.value.replace(/\\/g,'\\\\').replace(/'/g,"\\'")
     const starred=bookmarkedIOCs.has(i.id)
-    return '<tr><td><span class="type-badge type-'+i.type+'">'+i.type+'</span></td><td><div class="ioc-value" title="'+i.value+'">'+i.value+'</div>'+(i.notes?'<div style="font-size:10px;color:var(--text-dim);margin-top:3px;">'+i.notes.substring(0,80)+(i.notes.length>80?'...':'')+'</div>':'')+'</td><td><span class="sev-badge sev-'+i.severity+'">'+i.severity+'</span></td><td><div class="ioc-tags">'+(tags||'<span style="color:var(--text-dim);font-size:10px;">—</span>')+'</div></td><td style="font-size:11px;color:var(--text-mid);">'+i.author+'</td><td style="font-size:11px;color:var(--text-dim);">'+timeAgo(i.created_at)+'</td><td style="white-space:nowrap;"><button class="copy-btn" title="Copy value" onclick="copyVal(\''+val+'\')">⎘</button><button class="copy-btn bm-star-btn" title="'+(starred?'Remove bookmark':'Bookmark this IOC')+'" style="color:'+(starred?'var(--gold)':'')+'" onclick="toggleBmIOC(this,'+i.id+')">'+(starred?'★':'☆')+'</button>'+(canDel?'<button class="del-btn" onclick="deleteIOC('+i.id+')">✕</button>':'')+'</td></tr>'
+    return '<tr><td><span class="type-badge type-'+esc(i.type)+'">'+esc(i.type)+'</span></td><td><div class="ioc-value" title="'+esc(i.value)+'">'+esc(i.value)+'</div>'+(i.notes?'<div style="font-size:10px;color:var(--text-dim);margin-top:3px;">'+esc(i.notes.substring(0,80))+(i.notes.length>80?'...':'')+'</div>':'')+'</td><td style="font-size:11px;color:var(--text-mid);">'+(i.operation_name?esc(i.operation_name):'<span style="color:var(--text-dim)">—</span>')+'</td><td><span class="sev-badge sev-'+esc(i.severity)+'">'+esc(i.severity)+'</span></td><td><div class="ioc-tags">'+(tags||'<span style="color:var(--text-dim);font-size:10px;">—</span>')+'</div></td><td style="font-size:11px;color:var(--text-mid);">'+esc(i.author)+'</td><td style="font-size:11px;color:var(--text-dim);">'+timeAgo(i.created_at)+'</td><td style="white-space:nowrap;"><button class="copy-btn" title="Copy value" onclick="copyVal(\''+val+'\')">⎘</button><button class="copy-btn bm-star-btn" title="'+(starred?'Remove bookmark':'Bookmark this IOC')+'" style="color:'+(starred?'var(--gold)':'')+'" onclick="toggleBmIOC(this,'+i.id+')">'+(starred?'★':'☆')+'</button>'+(canDel?'<button class="del-btn" onclick="deleteIOC('+i.id+')">✕</button>':'')+'</td></tr>'
   }).join('')
 }
 function filterByType(type,el){activeType=type;document.querySelectorAll('.stat-pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');applyFilters();}
-function applyFilters(){const search=document.getElementById('searchInput').value.toLowerCase();const sev=document.getElementById('sevFilter').value;let f=allIOCs;if(activeType)f=f.filter(i=>i.type===activeType);if(sev)f=f.filter(i=>i.severity===sev);if(search)f=f.filter(i=>i.value.toLowerCase().includes(search)||i.tags.join(' ').toLowerCase().includes(search)||(i.notes||'').toLowerCase().includes(search));renderTable(f);}
+function applyFilters(){const search=document.getElementById('searchInput').value.toLowerCase();const sev=document.getElementById('sevFilter').value;const operationId=document.getElementById('operationFilter').value;let f=allIOCs;if(activeType)f=f.filter(i=>i.type===activeType);if(sev)f=f.filter(i=>i.severity===sev);if(operationId)f=f.filter(i=>String(i.operation_id||'')===String(operationId));if(search)f=f.filter(i=>i.value.toLowerCase().includes(search)||i.tags.join(' ').toLowerCase().includes(search)||(i.notes||'').toLowerCase().includes(search)||(i.operation_name||'').toLowerCase().includes(search));renderTable(f);}
 function openModal(){document.getElementById('iocModal').classList.remove('hidden');document.getElementById('iocValue').focus();}
 function closeModal(){document.getElementById('iocModal').classList.add('hidden');}
-async function submitIOC(){const value=document.getElementById('iocValue').value.trim();if(!value){alert('Value required.');return;}const res=await authFetch('/api/iocs/',{method:'POST',body:JSON.stringify({type:document.getElementById('iocType').value,value,severity:document.getElementById('iocSeverity').value,tags:document.getElementById('iocTags').value,notes:document.getElementById('iocNotes').value})});if(res.ok){closeModal();document.getElementById('iocValue').value='';document.getElementById('iocTags').value='';document.getElementById('iocNotes').value='';await loadIOCs();}else{const e=await res.json();alert(e.detail||'Failed.');}}
+async function submitIOC(){const value=document.getElementById('iocValue').value.trim();if(!value){alert('Value required.');return;}const operationId=document.getElementById('iocOperation').value;const res=await authFetch('/api/iocs/',{method:'POST',body:JSON.stringify({type:document.getElementById('iocType').value,value,operation_id:operationId?Number(operationId):null,severity:document.getElementById('iocSeverity').value,tags:document.getElementById('iocTags').value,notes:document.getElementById('iocNotes').value})});if(res.ok){closeModal();document.getElementById('iocValue').value='';document.getElementById('iocTags').value='';document.getElementById('iocNotes').value='';document.getElementById('iocOperation').value='';await loadIOCs();applyFilters();}else{const e=await res.json();alert(e.detail||'Failed.');}}
 async function deleteIOC(id){if(!confirm('Delete this IOC?'))return;await authFetch('/api/iocs/'+id,{method:'DELETE'});await loadIOCs();}
 function copyVal(val){navigator.clipboard.writeText(val).then(()=>{const btn=event.target;btn.textContent='✓';btn.style.color='var(--green)';setTimeout(()=>{btn.textContent='⎘';btn.style.color='';},1500);});}
 function exportCSV(){authFetch('/api/iocs/export').then(r=>r.blob()).then(blob=>{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='deadcats_iocs.csv';a.click();});}

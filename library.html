@@ -193,6 +193,25 @@ button{cursor:pointer}
   display:block;padding:12px;border:1px solid var(--border);border-radius:16px;background:rgba(10,19,28,.74);text-decoration:none;color:inherit;margin-bottom:10px
 }
 .backlink strong{display:block;color:var(--white);margin-bottom:4px}
+.comment-item{
+  padding:12px;border:1px solid var(--border);border-radius:16px;background:rgba(10,19,28,.74);margin-bottom:10px
+}
+.comment-item.resolved{opacity:.72;border-color:rgba(66,211,146,.28)}
+.comment-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.comment-body{font-size:13px;line-height:1.75;color:var(--text-soft);white-space:pre-wrap}
+.comment-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.comment-reply{margin:10px 0 0 18px;padding-left:12px;border-left:1px solid var(--border)}
+.history-item{
+  padding:12px;border:1px solid var(--border);border-radius:16px;background:rgba(10,19,28,.74);margin-bottom:10px
+}
+.history-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.history-title{font-size:13px;font-weight:700;color:var(--white)}
+.history-meta{font-size:11px;line-height:1.6;color:var(--text-dim)}
+.history-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.diff-block{
+  margin-top:14px;padding:16px;border:1px solid var(--border);border-radius:18px;background:#081119;
+  white-space:pre-wrap;word-break:break-word;font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--text-soft)
+}
 .hidden{display:none!important}
 .modal-overlay{
   position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.74);display:grid;place-items:center;padding:20px
@@ -201,6 +220,7 @@ button{cursor:pointer}
 .modal{
   width:min(560px,100%);padding:22px;border-radius:24px;border:1px solid var(--border-2);background:linear-gradient(180deg,#0c1620,#071119)
 }
+.modal.wide{width:min(920px,100%)}
 .modal h2{font-size:20px;color:var(--white);margin-bottom:8px}
 .modal p{font-size:13px;line-height:1.7;color:var(--text-dim);margin-bottom:14px}
 ::-webkit-scrollbar{width:8px;height:8px}
@@ -243,6 +263,21 @@ button{cursor:pointer}
   </div>
 </div>
 
+<div class="modal-overlay hidden" id="publishFolderModal">
+  <div class="modal">
+    <h2>Manage Publish Folders</h2>
+    <p>These folders are only for public published research, separate from internal wiki folders.</p>
+    <div style="display:grid;gap:12px">
+      <input class="field" id="publishFolderNameInput" type="text" placeholder="New publish folder">
+      <div id="publishFolderList" style="display:grid;gap:10px"></div>
+    </div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn" onclick="closePublishFolderModal()">Close</button>
+      <button class="btn green" onclick="createPublishFolder()">Create Publish Folder</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay hidden" id="reviewModal">
   <div class="modal">
     <h2 id="reviewModalTitle">Review</h2>
@@ -261,12 +296,37 @@ button{cursor:pointer}
     <p>Only approved notes can be published. The public paper preserves the original author attribution.</p>
     <div style="display:grid;gap:12px">
       <input class="field" id="publishTitle" type="text" placeholder="Public title">
+      <input class="field" id="publishBy" type="text" placeholder="Published by / collaborators">
+      <select class="field" id="publishFolderSelect"></select>
       <input class="field" id="publishSlug" type="text" placeholder="public-slug">
     </div>
     <div class="btn-row" style="margin-top:14px">
       <button class="btn" onclick="closePublishModal()">Cancel</button>
       <button class="btn red hidden" id="unpublishBtn" onclick="unpublishCurrentNote()">Unpublish</button>
       <button class="btn green" onclick="publishCurrentNote()">Publish Publicly</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="historyModal">
+  <div class="modal wide">
+    <h2 id="historyModalTitle">Revision</h2>
+    <p id="historyModalMeta">Loading revision…</p>
+    <div id="historyModalBody"></div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn" onclick="closeHistoryModal()">Close</button>
+      <button class="btn gold hidden" id="historyRestoreBtn" onclick="restoreActiveRevision()">Restore This Revision</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="conflictModal">
+  <div class="modal">
+    <h2>Editing Conflict</h2>
+    <p id="conflictModalText">This note changed on the server while you were editing it. Your local draft is still preserved.</p>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn" onclick="keepLocalConflictDraft()">Keep Local Draft</button>
+      <button class="btn gold" onclick="loadServerConflictVersion()">Load Latest Server Copy</button>
     </div>
   </div>
 </div>
@@ -282,6 +342,9 @@ button{cursor:pointer}
         <input id="globalSearch" type="text" placeholder="Search notes, tags, authors, content..." oninput="renderNoteList()">
       </div>
       <div class="filters">
+        <select class="field" id="operationFilter" onchange="renderNoteList()">
+          <option value="">All operations</option>
+        </select>
         <select class="field" id="phaseFilter" onchange="renderNoteList()">
           <option value="">All phases</option>
           <option value="triage">Triage</option>
@@ -303,6 +366,7 @@ button{cursor:pointer}
       <div class="btn-row" style="margin-top:12px">
         <button class="btn green" onclick="newNote()">New Note</button>
         <button class="btn hidden" id="adminFolderBtn" onclick="showFolderModal()">New Folder</button>
+        <button class="btn hidden" id="adminPublishFolderBtn" onclick="showPublishFolderModal()">Publish Folders</button>
       </div>
     </div>
     <div class="folders" id="folderTree"></div>
@@ -389,6 +453,12 @@ button{cursor:pointer}
         <div class="panel-body">
           <div class="meta-grid">
             <div>
+              <div class="meta-label">Operation</div>
+              <select class="field" id="editorOperation">
+                <option value="">No operation</option>
+              </select>
+            </div>
+            <div>
               <div class="meta-label">Type</div>
               <select class="field" id="editorType">
                 <option value="research-note">Research Note</option>
@@ -424,18 +494,27 @@ button{cursor:pointer}
               </select>
             </div>
             <div>
-              <div class="meta-label">Visibility</div>
-              <select class="field" id="editorTlp">
-                <option value="team">Team</option>
-                <option value="amber">Amber</option>
-                <option value="green">Green</option>
-                <option value="white">White</option>
-              </select>
-            </div>
-            <div>
               <div class="meta-label">Tags</div>
               <input class="field" id="editorTags" type="text" placeholder="comma, separated, tags">
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="meta-card">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Discussion</div>
+            <div class="panel-sub">Threaded comments and review notes.</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <textarea class="field" id="commentInput" rows="4" placeholder="Leave a comment or review note"></textarea>
+          <div class="btn-row" style="margin-top:10px">
+            <button class="btn green" onclick="addComment()">Post Comment</button>
+          </div>
+          <div id="commentsPanel" style="margin-top:14px">
+            <div class="subtle" style="font-size:12px;color:var(--text-dim)">Open a note to discuss it.</div>
           </div>
         </div>
       </section>
@@ -449,6 +528,18 @@ button{cursor:pointer}
         </div>
         <div class="panel-body" id="backlinksPanel">
           <div class="subtle" style="font-size:12px;color:var(--text-dim)">Open a note to see backlinks.</div>
+        </div>
+      </section>
+
+      <section class="meta-card">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Version History</div>
+            <div class="panel-sub">Snapshot trail for this note.</div>
+          </div>
+        </div>
+        <div class="panel-body" id="historyPanel">
+          <div class="subtle" style="font-size:12px;color:var(--text-dim)">Open a note to see revision history.</div>
         </div>
       </section>
     </div>
@@ -467,6 +558,19 @@ let mode = 'preview';
 let pendingReviewAction = null;
 let bookmarkedNotes = new Set();
 let bookmarkIdMap = {};
+let publishFolders = [];
+let operations = [];
+let noteHistory = [];
+let activeHistoryRevision = null;
+let noteComments = [];
+let autosaveTimer = null;
+let autosaveDirty = false;
+let autosaveInFlight = false;
+let autosaveQueued = false;
+let lastServerVersion = null;
+let lastSavedSignature = '';
+let conflictSnapshot = null;
+let suppressDraftRestoreKey = null;
 
 function esc(s){
   return String(s ?? '')
@@ -515,6 +619,7 @@ async function ensureSession(){
     document.getElementById('sessionBadge').textContent = user.is_admin ? 'admin session active' : 'team session active';
     if(user.is_admin){
       document.getElementById('adminFolderBtn').classList.remove('hidden');
+      document.getElementById('adminPublishFolderBtn').classList.remove('hidden');
     }
     return true;
   }catch(_){
@@ -538,6 +643,58 @@ function wordStats(text){
   return { words, minutes: Math.max(1, Math.ceil(words / 220)) };
 }
 
+function setSaveStatus(message){
+  document.getElementById('saveStatus').textContent = message;
+}
+
+function currentVersionStamp(note){
+  return note ? (note.updated_at || note.created_at || null) : null;
+}
+
+function draftStorageKey(noteId = null){
+  const resolved = noteId ?? (currentNote && currentNote.id ? currentNote.id : 'new');
+  return `dc_note_draft_${resolved}`;
+}
+
+function draftSignature(draft){
+  return JSON.stringify(draft || {});
+}
+
+function readStoredDraft(noteId = null){
+  try{
+    const raw = localStorage.getItem(draftStorageKey(noteId));
+    return raw ? JSON.parse(raw) : null;
+  }catch(_){
+    localStorage.removeItem(draftStorageKey(noteId));
+    return null;
+  }
+}
+
+function writeStoredDraft(draft, noteId = null){
+  try{
+    localStorage.setItem(draftStorageKey(noteId), JSON.stringify({
+      note_id: noteId ?? (currentNote && currentNote.id) ?? null,
+      saved_at: new Date().toISOString(),
+      draft,
+    }));
+  }catch(_){}
+}
+
+function clearStoredDraft(noteId = null){
+  localStorage.removeItem(draftStorageKey(noteId));
+}
+
+function resetAutosaveState(){
+  if(autosaveTimer){
+    clearTimeout(autosaveTimer);
+    autosaveTimer = null;
+  }
+  autosaveDirty = false;
+  autosaveInFlight = false;
+  autosaveQueued = false;
+  conflictSnapshot = null;
+}
+
 function reviewLabel(status){
   return ({
     draft:'draft',
@@ -546,6 +703,20 @@ function reviewLabel(status){
     approved:'approved',
     published:'published'
   })[status] || 'draft';
+}
+
+function historyEventLabel(eventType){
+  return ({
+    created:'Created',
+    updated:'Saved',
+    submitted_for_review:'Submitted For Review',
+    approved:'Approved',
+    changes_requested:'Changes Requested',
+    reverted_to_draft:'Moved To Draft',
+    published:'Published',
+    unpublished:'Unpublished',
+    restored:'Restored'
+  })[eventType] || 'Snapshot';
 }
 
 function noteStatusChip(note){
@@ -559,12 +730,84 @@ async function loadFolders(){
   renderFolderTree();
 }
 
-async function loadNotes(folderId = null){
-  const url = folderId !== null ? `/api/notes/?folder_id=${folderId}` : '/api/notes/';
-  const res = await authFetch(url);
+async function loadPublishFolders(){
+  const res = await authFetch('/api/notes/publish-folders');
+  publishFolders = res.ok ? await res.json() : [];
+  renderPublishFolderOptions();
+  renderPublishFolderAdminList();
+}
+
+async function loadOperations(){
+  const res = await authFetch('/api/operations/');
+  operations = res.ok ? await res.json() : [];
+  renderOperationOptions();
+}
+
+function renderOperationOptions(){
+  const filter = document.getElementById('operationFilter');
+  const editor = document.getElementById('editorOperation');
+  const options = ['<option value="">No operation</option>']
+    .concat(operations.map((operation) => `<option value="${operation.id}">${esc(operation.name)}</option>`));
+  if(filter){
+    filter.innerHTML = '<option value="">All operations</option>' + operations.map((operation) => `<option value="${operation.id}">${esc(operation.name)}</option>`).join('');
+  }
+  if(editor){
+    editor.innerHTML = options.join('');
+  }
+}
+
+function renderPublishFolderOptions(){
+  const select = document.getElementById('publishFolderSelect');
+  if(!select) return;
+  if(!publishFolders.length){
+    select.innerHTML = '<option value="">No publish folders available</option>';
+    return;
+  }
+  select.innerHTML = '<option value="">Select publish folder</option>' + publishFolders.map((folder) => `<option value="${folder.id}">${esc(folder.name)}</option>`).join('');
+}
+
+function renderPublishFolderAdminList(){
+  const list = document.getElementById('publishFolderList');
+  if(!list) return;
+  if(!publishFolders.length){
+    list.innerHTML = '<div class="subtle" style="font-size:12px;color:var(--text-dim)">No publish folders yet.</div>';
+    return;
+  }
+  list.innerHTML = publishFolders.map((folder) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:14px;background:rgba(10,19,28,.72)">
+      <strong style="color:var(--white);font-size:13px">${esc(folder.name)}</strong>
+      <button class="btn red" onclick="deletePublishFolder(${folder.id})">Delete</button>
+    </div>
+  `).join('');
+}
+
+async function loadNotes(){
+  const res = await authFetch('/api/notes/');
   notes = res.ok ? await res.json() : [];
   renderFolderTree();
   renderNoteList();
+}
+
+async function loadNoteHistory(noteId){
+  if(!noteId){
+    noteHistory = [];
+    renderNoteHistory();
+    return;
+  }
+  const res = await authFetch(`/api/notes/${noteId}/history`);
+  noteHistory = res.ok ? await res.json() : [];
+  renderNoteHistory();
+}
+
+async function loadNoteComments(noteId){
+  if(!noteId){
+    noteComments = [];
+    renderComments();
+    return;
+  }
+  const res = await authFetch(`/api/notes/${noteId}/comments`);
+  noteComments = res.ok ? await res.json() : [];
+  renderComments();
 }
 
 function renderFolderTree(){
@@ -591,9 +834,12 @@ function renderFolderTree(){
 
 function getFilteredNotes(){
   const query = document.getElementById('globalSearch').value.trim().toLowerCase();
+  const operationId = document.getElementById('operationFilter').value;
   const phase = document.getElementById('phaseFilter').value;
   const severity = document.getElementById('severityFilter').value;
   return notes.filter((note) => {
+    if(currentFolder !== null && note.folder_id !== currentFolder) return false;
+    if(operationId && String(note.operation_id || '') !== String(operationId)) return false;
     const haystack = [note.title, note.content, note.author_handle, note.target_name, ...(note.tags || [])].join(' ').toLowerCase();
     if(query && !haystack.includes(query)) return false;
     if(phase && note.research_phase !== phase) return false;
@@ -621,7 +867,7 @@ function renderNoteList(){
       </div>
       <div class="btn-row" style="margin-top:10px;justify-content:space-between">
         ${noteStatusChip(note)}
-        <div class="note-meta">${esc(note.target_name || 'no target')}</div>
+        <div class="note-meta">${esc(note.operation_name || note.target_name || 'no operation')}</div>
       </div>
     </article>
   `).join('');
@@ -633,14 +879,21 @@ function hideBlank(){
 }
 
 function showBlank(){
+  resetAutosaveState();
   currentNote = null;
   isNew = false;
+  noteComments = [];
+  noteHistory = [];
+  activeHistoryRevision = null;
   document.getElementById('blankState').classList.remove('hidden');
   document.getElementById('noteShell').classList.add('hidden');
   document.getElementById('workspaceHeading').textContent = 'Shared notes for the whole team.';
   document.getElementById('workspaceSubheading').textContent = 'Open a note to read it, then switch to edit if you need to change it. Admin review and publishing actions appear only when relevant.';
   document.getElementById('reviewBar').classList.remove('visible');
+  document.getElementById('commentsPanel').innerHTML = '<div class="subtle" style="font-size:12px;color:var(--text-dim)">Open a note to discuss it.</div>';
   document.getElementById('backlinksPanel').innerHTML = '<div class="subtle" style="font-size:12px;color:var(--text-dim)">Open a note to see backlinks.</div>';
+  document.getElementById('historyPanel').innerHTML = '<div class="subtle" style="font-size:12px;color:var(--text-dim)">Open a note to see revision history.</div>';
+  setSaveStatus('Not saved yet');
 }
 
 function setMode(next){
@@ -656,13 +909,57 @@ function currentDraft(){
     title: document.getElementById('editorTitle').value.trim(),
     content: document.getElementById('editorContent').value,
     tags: document.getElementById('editorTags').value.trim(),
-    folder_id: currentFolder,
+    folder_id: isNew ? currentFolder : (currentNote && typeof currentNote.folder_id !== 'undefined' ? currentNote.folder_id : currentFolder),
+    operation_id: document.getElementById('editorOperation').value ? Number(document.getElementById('editorOperation').value) : null,
     note_type: document.getElementById('editorType').value,
     research_phase: document.getElementById('editorPhase').value,
     target_name: document.getElementById('editorTarget').value.trim(),
     severity: document.getElementById('editorSeverity').value,
-    tlp: document.getElementById('editorTlp').value,
+    tlp: 'team',
   };
+}
+
+function applyDraftToEditor(draft){
+  document.getElementById('editorTitle').value = draft.title || '';
+  document.getElementById('editorContent').value = draft.content || '';
+  document.getElementById('editorOperation').value = draft.operation_id ? String(draft.operation_id) : '';
+  document.getElementById('editorType').value = draft.note_type || 'research-note';
+  document.getElementById('editorPhase').value = draft.research_phase || 'triage';
+  document.getElementById('editorTarget').value = draft.target_name || '';
+  document.getElementById('editorSeverity').value = draft.severity || 'info';
+  document.getElementById('editorTags').value = draft.tags || '';
+}
+
+function syncDraftSignature(){
+  lastSavedSignature = draftSignature(currentDraft());
+}
+
+function maybeRestoreStoredDraft(note){
+  const noteId = note && note.id ? note.id : null;
+  const key = draftStorageKey(noteId);
+  if(suppressDraftRestoreKey === key){
+    suppressDraftRestoreKey = null;
+    return;
+  }
+  const stored = readStoredDraft(noteId);
+  if(!stored || !stored.draft) return;
+  if(draftSignature(stored.draft) === lastSavedSignature){
+    clearStoredDraft(noteId);
+    return;
+  }
+  const targetLabel = noteId ? `"${note.title || 'Untitled'}"` : 'your new note';
+  const when = stored.saved_at ? ` from ${new Date(stored.saved_at).toLocaleString()}` : '';
+  if(confirm(`Restore an unsaved local draft for ${targetLabel}${when}?`)){
+    applyDraftToEditor(stored.draft);
+    autosaveDirty = true;
+    renderMarkdown();
+    updateStats();
+    syncDraftPreviewState();
+    setMode('edit');
+    setSaveStatus('Recovered local draft');
+  }else{
+    clearStoredDraft(noteId);
+  }
 }
 
 function buildTitleMap(){
@@ -696,8 +993,36 @@ function updateStats(){
   document.getElementById('editorStats').textContent = `${stats.words} words · ${stats.minutes} min read`;
 }
 
+function syncDraftPreviewState(){
+  if(currentNote){
+    currentNote = {
+      ...currentNote,
+      ...currentDraft(),
+    };
+    syncStatusChips(currentNote);
+  }
+}
+
+function markDirty(){
+  autosaveDirty = true;
+  writeStoredDraft(currentDraft());
+  setSaveStatus(conflictSnapshot ? 'Conflict detected' : 'Unsaved changes');
+  renderMarkdown();
+  updateStats();
+  syncDraftPreviewState();
+  scheduleAutosave();
+}
+
+function scheduleAutosave(){
+  if(conflictSnapshot) return;
+  if(autosaveTimer) clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(() => {
+    saveNote({ autosave:true });
+  }, 1400);
+}
+
 function syncEditable(note, canEdit){
-  ['editorTitle','editorContent','editorType','editorPhase','editorTarget','editorSeverity','editorTlp','editorTags'].forEach((id) => {
+  ['editorTitle','editorContent','editorOperation','editorType','editorPhase','editorTarget','editorSeverity','editorTags'].forEach((id) => {
     document.getElementById(id).disabled = !canEdit;
   });
   document.getElementById('saveBtn').style.display = canEdit ? 'inline-flex' : 'none';
@@ -749,36 +1074,113 @@ function syncReviewBar(note, canEdit){
   bar.classList.toggle('visible', btns.length > 0 || !!note.review_notes || status !== 'draft');
 }
 
+function renderNoteHistory(){
+  const panel = document.getElementById('historyPanel');
+  if(!currentNote || !currentNote.id){
+    panel.innerHTML = '<div class="subtle" style="font-size:12px;color:var(--text-dim)">Open a note to see revision history.</div>';
+    return;
+  }
+  if(!noteHistory.length){
+    panel.innerHTML = '<div class="subtle" style="font-size:12px;color:var(--text-dim)">No revisions yet.</div>';
+    return;
+  }
+  const canRestore = !!(user && (user.is_admin || currentNote.author_id === user.id));
+  panel.innerHTML = noteHistory.slice(0, 8).map((revision) => `
+    <div class="history-item">
+      <div class="history-top">
+        <div class="history-title">${esc(historyEventLabel(revision.event_type))}</div>
+        <div class="meta-label" style="margin:0">${esc(timeAgo(revision.created_at))}</div>
+      </div>
+      <div class="history-meta">
+        <div>${esc(revision.actor_handle || 'system')} · rev ${revision.id}</div>
+        <div>${esc(revision.title || 'Untitled')}</div>
+      </div>
+      <div class="history-actions">
+        <button class="btn" onclick="viewRevision(${revision.id})">View Diff</button>
+        ${canRestore ? `<button class="btn gold" onclick="restoreRevision(${revision.id})">Restore</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderCommentNode(comment, canModerate){
+  const replies = noteComments.filter((reply) => reply.parent_id === comment.id);
+  return `
+    <div class="comment-item ${comment.resolved ? 'resolved' : ''}">
+      <div class="comment-head">
+        <div class="history-title">${esc(comment.author_handle || 'unknown')}</div>
+        <div class="meta-label" style="margin:0">${esc(timeAgo(comment.updated_at || comment.created_at))}</div>
+      </div>
+      <div class="comment-body">${esc(comment.content || '')}</div>
+      <div class="history-meta" style="margin-top:8px">
+        ${comment.resolved ? `Resolved by ${esc(comment.resolved_by || 'unknown')} ${esc(timeAgo(comment.resolved_at))}` : 'Open discussion'}
+      </div>
+      <div class="comment-actions">
+        <button class="btn" onclick="replyToComment(${comment.id})">Reply</button>
+        ${canModerate ? `<button class="btn ${comment.resolved ? '' : 'green'}" onclick="toggleCommentResolved(${comment.id}, ${comment.resolved ? 'false' : 'true'})">${comment.resolved ? 'Reopen' : 'Resolve'}</button>` : ''}
+        ${(user && (user.is_admin || user.id === comment.author_id || (currentNote && currentNote.author_id === user.id))) ? `<button class="btn red" onclick="deleteComment(${comment.id})">Delete</button>` : ''}
+      </div>
+      ${replies.length ? `<div class="comment-reply">${replies.map((reply) => renderCommentNode(reply, canModerate)).join('')}</div>` : ''}
+    </div>
+  `;
+}
+
+function renderComments(){
+  const panel = document.getElementById('commentsPanel');
+  if(!currentNote || !currentNote.id){
+    panel.innerHTML = '<div class="subtle" style="font-size:12px;color:var(--text-dim)">Open a note to discuss it.</div>';
+    return;
+  }
+  const roots = noteComments.filter((comment) => !comment.parent_id);
+  const canModerate = !!(user && currentNote && (user.is_admin || currentNote.author_id === user.id));
+  if(!roots.length){
+    panel.innerHTML = '<div class="subtle" style="font-size:12px;color:var(--text-dim)">No comments yet.</div>';
+    return;
+  }
+  panel.innerHTML = roots.map((comment) => renderCommentNode(comment, canModerate)).join('');
+}
+
 function populateNote(note){
   hideBlank();
+  resetAutosaveState();
   const canEdit = !!(user && (user.is_admin || note.author_id === user.id));
+  const nextMode = canEdit && mode === 'edit' ? 'edit' : 'preview';
   document.getElementById('workspaceHeading').textContent = note.title;
-  document.getElementById('workspaceSubheading').textContent = `by ${note.author_handle} · ${timeAgo(note.updated_at || note.created_at)} · ${note.note_type}`;
-  document.getElementById('editorTitle').value = note.title || '';
-  document.getElementById('editorContent').value = note.content || '';
-  document.getElementById('editorType').value = note.note_type || 'research-note';
-  document.getElementById('editorPhase').value = note.research_phase || 'triage';
-  document.getElementById('editorTarget').value = note.target_name || '';
-  document.getElementById('editorSeverity').value = note.severity || 'info';
-  document.getElementById('editorTlp').value = note.tlp || 'team';
-  document.getElementById('editorTags').value = Array.isArray(note.tags) ? note.tags.join(', ') : '';
+  document.getElementById('workspaceSubheading').textContent = `by ${note.author_handle} · ${timeAgo(note.updated_at || note.created_at)} · ${note.operation_name || note.note_type}`;
+  applyDraftToEditor({
+    title: note.title || '',
+    content: note.content || '',
+    operation_id: note.operation_id,
+    note_type: note.note_type || 'research-note',
+    research_phase: note.research_phase || 'triage',
+    target_name: note.target_name || '',
+    severity: note.severity || 'info',
+    tags: Array.isArray(note.tags) ? note.tags.join(', ') : '',
+  });
   syncEditable(note, canEdit);
   syncStatusChips(note);
   syncReviewBar(note, canEdit);
   renderBacklinks();
   renderMarkdown();
   updateStats();
-  setMode(canEdit ? 'preview' : 'preview');
+  lastServerVersion = currentVersionStamp(note);
+  syncDraftSignature();
+  setSaveStatus(note.id ? `Saved ${timeAgo(lastServerVersion)}` : 'Not saved yet');
+  setMode(nextMode);
+  maybeRestoreStoredDraft(note);
 }
 
 function newNote(){
+  resetAutosaveState();
   currentNote = null;
   isNew = true;
+  noteComments = [];
   hideBlank();
   const base = {
     title:'',
     content:'',
     note_type:'research-note',
+    operation_id:null,
     research_phase:'triage',
     target_name:'',
     severity:'info',
@@ -793,46 +1195,140 @@ function newNote(){
   setMode('edit');
   document.getElementById('workspaceHeading').textContent = 'New note';
   document.getElementById('workspaceSubheading').textContent = 'A normal shared wiki note. Review and publication are optional later steps.';
-  document.getElementById('saveStatus').textContent = 'Not saved yet';
+  lastServerVersion = null;
+  syncDraftSignature();
+  setSaveStatus('Not saved yet');
+  noteHistory = [];
+  renderNoteHistory();
   document.getElementById('editorTitle').focus();
 }
 
 function selectFolder(folderId){
   currentFolder = folderId;
   renderFolderTree();
+  renderNoteList();
   showBlank();
-  loadNotes(folderId);
 }
 
 async function openNote(id){
+  resetAutosaveState();
   const res = await authFetch(`/api/notes/${id}`);
   if(!res.ok) return;
   currentNote = await res.json();
   isNew = false;
+  mode = 'preview';
   renderNoteList();
   populateNote(currentNote);
+  await loadNoteComments(currentNote.id);
+  await loadNoteHistory(currentNote.id);
 }
 
-async function saveNote(){
+function closeConflictModal(){
+  document.getElementById('conflictModal').classList.add('hidden');
+}
+
+function openConflictModal(){
+  const serverNote = conflictSnapshot && conflictSnapshot.server;
+  const message = serverNote
+    ? `This note was updated by ${serverNote.author_handle || 'someone else'} ${timeAgo(serverNote.updated_at || serverNote.created_at)}. Your local draft is still preserved.`
+    : 'This note changed on the server while you were editing it. Your local draft is still preserved.';
+  document.getElementById('conflictModalText').textContent = message;
+  document.getElementById('conflictModal').classList.remove('hidden');
+}
+
+function keepLocalConflictDraft(){
+  closeConflictModal();
+  setMode('edit');
+  setSaveStatus('Conflict detected');
+}
+
+function loadServerConflictVersion(){
+  if(!conflictSnapshot || !conflictSnapshot.server) return;
+  suppressDraftRestoreKey = draftStorageKey(conflictSnapshot.server.id || null);
+  currentNote = conflictSnapshot.server;
+  isNew = false;
+  populateNote(currentNote);
+  renderNoteList();
+  loadNoteComments(currentNote.id);
+  loadNoteHistory(currentNote.id);
+  closeConflictModal();
+}
+
+async function saveNote(options = {}){
+  const { autosave = false } = options;
+  if(autosaveInFlight){
+    autosaveQueued = true;
+    return false;
+  }
   const payload = currentDraft();
   if(!payload.title){
-    alert('Please add a title.');
-    return;
+    if(!autosave){
+      alert('Please add a title.');
+    }else{
+      setSaveStatus('Add a title to start autosave');
+    }
+    return false;
   }
-  const res = isNew
-    ? await authFetch('/api/notes/', { method:'POST', body:JSON.stringify(payload) })
-    : await authFetch(`/api/notes/${currentNote.id}`, { method:'PATCH', body:JSON.stringify(payload) });
+  if(!isNew){
+    payload.base_updated_at = lastServerVersion || currentVersionStamp(currentNote);
+  }
+  if(autosave){
+    setSaveStatus('Autosaving...');
+  }
+  autosaveInFlight = true;
+  let res;
+  try{
+    res = isNew
+      ? await authFetch('/api/notes/', { method:'POST', body:JSON.stringify(payload) })
+      : await authFetch(`/api/notes/${currentNote.id}`, { method:'PATCH', body:JSON.stringify(payload) });
+  }catch(_){
+    autosaveInFlight = false;
+    setSaveStatus(autosave ? 'Autosave failed' : 'Save failed');
+    if(!autosave){
+      alert('Failed to reach the server.');
+    }
+    return false;
+  }
+  autosaveInFlight = false;
   if(!res.ok){
     const err = await res.json().catch(() => ({}));
-    alert(err.detail || 'Failed to save note.');
-    return;
+    if(res.status === 409){
+      conflictSnapshot = {
+        local: payload,
+        server: err.detail && typeof err.detail === 'object' ? err.detail.current_note : null,
+      };
+      writeStoredDraft(payload, currentNote && currentNote.id ? currentNote.id : null);
+      setSaveStatus('Conflict detected');
+      openConflictModal();
+      return false;
+    }
+    if(!autosave){
+      alert((err.detail && err.detail.message) || err.detail || 'Failed to save note.');
+    }else{
+      setSaveStatus('Autosave failed');
+    }
+    return false;
   }
   currentNote = await res.json();
   isNew = false;
-  document.getElementById('saveStatus').textContent = 'Saved just now';
-  await loadNotes(currentFolder);
+  conflictSnapshot = null;
+  lastServerVersion = currentVersionStamp(currentNote);
+  await loadNotes();
   renderNoteList();
+  suppressDraftRestoreKey = draftStorageKey(currentNote.id);
+  clearStoredDraft(currentNote.id);
+  clearStoredDraft('new');
   populateNote(currentNote);
+  await loadNoteComments(currentNote.id);
+  autosaveDirty = false;
+  syncDraftSignature();
+  setSaveStatus(autosave ? 'Autosaved just now' : 'Saved just now');
+  await loadNoteHistory(currentNote.id);
+  if(autosaveQueued){
+    autosaveQueued = false;
+    scheduleAutosave();
+  }
+  return true;
 }
 
 async function deleteNote(){
@@ -841,8 +1337,119 @@ async function deleteNote(){
   const res = await authFetch(`/api/notes/${currentNote.id}`, { method:'DELETE' });
   if(res.ok){
     showBlank();
-    await loadNotes(currentFolder);
+    await loadNotes();
   }
+}
+
+async function addComment(parentId = null, contentOverride = null){
+  if(!currentNote || !currentNote.id) return;
+  const input = document.getElementById('commentInput');
+  const content = (contentOverride ?? input.value).trim();
+  if(!content) return;
+  const res = await authFetch(`/api/notes/${currentNote.id}/comments`, {
+    method:'POST',
+    body:JSON.stringify({ content, parent_id: parentId || null })
+  });
+  if(!res.ok){
+    const err = await res.json().catch(() => ({}));
+    alert(err.detail || 'Failed to add comment.');
+    return;
+  }
+  if(!parentId){
+    input.value = '';
+  }
+  await loadNoteComments(currentNote.id);
+}
+
+async function replyToComment(commentId){
+  const content = prompt('Reply to this comment:');
+  if(!content || !content.trim()) return;
+  await addComment(commentId, content.trim());
+}
+
+async function toggleCommentResolved(commentId, resolved){
+  if(!currentNote || !currentNote.id) return;
+  const res = await authFetch(`/api/notes/${currentNote.id}/comments/${commentId}`, {
+    method:'PATCH',
+    body:JSON.stringify({ resolved: !!resolved })
+  });
+  if(!res.ok){
+    const err = await res.json().catch(() => ({}));
+    alert(err.detail || 'Failed to update comment.');
+    return;
+  }
+  await loadNoteComments(currentNote.id);
+}
+
+async function deleteComment(commentId){
+  if(!currentNote || !currentNote.id) return;
+  if(!confirm('Delete this comment thread?')) return;
+  const res = await authFetch(`/api/notes/${currentNote.id}/comments/${commentId}`, { method:'DELETE' });
+  if(!res.ok && res.status !== 204){
+    const err = await res.json().catch(() => ({}));
+    alert(err.detail || 'Failed to delete comment.');
+    return;
+  }
+  await loadNoteComments(currentNote.id);
+}
+
+function closeHistoryModal(){
+  activeHistoryRevision = null;
+  document.getElementById('historyModal').classList.add('hidden');
+}
+
+async function viewRevision(revisionId){
+  if(!currentNote || !currentNote.id) return;
+  const [revisionRes, diffRes] = await Promise.all([
+    authFetch(`/api/notes/${currentNote.id}/history/${revisionId}`),
+    authFetch(`/api/notes/${currentNote.id}/history/${revisionId}/diff`)
+  ]);
+  if(!revisionRes.ok || !diffRes.ok){
+    alert('Unable to load revision.');
+    return;
+  }
+  const revision = await revisionRes.json();
+  const diff = await diffRes.json();
+  activeHistoryRevision = revision;
+  document.getElementById('historyModalTitle').textContent = `${historyEventLabel(revision.event_type)} · Revision ${revision.id}`;
+  document.getElementById('historyModalMeta').textContent = `${revision.actor_handle || 'system'} · ${new Date(revision.created_at).toLocaleString()}`;
+  document.getElementById('historyModalBody').innerHTML = `
+    <div class="history-item" style="margin-bottom:0">
+      <div class="history-meta">
+        <div><strong style="color:var(--white)">Snapshot Title</strong>: ${esc(revision.title || 'Untitled')}</div>
+        <div><strong style="color:var(--white)">Review State</strong>: ${esc(reviewLabel(revision.review_status))}</div>
+        <div><strong style="color:var(--white)">Public State</strong>: ${revision.published ? 'published' : 'internal only'}</div>
+        <div><strong style="color:var(--white)">Reason</strong>: ${esc(revision.reason || 'No extra notes')}</div>
+      </div>
+      <div class="diff-block">${esc(diff.diff || 'Initial revision. No previous diff available.')}</div>
+    </div>
+  `;
+  const canRestore = !!(user && (user.is_admin || currentNote.author_id === user.id));
+  document.getElementById('historyRestoreBtn').classList.toggle('hidden', !canRestore);
+  document.getElementById('historyModal').classList.remove('hidden');
+}
+
+async function restoreRevision(revisionId){
+  activeHistoryRevision = { id: revisionId };
+  await restoreActiveRevision();
+}
+
+async function restoreActiveRevision(){
+  if(!currentNote || !currentNote.id || !activeHistoryRevision || !activeHistoryRevision.id) return;
+  if(!confirm(`Restore revision ${activeHistoryRevision.id}? The current note state will be replaced.`)) return;
+  const res = await authFetch(`/api/notes/${currentNote.id}/history/${activeHistoryRevision.id}/restore`, { method:'POST' });
+  if(!res.ok){
+    const err = await res.json().catch(() => ({}));
+    alert(err.detail || 'Failed to restore revision.');
+    return;
+  }
+  currentNote = await res.json();
+  closeHistoryModal();
+  await loadNotes();
+  suppressDraftRestoreKey = draftStorageKey(currentNote.id);
+  clearStoredDraft(currentNote.id);
+  populateNote(currentNote);
+  await loadNoteHistory(currentNote.id);
 }
 
 function slugify(value){
@@ -851,7 +1458,10 @@ function slugify(value){
 
 function showPublishModal(){
   if(!currentNote || !user || !user.is_admin) return;
+  renderPublishFolderOptions();
   document.getElementById('publishTitle').value = currentNote.public_title || currentNote.title || '';
+  document.getElementById('publishBy').value = currentNote.published_by || currentNote.author_handle || '';
+  document.getElementById('publishFolderSelect').value = currentNote.publish_folder_id ? String(currentNote.publish_folder_id) : '';
   document.getElementById('publishSlug').value = currentNote.public_slug || slugify(currentNote.title);
   document.getElementById('unpublishBtn').classList.toggle('hidden', !currentNote.published);
   document.getElementById('publishModal').classList.remove('hidden');
@@ -863,10 +1473,17 @@ function closePublishModal(){
 
 async function publishCurrentNote(){
   if(!currentNote) return;
+  const publishFolderId = document.getElementById('publishFolderSelect').value;
+  if(!publishFolderId){
+    alert('Select a publish folder.');
+    return;
+  }
   const res = await authFetch(`/api/notes/${currentNote.id}/publish`, {
     method:'POST',
     body:JSON.stringify({
       public_title: document.getElementById('publishTitle').value.trim() || undefined,
+      published_by: document.getElementById('publishBy').value.trim() || undefined,
+      publish_folder_id: Number(publishFolderId),
       slug: document.getElementById('publishSlug').value.trim() || undefined,
     })
   });
@@ -877,8 +1494,11 @@ async function publishCurrentNote(){
   }
   currentNote = await res.json();
   closePublishModal();
-  await loadNotes(currentFolder);
+  await loadNotes();
+  suppressDraftRestoreKey = draftStorageKey(currentNote.id);
+  clearStoredDraft(currentNote.id);
   populateNote(currentNote);
+  await loadNoteHistory(currentNote.id);
 }
 
 async function unpublishCurrentNote(){
@@ -891,8 +1511,11 @@ async function unpublishCurrentNote(){
   }
   currentNote = await res.json();
   closePublishModal();
-  await loadNotes(currentFolder);
+  await loadNotes();
+  suppressDraftRestoreKey = draftStorageKey(currentNote.id);
+  clearStoredDraft(currentNote.id);
   populateNote(currentNote);
+  await loadNoteHistory(currentNote.id);
 }
 
 function showReviewModal(action){
@@ -928,13 +1551,17 @@ async function confirmReviewAction(){
   }
   currentNote = await res.json();
   closeReviewModal();
-  await loadNotes(currentFolder);
+  await loadNotes();
+  suppressDraftRestoreKey = draftStorageKey(currentNote.id);
+  clearStoredDraft(currentNote.id);
   populateNote(currentNote);
+  await loadNoteHistory(currentNote.id);
 }
 
 async function submitForReview(){
   if(!currentNote || !currentNote.id){
-    await saveNote();
+    const saved = await saveNote();
+    if(!saved) return;
   }
   if(!currentNote || !currentNote.id) return;
   const res = await authFetch(`/api/notes/${currentNote.id}/submit-review`, { method:'POST' });
@@ -944,8 +1571,11 @@ async function submitForReview(){
     return;
   }
   currentNote = await res.json();
-  await loadNotes(currentFolder);
+  await loadNotes();
+  suppressDraftRestoreKey = draftStorageKey(currentNote.id);
+  clearStoredDraft(currentNote.id);
   populateNote(currentNote);
+  await loadNoteHistory(currentNote.id);
 }
 
 async function revertToDraft(){
@@ -957,8 +1587,11 @@ async function revertToDraft(){
     return;
   }
   currentNote = await res.json();
-  await loadNotes(currentFolder);
+  await loadNotes();
+  suppressDraftRestoreKey = draftStorageKey(currentNote.id);
+  clearStoredDraft(currentNote.id);
   populateNote(currentNote);
+  await loadNoteHistory(currentNote.id);
 }
 
 function renderBacklinks(){
@@ -991,6 +1624,16 @@ function closeFolderModal(){
   document.getElementById('folderModal').classList.add('hidden');
 }
 
+function showPublishFolderModal(){
+  document.getElementById('publishFolderModal').classList.remove('hidden');
+  document.getElementById('publishFolderNameInput').value = '';
+  renderPublishFolderAdminList();
+}
+
+function closePublishFolderModal(){
+  document.getElementById('publishFolderModal').classList.add('hidden');
+}
+
 async function createFolder(){
   const name = document.getElementById('folderNameInput').value.trim();
   if(!name) return;
@@ -1001,6 +1644,27 @@ async function createFolder(){
   }
 }
 
+async function createPublishFolder(){
+  const name = document.getElementById('publishFolderNameInput').value.trim();
+  if(!name) return;
+  const res = await authFetch('/api/notes/publish-folders', { method:'POST', body:JSON.stringify({ name }) });
+  if(!res.ok){
+    const err = await res.json().catch(() => ({}));
+    alert(err.detail || 'Failed to create publish folder.');
+    return;
+  }
+  document.getElementById('publishFolderNameInput').value = '';
+  await loadPublishFolders();
+}
+
+async function deletePublishFolder(folderId){
+  if(!confirm('Delete this publish folder? Published notes will lose the folder label.')) return;
+  const res = await authFetch(`/api/notes/publish-folders/${folderId}`, { method:'DELETE' });
+  if(res.ok){
+    await loadPublishFolders();
+  }
+}
+
 async function deleteFolder(event, folderId){
   event.stopPropagation();
   if(!confirm('Delete this folder? Notes inside will be moved to root.')) return;
@@ -1008,7 +1672,7 @@ async function deleteFolder(event, folderId){
   if(res.ok){
     if(currentFolder === folderId) currentFolder = null;
     await loadFolders();
-    await loadNotes(currentFolder);
+    await loadNotes();
     showBlank();
   }
 }
@@ -1057,26 +1721,22 @@ async function toggleBookmark(btn, noteId){
   }
 }
 
-['editorTitle','editorContent','editorType','editorPhase','editorTarget','editorSeverity','editorTlp','editorTags'].forEach((id) => {
-  document.addEventListener('input', (event) => {
-    if(event.target && event.target.id === id){
-      document.getElementById('saveStatus').textContent = 'Unsaved changes';
-      renderMarkdown();
-      updateStats();
-      if(currentNote){
-        currentNote = {
-          ...currentNote,
-          ...currentDraft(),
-        };
-        syncStatusChips(currentNote);
-      }
-    }
+['editorTitle','editorContent','editorOperation','editorType','editorPhase','editorTarget','editorSeverity','editorTags'].forEach((id) => {
+  const el = document.getElementById(id);
+  if(!el) return;
+  ['input','change'].forEach((eventName) => {
+    el.addEventListener(eventName, markDirty);
   });
 });
 
 document.getElementById('folderNameInput').addEventListener('keydown', (event) => {
   if(event.key === 'Enter') createFolder();
   if(event.key === 'Escape') closeFolderModal();
+});
+
+document.getElementById('publishFolderNameInput').addEventListener('keydown', (event) => {
+  if(event.key === 'Enter') createPublishFolder();
+  if(event.key === 'Escape') closePublishFolderModal();
 });
 
 document.addEventListener('keydown', (event) => {
@@ -1086,8 +1746,18 @@ document.addEventListener('keydown', (event) => {
   }
   if(event.key === 'Escape'){
     closeFolderModal();
+    closePublishFolderModal();
     closeReviewModal();
     closePublishModal();
+    closeHistoryModal();
+    closeConflictModal();
+  }
+});
+
+window.addEventListener('beforeunload', (event) => {
+  if(autosaveDirty || autosaveInFlight || conflictSnapshot){
+    event.preventDefault();
+    event.returnValue = '';
   }
 });
 
@@ -1097,7 +1767,19 @@ document.addEventListener('keydown', (event) => {
   if(!ok) return;
   await loadBookmarks();
   await loadFolders();
-  await loadNotes(null);
+  await loadOperations();
+  await loadPublishFolders();
+  await loadNotes();
+  const noteParam = new URLSearchParams(window.location.search).get('note_id');
+  const operationParam = new URLSearchParams(window.location.search).get('operation_id');
+  if(operationParam){
+    document.getElementById('operationFilter').value = operationParam;
+    renderNoteList();
+  }
+  if(noteParam){
+    await openNote(Number(noteParam));
+    return;
+  }
   showBlank();
 })();
 </script>

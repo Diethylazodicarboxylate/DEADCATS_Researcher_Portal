@@ -6,15 +6,18 @@ from contextlib import asynccontextmanager
 import os as _os
 from sqlalchemy import text
 
-from core.config import FRONTEND_ORIGINS, ADMIN_HANDLE, ADMIN_PASSWORD
+from core.config import FRONTEND_ORIGINS, ADMIN_HANDLE, ADMIN_PASSWORD, COOKIE_SECURE
 from core.database import engine, Base
 from core.security import hash_password
 from models.user import User
-from routers import auth, users, notes, achievements, announcements, iocs, vault, bookmarks, whiteboard, ctf, pwnbox, ai_chat, research_adventure
+from models.note import PublishFolder
+import models.operation
+from routers import auth, users, notes, operations, achievements, announcements, iocs, vault, bookmarks, whiteboard, ctf, pwnbox, ai_chat, research_adventure
 import models.bookmark
 import models.goal
 import models.whiteboard_config
 import models.ctf
+import models.note_comment
 import models.chat_message
 import models.research_adventure
 from core.database import get_db
@@ -29,23 +32,46 @@ async def lifespan(app: FastAPI):
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE ctf_events ADD COLUMN IF NOT EXISTS description TEXT"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_status VARCHAR(40) DEFAULT 'available'"))
+        conn.execute(text("ALTER TABLE iocs ADD COLUMN IF NOT EXISTS operation_id INTEGER"))
+        conn.execute(text("ALTER TABLE vault_files ADD COLUMN IF NOT EXISTS operation_id INTEGER"))
+        conn.execute(text("ALTER TABLE operations ADD COLUMN IF NOT EXISTS whiteboard_room_url VARCHAR(500)"))
+        conn.execute(text("ALTER TABLE team_goals ADD COLUMN IF NOT EXISTS operation_id INTEGER"))
         conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS note_type VARCHAR(50) DEFAULT 'research-note'"))
         conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS research_phase VARCHAR(50) DEFAULT 'triage'"))
         conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS target_name VARCHAR(200) DEFAULT ''"))
         conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS severity VARCHAR(30) DEFAULT 'info'"))
         conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS tlp VARCHAR(20) DEFAULT 'team'"))
+        conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS operation_id INTEGER"))
         conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS review_status VARCHAR(30) DEFAULT 'draft'"))
         conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS review_notes TEXT DEFAULT ''"))
         conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS reviewed_by VARCHAR(50) DEFAULT ''"))
         conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP"))
         conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMP"))
         conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS public_title VARCHAR(200)"))
+        conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS published_by VARCHAR(120)"))
+        conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS publish_folder_id INTEGER"))
         conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS public_slug VARCHAR(220)"))
         conn.execute(text("ALTER TABLE notes ADD COLUMN IF NOT EXISTS published_at TIMESTAMP"))
+        conn.execute(text("ALTER TABLE ctf_events ADD COLUMN IF NOT EXISTS operation_id INTEGER"))
 
     from core.database import SessionLocal
     db = SessionLocal()
     try:
+        default_publish_folders = [
+            "WEB Security",
+            "Binary Exploits",
+            "SOC/SIEM",
+            "DFIR",
+            "Mal DEV/Analysis",
+            "HTB",
+            "CTF",
+            "MISC",
+        ]
+        for name in default_publish_folders:
+            if not db.query(PublishFolder).filter(PublishFolder.name == name).first():
+                db.add(PublishFolder(name=name))
+        db.commit()
+
         existing = db.query(User).filter(User.handle == ADMIN_HANDLE).first()
         if not existing:
             admin = User(
@@ -90,6 +116,22 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-Frame-Options"]        = "DENY"
     response.headers["Referrer-Policy"]        = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"]     = "camera=(), microphone=(), geolocation=()"
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self' data: https:; "
+        "connect-src 'self'; "
+        "object-src 'none'; "
+        "base-uri 'self'; "
+        "frame-ancestors 'none'"
+    )
+    forwarded_proto = request.headers.get("x-forwarded-proto", "")
+    if COOKIE_SECURE and (request.url.scheme == "https" or "https" in forwarded_proto.lower()):
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
 
 # ── CORS ─────────────────────────────────────────────────────────
@@ -106,6 +148,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(notes.router)
+app.include_router(operations.router)
 app.include_router(achievements.router)
 app.include_router(announcements.router)
 app.include_router(iocs.router)
@@ -123,15 +166,18 @@ app.include_router(research_adventure.router)
 def get_stats(db = Depends(get_db), _: User = Depends(get_current_user)):
     from models.user import User as UserModel
     from models.note import Note
+    from models.operation import Operation
     from sqlalchemy import func
     from models.ioc import IOC
     total_members = db.query(func.count(UserModel.id)).scalar()
     total_notes   = db.query(func.count(Note.id)).scalar()
     total_iocs    = db.query(func.count(IOC.id)).scalar()
+    total_operations = db.query(func.count(Operation.id)).scalar()
     return {
         "total_members": total_members,
         "total_notes":   total_notes,
         "total_iocs":    total_iocs,
+        "total_operations": total_operations,
     }
 
 @app.get("/api/health")

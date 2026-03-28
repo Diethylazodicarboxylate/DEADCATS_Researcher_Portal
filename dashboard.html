@@ -415,6 +415,47 @@
     </div>
   </div>
 
+  <div class="modal-overlay hidden" id="operationModal">
+    <div class="modal">
+      <div class="modal-title" id="operationModalTitle">Create Operation</div>
+      <div class="modal-row">
+        <label class="modal-label">Operation Name</label>
+        <input class="modal-input" type="text" id="operationName" placeholder="Operation Glass Hydra">
+      </div>
+      <div class="modal-row">
+        <label class="modal-label">Lead Handle</label>
+        <input class="modal-input" type="text" id="operationLead" placeholder="lead researcher">
+      </div>
+      <div class="modal-row">
+        <label class="modal-label">Status</label>
+        <select class="modal-select" id="operationStatus">
+          <option value="active">Active</option>
+          <option value="planning">Planning</option>
+          <option value="on_hold">On Hold</option>
+          <option value="closed">Closed</option>
+          <option value="archived">Archived</option>
+        </select>
+      </div>
+      <div class="modal-row">
+        <label class="modal-label">Priority</label>
+        <select class="modal-select" id="operationPriority">
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+          <option value="high">High</option>
+          <option value="critical">Critical</option>
+        </select>
+      </div>
+      <div class="modal-row">
+        <label class="modal-label">Summary</label>
+        <textarea class="modal-textarea" id="operationSummary" placeholder="Scope, current direction, and what this operation is trying to prove."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn" onclick="closeOperationModal()">Cancel</button>
+        <button class="modal-btn confirm" id="operationConfirmBtn" onclick="submitOperation()">Create</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MAIN -->
   <main class="main">
     <div class="main-inner">
@@ -474,6 +515,19 @@
 
         <div style="display:flex; flex-direction:column; gap:20px;">
 
+          <div class="panel" id="operations-panel">
+            <div class="panel-head">
+              <span class="panel-title"><span class="panel-title-ico">🗂️</span> Active Operations</span>
+              <div style="display:flex;gap:10px;align-items:center">
+                <a class="panel-action" href="operations.html">Open Board</a>
+                <button class="panel-action" id="operationCreateBtn" onclick="openOperationModal()" style="display:none">+ Create</button>
+              </div>
+            </div>
+            <div class="notes-list" id="operations-list">
+              <div style="padding:16px 18px;font-family:var(--mono);font-size:11px;color:var(--text-dim);">Loading operations...</div>
+            </div>
+          </div>
+
           <!-- Recent Notes -->
           <div class="panel">
             <div class="panel-head">
@@ -483,6 +537,25 @@
             <div class="notes-list" id="recent-notes">
               <div style="padding:16px 18px;font-family:var(--mono);font-size:11px;color:var(--text-dim);">Loading
                 notes...</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title"><span class="panel-title-ico">⏱️</span> Activity Timeline</span>
+            </div>
+            <div class="notes-list" id="activity-timeline">
+              <div style="padding:16px 18px;font-family:var(--mono);font-size:11px;color:var(--text-dim);">Loading timeline...</div>
+            </div>
+          </div>
+
+          <div class="panel" id="review-board-panel" style="display:none">
+            <div class="panel-head">
+              <span class="panel-title"><span class="panel-title-ico">✅</span> Review Queue</span>
+              <a href="review-board.html" class="panel-action">Open Board</a>
+            </div>
+            <div class="notes-list" id="review-queue-preview">
+              <div style="padding:16px 18px;font-family:var(--mono);font-size:11px;color:var(--text-dim);">Loading queue...</div>
             </div>
           </div>
 

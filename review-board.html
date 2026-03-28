@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEADCATS // Review Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#071018;--bg2:#0d1822;--surface:#132432;--border:#1d3343;--text:#d7e7f4;--text-dim:#87a0b1;--white:#eef7ff;--cyan:#55d6ff;--gold:#f4b33c;--green:#42d392;--red:#ff667a;--mono:'IBM Plex Mono',monospace;--body:'IBM Plex Sans',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}body{min-height:100vh;font-family:var(--body);color:var(--text);background:radial-gradient(circle at top left, rgba(85,214,255,.12), transparent 28%),linear-gradient(180deg,#071018,#050c12)}
+.top{position:fixed;top:0;left:0;right:0;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;background:rgba(7,16,24,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);z-index:10}
+.brand,.nav-link,.eyebrow,.meta,.chip,.btn{font-family:var(--mono)}.brand,.nav-link{text-decoration:none;color:var(--text-dim);font-size:11px;letter-spacing:.18em;text-transform:uppercase}.brand span{color:var(--gold)}.nav-link:hover{color:var(--text)}
+.layout{max-width:1400px;margin:0 auto;padding:82px 20px 20px}.hero{margin-bottom:18px}.eyebrow{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px}.hero h1{font-size:42px;color:var(--white);letter-spacing:-.05em}.hero p{max-width:900px;font-size:15px;line-height:1.8;color:var(--text-dim);margin-top:10px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.column{border:1px solid var(--border);border-radius:24px;background:linear-gradient(180deg,rgba(19,36,50,.95),rgba(8,16,23,.95));min-height:320px}
+.head{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}.title{font-size:14px;font-weight:700;color:var(--white)}.count{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim)}
+.body{padding:14px;display:grid;gap:10px}.card{padding:14px;border:1px solid var(--border);border-radius:18px;background:rgba(10,19,28,.76)}.card h3{font-size:15px;color:var(--white);margin-bottom:8px}.card p{font-size:13px;color:var(--text-dim);line-height:1.75;margin-bottom:10px}.meta{display:flex;gap:8px;flex-wrap:wrap;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.btn{display:inline-flex;padding:9px 10px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text);text-decoration:none;font-size:10px;letter-spacing:.12em;text-transform:uppercase}.btn.green{color:var(--green);border-color:rgba(66,211,146,.28)}.btn.gold{color:var(--gold);border-color:rgba(244,179,60,.28)}.btn.red{color:var(--red);border-color:rgba(255,102,122,.28)}
+.empty{padding:36px;text-align:center;color:var(--text-dim);border:1px dashed var(--border);border-radius:18px}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="top">
+  <a class="brand" href="index.html">DEAD<span>CATS</span></a>
+  <div style="display:flex;gap:16px">
+    <a class="nav-link" href="dashboard.html">Dashboard</a>
+    <a class="nav-link" href="library.html">Wiki</a>
+  </div>
+</div>
+<div class="layout">
+  <div class="hero">
+    <div class="eyebrow">Admin Workflow</div>
+    <h1>Review Board</h1>
+    <p>One place for admins to work the research publication pipeline: pending review, approved drafts waiting to be exported, and recently published work.</p>
+  </div>
+  <div class="grid">
+    <section class="column">
+      <div class="head"><div class="title">Needs Review</div><div class="count" id="countReview">0 items</div></div>
+      <div class="body" id="queueReview"><div class="empty">Loading...</div></div>
+    </section>
+    <section class="column">
+      <div class="head"><div class="title">Approved Drafts</div><div class="count" id="countApproved">0 items</div></div>
+      <div class="body" id="queueApproved"><div class="empty">Loading...</div></div>
+    </section>
+    <section class="column">
+      <div class="head"><div class="title">Recently Published</div><div class="count" id="countPublished">0 items</div></div>
+      <div class="body" id="queuePublished"><div class="empty">Loading...</div></div>
+    </section>
+  </div>
+</div>
+<script>
+const API='';
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function authFetch(url,opts={}){return fetch(API+url,{...opts,credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json',...(opts.headers||{})}}).then((res)=>{if(res.status===401){localStorage.removeItem('dc_user');window.location.href='login.html';}return res;})}
+function timeAgo(value){if(!value)return'just now';const seconds=(Date.now()-new Date(value))/1000;if(seconds<60)return'just now';if(seconds<3600)return Math.floor(seconds/60)+'m ago';if(seconds<86400)return Math.floor(seconds/3600)+'h ago';return Math.floor(seconds/86400)+'d ago'}
+async function ensureAdmin(){const res=await authFetch('/api/auth/me');if(!res.ok)return false;const me=await res.json();if(!me.is_admin){window.location.href='dashboard.html';return false}return true}
+function renderColumn(id,countId,items,kind){document.getElementById(countId).textContent=`${items.length} items`;const root=document.getElementById(id);if(!items.length){root.innerHTML='<div class="empty">Nothing here.</div>';return}root.innerHTML=items.map((item)=>`<div class="card"><h3>${esc(item.title)}</h3><p>${esc((item.content||'').slice(0,180))}${(item.content||'').length>180?'...':''}</p><div class="meta"><span>${esc(item.author_handle||'unknown')}</span><span>${esc(item.operation_name||'no operation')}</span><span>${esc(timeAgo(item.updated_at||item.created_at))}</span></div><div class="actions"><a class="btn" href="library.html?note_id=${encodeURIComponent(item.id)}">Open Note</a>${kind==='approved'?'<a class="btn gold" href="library.html?note_id='+encodeURIComponent(item.id)+'">Export</a>':''}${kind==='published'&&item.public_slug?'<a class="btn green" href="paper.html?slug='+encodeURIComponent(item.public_slug)+'">Public Page</a>':''}</div></div>`).join('')}
+async function loadQueue(){const res=await authFetch('/api/notes/review-queue');if(!res.ok){document.getElementById('queueReview').innerHTML='<div class="empty">Unable to load queue.</div>';return}const data=await res.json();renderColumn('queueReview','countReview',data.in_review||[],'review');renderColumn('queueApproved','countApproved',data.approved||[],'approved');renderColumn('queuePublished','countPublished',data.recently_published||[],'published')}
+(async()=>{const ok=await ensureAdmin();if(!ok)return;await loadQueue()})()
+</script>
+</body>
+</html>

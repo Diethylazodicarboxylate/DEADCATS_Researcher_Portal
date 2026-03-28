@@ -11,6 +11,7 @@ class VaultFile(Base):
     mimetype     = Column(String(200), default="application/octet-stream")
     size         = Column(BigInteger, default=0)
     sha256       = Column(String(64), default="")
+    operation_id = Column(Integer, ForeignKey("operations.id"), nullable=True)
     tags         = Column(String(500), default="")
     description  = Column(Text, default="")
     author       = Column(String(50), nullable=False)
@@ -25,10 +26,10 @@ class VaultFile(Base):
             "mimetype":      self.mimetype,
             "size":          self.size,
             "sha256":        self.sha256,
+            "operation_id":  self.operation_id,
             "tags":          self.tags.split(",") if self.tags else [],
             "description":   self.description,
             "author":        self.author,
             "author_id":     self.author_id,
             "created_at":    str(self.created_at),
         }
-

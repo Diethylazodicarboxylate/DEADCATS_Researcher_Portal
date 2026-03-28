@@ -268,6 +268,12 @@ a[class*="btn"]:focus-visible{
       <div style="font-family:var(--body);font-size:13px;color:var(--text-bright);" id="previewTitle"></div>
       <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-top:4px;" id="previewMeta"></div>
     </div>
+    <div class="modal-row">
+      <label class="modal-label">Link To Operation</label>
+      <select class="modal-select" id="ctfOperationSelect">
+        <option value="">No operation</option>
+      </select>
+    </div>
     <div class="modal-row" id="manualFields">
       <label class="modal-label">Or enter manually</label>
       <input class="modal-input" type="text" id="manualTitle" placeholder="CTF name *" style="margin-bottom:8px;">
@@ -356,6 +362,18 @@ a[class*="btn"]:focus-visible{
       </div>
     </div>
     <a class="team-ctftime-link" href="https://ctftime.org/team/367609" target="_blank" rel="noopener noreferrer">↗ CTFtime</a>
+  </div>
+
+  <div class="section" style="margin-top:18px">
+    <div class="section-head">
+      <span class="section-title">Scope</span>
+      <div class="section-line"></div>
+    </div>
+    <div style="max-width:320px">
+      <select class="modal-select" id="operationFilter" onchange="loadEvents()">
+        <option value="">All operations</option>
+      </select>
+    </div>
   </div>
 
   <!-- UPCOMING CTFs -->
@@ -459,7 +477,20 @@ let _selectedCtf         = null;
 let _memberHandles       = [];
 let _ctfYears            = [];
 let _resultDefaults      = null;
+let operations           = [];
 const CTF_RESULTS_MIN_YEAR = 2025;
+
+async function loadOperations() {
+  try {
+    const res = await authFetch('/api/operations/');
+    operations = res.ok ? await res.json() : [];
+    const filterOptions = ['<option value="">All operations</option>']
+      .concat(operations.map(op => `<option value="${op.id}">${esc(op.name)}</option>`))
+      .join('');
+    document.getElementById('operationFilter').innerHTML = filterOptions;
+    document.getElementById('ctfOperationSelect').innerHTML = filterOptions.replace('All operations', 'No operation');
+  } catch (_) {}
+}
 
 // ── Team stats ─────────────────────────────────────────────────
 async function loadTeamStats() {
@@ -530,7 +561,9 @@ async function loadCtftimeHistory() {
 // ── Events ─────────────────────────────────────────────────────
 async function loadEvents() {
   try {
-    const res = await authFetch('/api/ctf/events');
+    const operationId = document.getElementById('operationFilter').value;
+    const suffix = operationId ? `?operation_id=${encodeURIComponent(operationId)}` : '';
+    const res = await authFetch('/api/ctf/events' + suffix);
     if (!res.ok) return;
     allEvents = await res.json();
     renderUpcoming();
@@ -816,6 +849,7 @@ function openAddCtf() {
   document.getElementById('manualStart').value = '';
   document.getElementById('manualEnd').value = '';
   document.getElementById('manualDesc').value = '';
+  document.getElementById('ctfOperationSelect').value = document.getElementById('operationFilter').value || '';
   document.getElementById('addCtfModal').classList.remove('hidden');
   setTimeout(() => document.getElementById('ctfSearchInput').focus(), 50);
 }
@@ -886,6 +920,7 @@ async function submitAddCtf() {
       format:           _selectedCtf.format || null,
       weight:           _selectedCtf.weight != null ? Number(_selectedCtf.weight) : null,
       description:      document.getElementById('manualDesc').value.trim() || null,
+      operation_id:     document.getElementById('ctfOperationSelect').value ? Number(document.getElementById('ctfOperationSelect').value) : null,
     };
   } else {
     const title = document.getElementById('manualTitle').value.trim();
@@ -896,6 +931,7 @@ async function submitAddCtf() {
       start_time: document.getElementById('manualStart').value.trim() || null,
       end_time:   document.getElementById('manualEnd').value.trim() || null,
       description:document.getElementById('manualDesc').value.trim() || null,
+      operation_id:document.getElementById('ctfOperationSelect').value ? Number(document.getElementById('ctfOperationSelect').value) : null,
     };
   }
   const res = await authFetch('/api/ctf/events', { method:'POST', body: JSON.stringify(body) });
@@ -1063,6 +1099,12 @@ async function loadMemberHandles() {
 (async () => {
   const ok = await ensureSession();
   if (!ok) return;
+  await loadOperations();
+  const operationParam = new URLSearchParams(window.location.search).get('operation_id');
+  if (operationParam) {
+    document.getElementById('operationFilter').value = operationParam;
+    document.getElementById('ctfOperationSelect').value = operationParam;
+  }
   loadTeamStats();
   loadEvents();
   if (me.is_admin) loadMemberHandles();

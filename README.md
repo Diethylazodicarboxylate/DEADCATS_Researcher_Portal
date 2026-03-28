@@ -2,8 +2,9 @@
 
 DEADCATS is a full-stack cyber research portal with:
 
-- Team dashboard, announcements, notes, vault, whiteboard, members, CTF tracking
+- Team dashboard, announcements, shared wiki, vault, whiteboard, members, CTF tracking
 - Auth + admin portal + profile management
+- Shared wiki with markdown/code blocks, review workflow, revision history, and admin-controlled public publishing
 - Integrated **PwnBox** browser terminal (`/pwnbox.html`)
 - PostgreSQL backend (FastAPI + SQLAlchemy)
 
@@ -26,9 +27,30 @@ This README is the single source of truth for setup and deployment.
 - Frontend: Static HTML/CSS/JS served by FastAPI
 - PwnBox runtime: Docker SDK + host Docker daemon
 
+## Core Workflow
+
+- Operations give the portal its shared investigation context
+- Internal research lives in the shared wiki at `/library.html`
+- Operations can be created from the dashboard and reviewed on `/operations.html`
+- Notes support markdown, fenced code blocks, backlinks, bookmarks, and version history
+- Notes now support autosave, local draft recovery, conflict protection, and threaded comments
+- Notes can be assigned to operations and the wiki can be filtered by operation
+- IOCs can also be linked to operations from `/ioc-tracker.html`
+- Vault files can be linked to operations from `/vault.html`
+- CTF events can be linked to operations from `/ctf.html`
+- Operation goals live inside the war room and the operation detail page
+- The dashboard and operation pages expose a live activity timeline across notes, indicators, evidence files, goals, and CTF events
+- Each operation can carry its own war room canvas and be opened directly in `/whiteboard.html?operation_id=<id>`
+- Admins now have a dedicated review board at `/review-board.html`
+- Authors can submit notes for review
+- Admins can approve, request changes, and export approved notes into the public research feed
+- Public research is grouped into separate publish folders and displayed at `/research-feed.html`
+
 ## Quick Start (Docker, Recommended)
 
 This guide uses `docker-compose` (legacy CLI). If your machine has Compose v2 plugin, you can replace it with `docker compose`.
+
+Before you deploy, set production secrets and decide whether you actually want PwnBox enabled on the same host. The app works without making the Docker socket a general-purpose convenience feature; with PwnBox enabled, that socket mount becomes the highest-risk part of the platform.
 
 ### 1) Clone and enter repo
 
@@ -106,6 +128,7 @@ Notes:
 - If you keep the Compose `db` service, use `db` as the hostname inside `DATABASE_URL`.
 - If you use a separate managed PostgreSQL instance, replace `DATABASE_URL` with that connection string and remove or disable the local `db` service in Coolify.
 - After deploy, the app should be available at `https://research.deadcats.space/login.html`.
+- Admin review, publishing, publish folders, and note revision history are created automatically by the backend on startup.
 
 ### 3) Start everything
 
@@ -161,6 +184,8 @@ docker-compose up -d --build
 - `app`: FastAPI app serving API + all frontend pages
 
 `app` mounts `/var/run/docker.sock`, so PwnBox can create user containers on the host Docker daemon.
+
+If you do not need PwnBox in production, remove that socket mount and disable the PwnBox feature path. That single choice reduces your attack surface more than any frontend hardening.
 
 ## Environment Variables (`.env`)
 
@@ -324,9 +349,24 @@ Compose volumes persist:
 ## Security Notes
 
 - Set strong `JWT_SECRET` and `ADMIN_PASSWORD`.
+- Do not rely on the generated fallback secrets/passwords outside local development.
 - Use HTTPS + reverse proxy in production.
 - Set `COOKIE_SECURE=true` under HTTPS.
-- Limit host access to Docker socket (high-privilege surface).
+- Keep `ALLOW_SELF_REGISTER=false` unless you have a controlled onboarding flow.
+- Limit host access to Docker socket. If PwnBox is enabled, treat the app host as a high-trust environment.
+- Review `FRONTEND_ORIGIN` and `PWNBOX_ALLOWED_ORIGINS` carefully. Do not leave them broad.
+- The backend now adds stricter response headers and login throttling, but that is not a substitute for reverse-proxy rate limiting and TLS termination.
+
+## Production Checklist
+
+- Set long random values for `JWT_SECRET`, `ADMIN_PASSWORD`, and database credentials
+- Run behind HTTPS with a reverse proxy
+- Keep `COOKIE_SECURE=true`
+- Keep `ALLOW_SELF_REGISTER=false` unless intentionally enabled
+- Restrict database exposure to the app network only
+- Decide whether PwnBox is worth the Docker socket risk on the same deployment
+- Back up PostgreSQL and the named volumes regularly
+- Watch app logs and auth logs for repeated failures or abuse
 
 ## Project Layout
 

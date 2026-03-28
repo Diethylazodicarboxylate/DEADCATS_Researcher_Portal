@@ -6,6 +6,7 @@ import hashlib, uuid, os
 from core.database import get_db
 from core.security import get_current_user
 from core.validation import clean_text, safe_download_name
+from models.operation import Operation
 from models.vault import VaultFile
 from models.user import User
 
@@ -20,11 +21,18 @@ def list_files(
     _:  User    = Depends(get_current_user)
 ):
     files = db.query(VaultFile).order_by(VaultFile.created_at.desc()).all()
-    return [f.to_dict() for f in files]
+    operation_map = {row.id: row.name for row in db.query(Operation).all()}
+    result = []
+    for f in files:
+        data = f.to_dict()
+        data["operation_name"] = operation_map.get(data.get("operation_id"), "")
+        result.append(data)
+    return result
 
 @router.post("/upload", status_code=201)
 async def upload_file(
     file:        UploadFile = File(...),
+    operation_id: Optional[int] = Form(None),
     tags:        Optional[str] = Form(""),
     description: Optional[str] = Form(""),
     db:          Session = Depends(get_db),
@@ -50,6 +58,10 @@ async def upload_file(
             hasher.update(chunk)
             f.write(chunk)
     sha256 = hasher.hexdigest()
+    if operation_id is not None and not db.query(Operation).filter(Operation.id == operation_id).first():
+        if os.path.exists(path):
+            os.remove(path)
+        raise HTTPException(404, "Operation not found")
 
     vf = VaultFile(
         filename      = stored,
@@ -57,6 +69,7 @@ async def upload_file(
         mimetype      = file.content_type or "application/octet-stream",
         size          = size,
         sha256        = sha256,
+        operation_id  = operation_id,
         tags          = clean_text(tags, field="tags", max_len=500),
         description   = clean_text(description, field="description", max_len=4000),
         author        = current.handle,
@@ -64,7 +77,9 @@ async def upload_file(
     )
     db.add(vf); db.commit(); db.refresh(vf)
     from core.logger import log_upload; log_upload(current.handle, file.filename, size, file.content_type or "unknown")
-    return vf.to_dict()
+    data = vf.to_dict()
+    data["operation_name"] = db.query(Operation).filter(Operation.id == operation_id).first().name if operation_id else ""
+    return data
 
 @router.get("/download/{file_id}")
 def download_file(
