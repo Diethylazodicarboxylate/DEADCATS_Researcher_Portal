@@ -199,6 +199,34 @@ def create_note(
     db.refresh(note)
     return note.to_dict()
 
+@router.get("/public")
+def list_public_notes(db: Session = Depends(get_db)):
+    notes = (
+        db.query(Note)
+        .filter(Note.published.is_(True), Note.public_slug.is_not(None))
+        .order_by(Note.published_at.desc().nullslast(), Note.updated_at.desc().nullslast(), Note.created_at.desc())
+        .all()
+    )
+    result = []
+    for n in notes:
+        d = n.to_dict()
+        content = d.get("content") or ""
+        d["title"] = d.get("public_title") or d.get("title")
+        d["excerpt"] = content[:280] + "..." if len(content) > 280 else content
+        result.append(d)
+    return result
+
+
+@router.get("/public/{slug}")
+def get_public_note(slug: str, db: Session = Depends(get_db)):
+    note = db.query(Note).filter(Note.public_slug == slug, Note.published.is_(True)).first()
+    if not note:
+        raise HTTPException(status_code=404, detail="Public note not found")
+    data = note.to_dict()
+    data["title"] = data.get("public_title") or data.get("title")
+    return data
+
+
 @router.get("/{note_id}")
 def get_note(
     note_id: int,
@@ -349,34 +377,6 @@ def unpublish_note(
     db.commit()
     db.refresh(note)
     return note.to_dict()
-
-
-@router.get("/public")
-def list_public_notes(db: Session = Depends(get_db)):
-    notes = (
-        db.query(Note)
-        .filter(Note.published.is_(True), Note.public_slug.is_not(None))
-        .order_by(Note.published_at.desc().nullslast(), Note.updated_at.desc().nullslast(), Note.created_at.desc())
-        .all()
-    )
-    result = []
-    for n in notes:
-        d = n.to_dict()
-        content = d.get("content") or ""
-        d["title"] = d.get("public_title") or d.get("title")
-        d["excerpt"] = content[:280] + "..." if len(content) > 280 else content
-        result.append(d)
-    return result
-
-
-@router.get("/public/{slug}")
-def get_public_note(slug: str, db: Session = Depends(get_db)):
-    note = db.query(Note).filter(Note.public_slug == slug, Note.published.is_(True)).first()
-    if not note:
-        raise HTTPException(status_code=404, detail="Public note not found")
-    data = note.to_dict()
-    data["title"] = data.get("public_title") or data.get("title")
-    return data
 
 @router.delete("/{note_id}")
 def delete_note(
