@@ -12,32 +12,26 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
 <style>
 :root{
-  --bg:#071018;
+  --bg:#081119;
   --bg2:#0d1822;
   --bg3:#101f2b;
-  --surface:#132432;
-  --surface-2:#182b3a;
-  --panel:#0a141d;
-  --border:#1c3243;
-  --border-2:#28475d;
-  --text:#d4e6f5;
-  --text-dim:#7e95a7;
-  --text-soft:#a9bfd0;
-  --cyan:#55d6ff;
-  --cyan-dim:#123c4f;
+  --panel:#132432;
+  --panel-soft:#10202c;
+  --border:#1c3445;
+  --border-2:#28485d;
+  --text:#d6e8f5;
+  --text-dim:#7e97aa;
+  --text-soft:#a8c0d1;
+  --white:#eef7ff;
+  --cyan:#56d7ff;
   --gold:#f4b33c;
   --green:#42d392;
-  --red:#ff5f74;
-  --red-dim:#4f1620;
-  --amber:#ff8a3d;
-  --white:#dce6ef;
-  --nav-h:58px;
-  --rail-w:84px;
-  --sidebar-w:290px;
-  --list-w:360px;
-  --tool-w:320px;
+  --red:#ff667a;
   --mono:'IBM Plex Mono',monospace;
   --body:'IBM Plex Sans',sans-serif;
+  --nav-h:58px;
+  --sidebar-w:320px;
+  --meta-w:280px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
@@ -46,240 +40,180 @@ body{
   font-family:var(--body);
   color:var(--text);
   background:
-    radial-gradient(circle at top left, rgba(85,214,255,0.12), transparent 26%),
-    radial-gradient(circle at top right, rgba(244,179,60,0.08), transparent 24%),
-    linear-gradient(180deg, #071018 0%, #050c13 100%);
+    radial-gradient(circle at top left, rgba(86,215,255,.10), transparent 25%),
+    linear-gradient(180deg,#081119 0%,#050c12 100%);
 }
 body::before{
   content:"";
   position:fixed;
   inset:0;
   background-image:
-    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-  background-size:32px 32px;
+    linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+  background-size:34px 34px;
   opacity:.25;
   pointer-events:none;
 }
 a{color:inherit}
-button,input,textarea,select{font:inherit}
-button,input,textarea,select{outline:none}
+button,input,textarea,select{font:inherit;outline:none}
 button{cursor:pointer}
 .topnav{
-  position:fixed;top:0;left:0;right:0;z-index:50;height:var(--nav-h);
+  position:fixed;top:0;left:0;right:0;z-index:40;height:var(--nav-h);
   display:flex;align-items:center;justify-content:space-between;padding:0 22px;
-  background:rgba(6,12,18,.92);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);
+  background:rgba(8,17,25,.92);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);
 }
 .nav-left,.nav-right{display:flex;align-items:center;gap:16px}
-.nav-logo{font-family:var(--mono);font-size:12px;letter-spacing:.35em;text-decoration:none;color:var(--white);text-transform:uppercase}
-.nav-logo span{color:var(--gold)}
-.nav-sep{width:1px;height:18px;background:var(--border-2)}
-.nav-page,.nav-link,.nav-status{
-  font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim)
+.nav-logo,.nav-page,.nav-link,.nav-status,.section-kicker,.chip,.meta-label,.folder-count,.subtle,.note-meta{
+  font-family:var(--mono)
 }
-.nav-page span{color:var(--cyan)}
+.nav-logo{font-size:12px;letter-spacing:.35em;text-transform:uppercase;text-decoration:none;color:var(--white)}
+.nav-logo span{color:var(--gold)}
+.nav-page,.nav-link,.nav-status{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim)}
 .nav-link{text-decoration:none}
 .nav-link:hover{color:var(--text)}
+.nav-sep{width:1px;height:18px;background:var(--border-2)}
 .layout{
   display:grid;
-  grid-template-columns:var(--rail-w) var(--sidebar-w) var(--list-w) 1fr;
+  grid-template-columns:var(--sidebar-w) minmax(0,1fr) var(--meta-w);
   height:calc(100vh - var(--nav-h));
   margin-top:var(--nav-h);
 }
-.activity-rail,.folder-sidebar,.note-list-panel,.workspace{min-height:0}
-.activity-rail{
-  border-right:1px solid var(--border);
-  background:rgba(8,15,22,.95);
-  padding:18px 12px;
-  display:flex;flex-direction:column;gap:14px;align-items:center;
+.sidebar,.workspace,.meta-panel{min-height:0}
+.sidebar,.meta-panel{background:rgba(10,19,28,.92);backdrop-filter:blur(16px)}
+.sidebar{border-right:1px solid var(--border);display:flex;flex-direction:column}
+.meta-panel{border-left:1px solid var(--border);overflow:auto}
+.workspace{display:grid;grid-template-rows:auto auto 1fr;background:rgba(9,17,25,.82)}
+.section{padding:18px;border-bottom:1px solid var(--border)}
+.section-kicker{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px}
+.sidebar-title{font-size:26px;font-weight:700;color:var(--white);letter-spacing:-.04em}
+.sidebar-sub{margin-top:8px;line-height:1.7;font-size:13px;color:var(--text-dim)}
+.search-wrap{
+  display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:14px
 }
-.rail-badge{
-  width:52px;height:52px;border-radius:16px;border:1px solid var(--border-2);
-  background:linear-gradient(180deg, rgba(85,214,255,0.14), rgba(85,214,255,0.03));
-  display:grid;place-items:center;font-size:20px;box-shadow:0 16px 28px rgba(0,0,0,.28)
+.search-wrap input{flex:1;background:transparent;border:none;color:var(--text);font-size:13px}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.field,.textarea,.title-input{
+  width:100%;background:rgba(7,14,20,.76);border:1px solid var(--border);border-radius:12px;color:var(--text)
 }
-.rail-label,.rail-count,.pill,.meta-label,.section-label,.subtle{
-  font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase
-}
-.rail-label{font-size:10px;color:var(--text-dim);text-align:center;line-height:1.5}
-.rail-action{
-  width:100%;padding:10px 6px;border:1px solid var(--border);background:var(--panel);
-  color:var(--text-soft);border-radius:14px;font-size:11px;transition:.18s ease
-}
-.rail-action:hover,.btn:hover,.folder-item:hover,.note-row:hover,.template-card:hover,.backlink-row:hover{transform:translateY(-1px)}
-.rail-action.active,.btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(85,214,255,.08)}
-.rail-spacer{flex:1}
-.rail-count{font-size:10px;color:var(--text-soft)}
-.folder-sidebar,.note-list-panel,.workspace{
-  background:rgba(9,17,25,.88);backdrop-filter:blur(18px)
-}
-.folder-sidebar,.note-list-panel{border-right:1px solid var(--border)}
-.sidebar-head,.list-head,.workspace-head{
-  padding:18px;border-bottom:1px solid var(--border)
-}
-.sidebar-head{display:flex;flex-direction:column;gap:14px}
-.section-title{font-size:24px;font-weight:700;color:var(--white);letter-spacing:-.03em}
-.section-sub{font-size:13px;color:var(--text-dim);line-height:1.6}
-.search-shell{
-  display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--panel);
-  border:1px solid var(--border);border-radius:14px
-}
-.search-shell input{
-  flex:1;background:transparent;border:none;color:var(--text);font-size:13px
-}
-.search-shell span{font-size:13px;color:var(--text-dim)}
-.filter-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.select-field,.text-field,.title-field,.editor-textarea{
-  border:1px solid var(--border);background:rgba(6,12,18,.76);color:var(--text);border-radius:12px
-}
-.select-field,.text-field{padding:10px 12px;font-size:12px}
-.folder-tree,.note-items,.workspace-scroll,.tool-scroll{overflow:auto}
-.folder-tree{padding:10px}
-.folder-item{
-  display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid transparent;border-radius:14px;
-  color:var(--text-soft);transition:.18s ease
-}
-.folder-item.active{background:rgba(85,214,255,.08);border-color:var(--cyan-dim);color:var(--white)}
-.folder-count{margin-left:auto;font-size:10px;color:var(--text-dim)}
-.folder-del{
-  border:none;background:transparent;color:var(--text-dim);padding:0 3px;font-size:12px;opacity:0
-}
-.folder-item:hover .folder-del{opacity:1}
-.list-head{display:flex;flex-direction:column;gap:12px}
-.list-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.list-title{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-dim)}
+.field{padding:10px 12px;font-size:12px}
 .btn{
   border:1px solid var(--border-2);background:transparent;color:var(--text-soft);padding:9px 12px;border-radius:12px;
-  font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;transition:.18s ease
+  text-transform:uppercase;letter-spacing:.12em;font-size:11px;transition:.18s ease
 }
-.btn.gold{color:var(--gold);border-color:rgba(244,179,60,.32)}
-.btn.green{color:var(--green);border-color:rgba(66,211,146,.32)}
-.btn.red{color:var(--red);border-color:rgba(255,95,116,.28)}
-.btn.small{padding:8px 10px;font-size:10px}
-.note-items{padding:8px 10px 20px}
-.note-row{
-  padding:16px;border:1px solid var(--border);background:linear-gradient(180deg, rgba(19,36,50,.92), rgba(10,20,29,.92));
-  border-radius:18px;margin-bottom:10px;transition:.18s ease;position:relative
+.btn:hover{transform:translateY(-1px);border-color:var(--text-dim);color:var(--text)}
+.btn.green{color:var(--green);border-color:rgba(66,211,146,.30)}
+.btn.gold{color:var(--gold);border-color:rgba(244,179,60,.30)}
+.btn.red{color:var(--red);border-color:rgba(255,102,122,.30)}
+.btn.active{color:var(--cyan);border-color:var(--cyan);background:rgba(86,215,255,.08)}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap}
+.folders{padding:10px;overflow:auto;border-bottom:1px solid var(--border)}
+.folder-item{
+  width:100%;display:flex;align-items:center;gap:10px;padding:11px 12px;margin-bottom:6px;
+  border:1px solid transparent;background:transparent;color:var(--text-soft);border-radius:14px;text-align:left
 }
-.note-row.active{border-color:rgba(85,214,255,.35);box-shadow:0 14px 34px rgba(0,0,0,.24)}
-.note-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
-.note-title{font-size:15px;font-weight:700;color:var(--white)}
-.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:999px;font-size:9px;border:1px solid var(--border-2);color:var(--text-soft)}
-.pill.pub{color:var(--green);border-color:rgba(66,211,146,.32);background:rgba(66,211,146,.08)}
-.pill.draft{color:var(--gold);border-color:rgba(244,179,60,.3);background:rgba(244,179,60,.08)}
-.note-preview{font-size:13px;line-height:1.6;color:var(--text-dim);margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.note-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:10px;color:var(--text-dim);font-family:var(--mono)}
-.tag{
-  display:inline-flex;padding:4px 7px;border:1px solid var(--border);border-radius:999px;
-  color:var(--text-soft);font-size:10px;font-family:var(--mono)
+.folder-item.active{background:rgba(86,215,255,.08);border-color:rgba(86,215,255,.22);color:var(--white)}
+.folder-count{margin-left:auto;font-size:10px;letter-spacing:.10em;color:var(--text-dim)}
+.folder-del{background:none;border:none;color:var(--text-dim);opacity:0;padding:0 3px}
+.folder-item:hover .folder-del{opacity:1}
+.note-list{overflow:auto;padding:10px}
+.note-card{
+  position:relative;padding:14px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(180deg, rgba(19,36,50,.90), rgba(9,18,26,.92));
+  margin-bottom:10px;cursor:pointer;transition:.18s ease
 }
-.note-star{
-  position:absolute;top:12px;right:12px;background:none;border:none;color:var(--text-dim);font-size:15px
+.note-card:hover{transform:translateY(-1px)}
+.note-card.active{border-color:rgba(86,215,255,.34);box-shadow:0 18px 30px rgba(0,0,0,.24)}
+.note-title{font-size:15px;font-weight:700;color:var(--white);padding-right:26px;margin-bottom:6px}
+.note-preview{font-size:13px;color:var(--text-dim);line-height:1.65;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:10px}
+.note-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:10px;letter-spacing:.08em;color:var(--text-dim)}
+.star-btn{
+  position:absolute;top:11px;right:11px;background:none;border:none;color:var(--text-dim);font-size:14px
 }
-.note-star.starred{color:var(--gold)}
-.workspace{
-  display:grid;
-  grid-template-rows:auto 1fr;
+.star-btn.starred{color:var(--gold)}
+.chip{
+  display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;border:1px solid var(--border-2);
+  font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-soft)
 }
-.workspace-head{
-  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap
+.chip.public{color:var(--green);border-color:rgba(66,211,146,.28);background:rgba(66,211,146,.08)}
+.chip.review{color:var(--gold);border-color:rgba(244,179,60,.28);background:rgba(244,179,60,.08)}
+.workspace-head{padding:20px 24px;border-bottom:1px solid var(--border)}
+.workspace-title{font-size:29px;font-weight:700;color:var(--white);letter-spacing:-.04em;margin-bottom:6px}
+.workspace-sub{font-size:13px;line-height:1.7;color:var(--text-dim)}
+.review-bar{
+  display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:12px 24px;border-bottom:1px solid var(--border);background:rgba(86,215,255,.05)
 }
-.workspace-title h1{font-size:22px;color:var(--white);margin-bottom:4px}
-.workspace-title p{font-size:13px;color:var(--text-dim)}
-.workspace-actions{display:flex;gap:10px;flex-wrap:wrap}
-.workspace-grid{
-  display:grid;grid-template-columns:minmax(0,1fr) var(--tool-w);min-height:0
+.review-bar.visible{display:flex}
+.review-text{font-size:12px;line-height:1.7;color:var(--text-soft)}
+.editor-wrap{min-height:0;overflow:auto;padding:22px 24px}
+.note-shell{max-width:980px;margin:0 auto}
+.note-toolbar{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px
 }
-.workspace-scroll{padding:18px 18px 22px}
-.tool-scroll{padding:18px 18px 22px;border-left:1px solid var(--border);background:rgba(8,15,22,.86)}
-.empty-state{
-  min-height:100%;display:grid;place-items:center;border:1px dashed var(--border);
-  border-radius:24px;background:rgba(10,20,29,.6);padding:30px;text-align:center
+.title-input{
+  padding:16px 18px;font-size:30px;font-weight:700;letter-spacing:-.04em;background:rgba(7,14,20,.88);margin-bottom:14px
 }
-.empty-state h2{font-size:28px;color:var(--white);margin-bottom:12px}
-.empty-state p{max-width:500px;line-height:1.7;color:var(--text-dim);margin:0 auto 18px}
-.empty-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.editor-shell{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:18px;min-height:100%}
-.panel{
-  border:1px solid var(--border);border-radius:24px;background:linear-gradient(180deg, rgba(12,24,34,.9), rgba(8,16,23,.95));
-  box-shadow:0 26px 44px rgba(0,0,0,.22)
+.mode-group{display:flex;gap:8px;flex-wrap:wrap}
+.status-group{display:flex;gap:8px;flex-wrap:wrap}
+.editor-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.editor-panel,.preview-panel,.meta-card,.blank-state{
+  border:1px solid var(--border);border-radius:24px;background:linear-gradient(180deg, rgba(16,31,43,.94), rgba(10,19,28,.96));
+  box-shadow:0 24px 38px rgba(0,0,0,.18)
 }
-.panel-head{
-  padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px
-}
-.panel-head h2{font-size:14px;letter-spacing:.02em;color:var(--white)}
-.panel-head p{font-size:12px;color:var(--text-dim)}
+.panel-head{padding:15px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.panel-title{font-size:14px;font-weight:700;color:var(--white)}
+.panel-sub{font-size:12px;color:var(--text-dim)}
 .panel-body{padding:18px}
-.meta-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:16px}
-.meta-block{display:flex;flex-direction:column;gap:7px}
-.meta-label,.section-label{font-size:10px;color:var(--text-dim)}
-.title-field{width:100%;padding:16px 18px;border-radius:16px;margin-bottom:14px;font-size:22px;font-weight:700;background:rgba(7,16,24,.82)}
-.editor-textarea{
-  width:100%;min-height:540px;padding:18px;border-radius:16px;resize:none;line-height:1.8;
-  font-family:var(--mono);font-size:13px
+.textarea{
+  min-height:68vh;padding:18px;resize:vertical;line-height:1.85;font-size:14px;font-family:var(--mono)
 }
-.editor-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;flex-wrap:wrap}
-.note-stats{font-size:11px;color:var(--text-dim);font-family:var(--mono)}
-.status-row{display:flex;gap:8px;flex-wrap:wrap}
-.md-body{max-width:900px}
+.stats{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px;font-size:11px;color:var(--text-dim)}
+.md-body{max-width:100%;line-height:1.85}
 .md-body h1,.md-body h2,.md-body h3,.md-body h4{color:var(--white);margin:0 0 16px}
-.md-body h1{font-size:30px;border-bottom:1px solid var(--border);padding-bottom:14px}
-.md-body h2{font-size:20px;margin-top:30px}
-.md-body h3{font-size:17px;margin-top:24px;color:var(--cyan)}
-.md-body p,.md-body li,.md-body blockquote,.md-body td{line-height:1.8;font-size:15px;color:var(--text-soft)}
-.md-body a{color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(85,214,255,.35)}
-.md-body code{background:rgba(85,214,255,.08);border:1px solid rgba(85,214,255,.18);padding:2px 6px;border-radius:8px;font-family:var(--mono);font-size:12px;color:var(--gold)}
-.md-body pre{background:#081119;border:1px solid var(--border);padding:16px;border-radius:18px;overflow:auto;margin:16px 0}
-.md-body pre code{padding:0;border:none;background:none}
-.md-body blockquote{border-left:3px solid var(--gold);padding:12px 16px;background:rgba(244,179,60,.08);border-radius:0 16px 16px 0;margin:18px 0}
+.md-body h1{font-size:32px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.md-body h2{font-size:24px;margin-top:28px}
+.md-body h3{font-size:18px;margin-top:22px;color:var(--cyan)}
+.md-body p,.md-body li,.md-body td,.md-body blockquote{font-size:15px;color:var(--text-soft);line-height:1.85}
+.md-body pre{margin:16px 0;padding:16px;background:#081119;border:1px solid var(--border);border-radius:18px;overflow:auto}
+.md-body code{padding:2px 6px;background:rgba(86,215,255,.07);border:1px solid rgba(86,215,255,.16);border-radius:8px;color:var(--gold);font-size:12px}
+.md-body pre code{padding:0;background:none;border:none}
+.md-body blockquote{margin:16px 0;padding:12px 16px;border-left:3px solid var(--gold);background:rgba(244,179,60,.08);border-radius:0 16px 16px 0}
 .md-body table{width:100%;border-collapse:collapse;margin:18px 0}
-.md-body th,.md-body td{border:1px solid var(--border);padding:10px 12px;text-align:left}
-.md-body th{font-family:var(--mono);font-size:11px;text-transform:uppercase;color:var(--text);background:rgba(85,214,255,.06)}
-.wikilink{color:var(--gold)!important;border-bottom-color:rgba(244,179,60,.3)!important}
-.tool-section{margin-bottom:18px}
-.tool-card,.template-card,.backlink-row{
-  border:1px solid var(--border);border-radius:18px;background:rgba(12,24,34,.74);padding:14px;transition:.18s ease
+.md-body th,.md-body td{padding:10px 12px;border:1px solid var(--border);text-align:left}
+.md-body th{background:rgba(86,215,255,.05);color:var(--white)}
+.meta-panel-inner{padding:20px}
+.meta-card{margin-bottom:14px}
+.meta-grid{display:grid;gap:12px}
+.meta-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px}
+.blank-state{
+  max-width:760px;margin:40px auto;padding:40px;text-align:center
 }
-.tool-card + .tool-card,.template-card + .template-card,.backlink-row + .backlink-row{margin-top:10px}
-.template-card h3,.tool-card h3{font-size:13px;color:var(--white);margin-bottom:6px}
-.template-card p,.tool-card p,.backlink-row p{font-size:12px;color:var(--text-dim);line-height:1.6}
-.template-card button,.tool-card button{margin-top:12px}
-.backlink-row h4{font-size:13px;color:var(--white);margin-bottom:4px}
-.backlink-row{cursor:pointer}
-.tool-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.tool-list .tag{cursor:pointer}
-.banner{
-  padding:12px 14px;border:1px solid var(--border);border-radius:16px;background:rgba(85,214,255,.07);
-  font-size:12px;color:var(--text-soft);line-height:1.6
+.blank-state h2{font-size:34px;color:var(--white);margin-bottom:12px}
+.blank-state p{line-height:1.75;color:var(--text-dim);margin-bottom:18px}
+.backlink{
+  display:block;padding:12px;border:1px solid var(--border);border-radius:16px;background:rgba(10,19,28,.74);text-decoration:none;color:inherit;margin-bottom:10px
 }
-.banner strong{color:var(--white)}
+.backlink strong{display:block;color:var(--white);margin-bottom:4px}
+.hidden{display:none!important}
 .modal-overlay{
-  position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:20px
+  position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.74);display:grid;place-items:center;padding:20px
 }
 .modal-overlay.hidden{display:none}
 .modal{
-  width:min(520px,100%);border:1px solid var(--border-2);border-radius:26px;padding:22px;background:linear-gradient(180deg, #0b1620, #071119);
-  box-shadow:0 36px 90px rgba(0,0,0,.45)
+  width:min(560px,100%);padding:22px;border-radius:24px;border:1px solid var(--border-2);background:linear-gradient(180deg,#0c1620,#071119)
 }
 .modal h2{font-size:20px;color:var(--white);margin-bottom:8px}
-.modal p{font-size:13px;color:var(--text-dim);line-height:1.7;margin-bottom:16px}
-.modal .meta-block{margin-bottom:12px}
-.hidden{display:none!important}
+.modal p{font-size:13px;line-height:1.7;color:var(--text-dim);margin-bottom:14px}
 ::-webkit-scrollbar{width:8px;height:8px}
 ::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:999px}
-@media (max-width:1380px){
-  .layout{grid-template-columns:var(--rail-w) var(--sidebar-w) minmax(300px,340px) 1fr}
-  .workspace-grid{grid-template-columns:1fr}
-  .tool-scroll{border-left:none;border-top:1px solid var(--border)}
+@media (max-width:1220px){
+  .layout{grid-template-columns:300px minmax(0,1fr)}
+  .meta-panel{display:none}
 }
-@media (max-width:1100px){
+@media (max-width:920px){
   body{overflow:auto}
   .layout{grid-template-columns:1fr;height:auto}
-  .activity-rail{display:none}
-  .folder-sidebar,.note-list-panel,.workspace{border-right:none;border-bottom:1px solid var(--border)}
-  .editor-shell{grid-template-columns:1fr}
-  .title-field{font-size:18px}
-  .editor-textarea{min-height:340px}
+  .sidebar,.workspace{border:none}
+  .textarea{min-height:45vh}
 }
 </style>
 </head>
@@ -288,7 +222,7 @@ button{cursor:pointer}
   <div class="nav-left">
     <a href="index.html" class="nav-logo">DEAD<span>CATS</span></a>
     <div class="nav-sep"></div>
-    <div class="nav-page">// <span>shared wiki</span></div>
+    <div class="nav-page">Shared Wiki</div>
   </div>
   <div class="nav-right">
     <a class="nav-link" href="research-feed.html">Public Research</a>
@@ -300,14 +234,23 @@ button{cursor:pointer}
 <div class="modal-overlay hidden" id="folderModal">
   <div class="modal">
     <h2>Create Folder</h2>
-    <p>Admins manage the shared folder taxonomy. Notes can still be drafted anywhere and moved later.</p>
-    <div class="meta-block">
-      <label class="meta-label" for="folderNameInput">Folder Name</label>
-      <input class="text-field" id="folderNameInput" type="text" placeholder="web-auth-findings">
-    </div>
-    <div class="workspace-actions">
+    <p>Admins can curate the folder structure for the shared wiki.</p>
+    <input class="field" id="folderNameInput" type="text" placeholder="Folder name">
+    <div class="btn-row" style="margin-top:14px">
       <button class="btn" onclick="closeFolderModal()">Cancel</button>
       <button class="btn green" onclick="createFolder()">Create Folder</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="reviewModal">
+  <div class="modal">
+    <h2 id="reviewModalTitle">Review</h2>
+    <p id="reviewModalText">Add review notes for this action.</p>
+    <textarea class="field" id="reviewNotesInput" rows="7" placeholder="Review notes"></textarea>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn" onclick="closeReviewModal()">Cancel</button>
+      <button class="btn green" id="reviewModalConfirmBtn" onclick="confirmReviewAction()">Apply</button>
     </div>
   </div>
 </div>
@@ -315,16 +258,12 @@ button{cursor:pointer}
 <div class="modal-overlay hidden" id="publishModal">
   <div class="modal">
     <h2>Export To Publish</h2>
-    <p>Only admins can move a note into the public research feed. The note stays editable internally and the public paper keeps the author attribution from the original note.</p>
-    <div class="meta-block">
-      <label class="meta-label" for="publishTitle">Public Title</label>
-      <input class="text-field" id="publishTitle" type="text" placeholder="Same as note title">
+    <p>Only approved notes can be published. The public paper preserves the original author attribution.</p>
+    <div style="display:grid;gap:12px">
+      <input class="field" id="publishTitle" type="text" placeholder="Public title">
+      <input class="field" id="publishSlug" type="text" placeholder="public-slug">
     </div>
-    <div class="meta-block">
-      <label class="meta-label" for="publishSlug">Public Slug</label>
-      <input class="text-field" id="publishSlug" type="text" placeholder="ssrf-on-example-gateway">
-    </div>
-    <div class="workspace-actions">
+    <div class="btn-row" style="margin-top:14px">
       <button class="btn" onclick="closePublishModal()">Cancel</button>
       <button class="btn red hidden" id="unpublishBtn" onclick="unpublishCurrentNote()">Unpublish</button>
       <button class="btn green" onclick="publishCurrentNote()">Publish Publicly</button>
@@ -332,45 +271,18 @@ button{cursor:pointer}
   </div>
 </div>
 
-<div class="modal-overlay hidden" id="reviewModal">
-  <div class="modal">
-    <h2 id="reviewModalTitle">Review Action</h2>
-    <p id="reviewModalText">Add reviewer context for this workflow step.</p>
-    <div class="meta-block">
-      <label class="meta-label" for="reviewNotesInput">Review Notes</label>
-      <textarea class="text-field" id="reviewNotesInput" rows="6" placeholder="Approval notes, requested changes, or review context"></textarea>
-    </div>
-    <div class="workspace-actions">
-      <button class="btn" onclick="closeReviewModal()">Cancel</button>
-      <button class="btn green" id="reviewModalConfirmBtn" onclick="confirmReviewAction()">Apply</button>
-    </div>
-  </div>
-</div>
-
 <div class="layout">
-  <aside class="activity-rail">
-    <div class="rail-badge">🕸️</div>
-    <div class="rail-label">Web App Research Wiki</div>
-    <button class="rail-action active" type="button" onclick="newNote()">New Draft</button>
-    <button class="rail-action" type="button" onclick="setEditorTemplate('recon')">Recon</button>
-    <button class="rail-action" type="button" onclick="setEditorTemplate('finding')">Finding</button>
-    <button class="rail-action" type="button" onclick="setEditorTemplate('paper')">Paper</button>
-    <div class="rail-spacer"></div>
-    <div class="rail-count" id="railCounts">0 notes</div>
-  </aside>
-
-  <aside class="folder-sidebar">
-    <div class="sidebar-head">
-      <div>
-        <div class="section-title">Shared Wiki</div>
-        <div class="section-sub">Obsidian-style drafting for recon notes, findings, methodology, and publication-ready research papers.</div>
+  <aside class="sidebar">
+    <div class="section">
+      <div class="section-kicker">Knowledge Base</div>
+      <div class="sidebar-title">Shared Wiki</div>
+      <div class="sidebar-sub">Markdown-first note taking for the whole team, with review and publication layered on top instead of taking over the workspace.</div>
+      <div class="search-wrap" style="margin-top:14px">
+        <span style="color:var(--text-dim)">⌕</span>
+        <input id="globalSearch" type="text" placeholder="Search notes, tags, authors, content..." oninput="renderNoteList()">
       </div>
-      <div class="search-shell">
-        <span>⌕</span>
-        <input id="globalSearch" type="text" placeholder="Search titles, tags, targets, content..." oninput="renderNoteList()">
-      </div>
-      <div class="filter-grid">
-        <select class="select-field" id="phaseFilter" onchange="renderNoteList()">
+      <div class="filters">
+        <select class="field" id="phaseFilter" onchange="renderNoteList()">
           <option value="">All phases</option>
           <option value="triage">Triage</option>
           <option value="recon">Recon</option>
@@ -379,7 +291,7 @@ button{cursor:pointer}
           <option value="drafting">Drafting</option>
           <option value="published">Published</option>
         </select>
-        <select class="select-field" id="severityFilter" onchange="renderNoteList()">
+        <select class="field" id="severityFilter" onchange="renderNoteList()">
           <option value="">All severity</option>
           <option value="info">Info</option>
           <option value="low">Low</option>
@@ -388,138 +300,72 @@ button{cursor:pointer}
           <option value="critical">Critical</option>
         </select>
       </div>
-      <div class="workspace-actions" id="adminControls" style="display:none">
-        <button class="btn small" type="button" onclick="showFolderModal()">+ Folder</button>
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn green" onclick="newNote()">New Note</button>
+        <button class="btn hidden" id="adminFolderBtn" onclick="showFolderModal()">New Folder</button>
       </div>
     </div>
-    <div class="folder-tree" id="folderTree"></div>
+    <div class="folders" id="folderTree"></div>
+    <div class="note-list" id="noteItems"></div>
   </aside>
-
-  <section class="note-list-panel">
-    <div class="list-head">
-      <div class="list-top">
-        <div>
-          <div class="list-title" id="currentFolderName">All Notes</div>
-        </div>
-        <button class="btn gold small" type="button" onclick="newNote()">+ New</button>
-      </div>
-      <div class="banner">
-        <strong>Workflow:</strong> authors draft and submit notes for review. Admins approve or request changes. Only approved notes can be exported into the public research feed.
-      </div>
-    </div>
-    <div class="note-items" id="noteItems"></div>
-  </section>
 
   <main class="workspace">
     <div class="workspace-head">
-      <div class="workspace-title">
-        <h1 id="workspaceHeading">Select or create a note</h1>
-        <p id="workspaceSubheading">Use markdown, wikilinks like <code>[[Broken Access Control Study]]</code>, tags, and security metadata to keep research publication-ready.</p>
-      </div>
-      <div class="workspace-actions hidden" id="workspaceActions">
-        <button class="btn active" id="editModeBtn" onclick="setMode('edit')">Edit</button>
-        <button class="btn" id="previewModeBtn" onclick="setMode('preview')">Preview</button>
-        <button class="btn green" onclick="saveNote()">Save</button>
-        <button class="btn" id="submitReviewBtn" onclick="submitForReview()">Submit For Review</button>
-        <button class="btn hidden" id="revertDraftBtn" onclick="revertToDraft()">Move To Draft</button>
-        <button class="btn hidden" id="approveReviewBtn" onclick="showReviewModal('approve')">Approve</button>
-        <button class="btn hidden" id="changesReviewBtn" onclick="showReviewModal('changes')">Request Changes</button>
-        <button class="btn gold hidden" id="publishActionBtn" onclick="showPublishModal()">Export To Publish</button>
-        <button class="btn red hidden" id="deleteActionBtn" onclick="deleteNote()">Delete</button>
-      </div>
+      <div class="workspace-title" id="workspaceHeading">Shared notes for the whole team.</div>
+      <div class="workspace-sub" id="workspaceSubheading">Open a note to read it, then switch to edit if you need to change it. Admin review and publishing actions appear only when relevant.</div>
     </div>
 
-    <div class="workspace-grid">
-      <div class="workspace-scroll">
-        <div class="empty-state" id="emptyState">
-          <div>
-            <h2>Build the team knowledge base.</h2>
-            <p>Draft recon logs, turn them into structured findings, and export finished work into a public paper stream without leaving the portal.</p>
-            <div class="empty-actions">
-              <button class="btn green" onclick="newNote()">Start New Note</button>
-              <button class="btn" onclick="setEditorTemplate('paper')">Load Paper Template</button>
-            </div>
+    <div class="review-bar" id="reviewBar">
+      <div class="review-text" id="reviewBarText"></div>
+      <div class="btn-row" id="reviewBarActions"></div>
+    </div>
+
+    <div class="editor-wrap">
+      <div class="blank-state" id="blankState">
+        <h2>Pick a note or start a new one.</h2>
+        <p>The wiki opens in reading mode by default. Use markdown, fenced code blocks, tables, and wikilinks like <code>[[Another Note]]</code> without the publication workflow getting in the way.</p>
+        <div class="btn-row" style="justify-content:center">
+          <button class="btn green" onclick="newNote()">Start New Note</button>
+        </div>
+      </div>
+
+      <div class="note-shell hidden" id="noteShell">
+        <input class="title-input" id="editorTitle" type="text" placeholder="Untitled note">
+
+        <div class="note-toolbar">
+          <div class="mode-group">
+            <button class="btn active" id="previewModeBtn" onclick="setMode('preview')">Preview</button>
+            <button class="btn" id="editModeBtn" onclick="setMode('edit')">Edit</button>
+          </div>
+          <div class="status-group" id="statusChips"></div>
+          <div class="btn-row">
+            <button class="btn green" id="saveBtn" onclick="saveNote()">Save</button>
+            <button class="btn red hidden" id="deleteBtn" onclick="deleteNote()">Delete</button>
           </div>
         </div>
 
-        <div class="editor-shell hidden" id="editorShell">
-          <section class="panel">
+        <div class="editor-grid">
+          <section class="editor-panel hidden" id="editorPanel">
             <div class="panel-head">
               <div>
-                <h2>Editor</h2>
-                <p>Research metadata, markdown, and structured publication prep.</p>
+                <div class="panel-title">Markdown Editor</div>
+                <div class="panel-sub">Use fenced code blocks, inline code, tables, headings, and normal note-taking workflows.</div>
               </div>
-              <div class="status-row" id="statusPills"></div>
             </div>
             <div class="panel-body">
-              <input id="editorTitle" class="title-field" type="text" placeholder="Untitled research note">
-              <div class="meta-grid">
-                <div class="meta-block">
-                  <label class="meta-label" for="editorType">Note Type</label>
-                  <select class="select-field" id="editorType">
-                    <option value="research-note">Research Note</option>
-                    <option value="finding">Finding</option>
-                    <option value="playbook">Playbook</option>
-                    <option value="paper-draft">Paper Draft</option>
-                    <option value="methodology">Methodology</option>
-                  </select>
-                </div>
-                <div class="meta-block">
-                  <label class="meta-label" for="editorPhase">Research Phase</label>
-                  <select class="select-field" id="editorPhase">
-                    <option value="triage">Triage</option>
-                    <option value="recon">Recon</option>
-                    <option value="analysis">Analysis</option>
-                    <option value="validation">Validation</option>
-                    <option value="drafting">Drafting</option>
-                    <option value="published">Published</option>
-                  </select>
-                </div>
-                <div class="meta-block">
-                  <label class="meta-label" for="editorTarget">Target / Program</label>
-                  <input class="text-field" id="editorTarget" type="text" placeholder="app.example.com / Bug bounty / Client portal">
-                </div>
-                <div class="meta-block">
-                  <label class="meta-label" for="editorSeverity">Severity</label>
-                  <select class="select-field" id="editorSeverity">
-                    <option value="info">Info</option>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical</option>
-                  </select>
-                </div>
-                <div class="meta-block">
-                  <label class="meta-label" for="editorTlp">Visibility</label>
-                  <select class="select-field" id="editorTlp">
-                    <option value="team">Team</option>
-                    <option value="amber">Amber</option>
-                    <option value="green">Green</option>
-                    <option value="white">White</option>
-                  </select>
-                </div>
-                <div class="meta-block">
-                  <label class="meta-label" for="editorTags">Tags</label>
-                  <input class="text-field" id="editorTags" type="text" placeholder="idor, authz, recon, ffuf">
-                </div>
-              </div>
-              <textarea id="editorContent" class="editor-textarea" placeholder="# Executive Summary&#10;&#10;Describe the research outcome, the attack path, and what still needs validation."></textarea>
-              <div class="editor-foot">
-                <div class="note-stats" id="editorStats">0 words · 0 min read</div>
-                <div class="note-stats" id="saveStatus">Not saved yet</div>
+              <textarea class="textarea" id="editorContent" placeholder="# Note title&#10;&#10;Write freely here. Markdown and code blocks are supported."></textarea>
+              <div class="stats">
+                <div id="editorStats">0 words · 0 min read</div>
+                <div id="saveStatus">Not saved yet</div>
               </div>
             </div>
           </section>
 
-          <section class="panel" id="previewPanel">
+          <section class="preview-panel" id="previewPanel">
             <div class="panel-head">
               <div>
-                <h2>Rendered Preview</h2>
-                <p>Markdown, code blocks, and wikilinks render here.</p>
-              </div>
-              <div class="status-row">
-                <span class="pill" id="authorPill">author</span>
-                <span class="pill" id="publishPill">internal</span>
+                <div class="panel-title">Rendered Note</div>
+                <div class="panel-sub">Reading view for the shared wiki.</div>
               </div>
             </div>
             <div class="panel-body">
@@ -528,64 +374,85 @@ button{cursor:pointer}
           </section>
         </div>
       </div>
-
-      <aside class="tool-scroll">
-        <div class="tool-section">
-          <div class="section-label">Research Aids</div>
-          <div class="tool-card">
-            <h3>Quick Templates</h3>
-            <p>Seed a note with structure for web app recon, exploit validation, or publication-ready writeups.</p>
-            <div class="workspace-actions">
-              <button class="btn small" onclick="setEditorTemplate('recon')">Recon</button>
-              <button class="btn small" onclick="setEditorTemplate('finding')">Finding</button>
-              <button class="btn small" onclick="setEditorTemplate('paper')">Paper</button>
-            </div>
-          </div>
-          <div class="tool-card">
-            <h3>Attack Surface Checklist</h3>
-            <p>Capture web application test coverage without opening a second tool.</p>
-            <div class="tool-list">
-              <span class="tag" onclick="insertSnippet('- Auth flow mapping: login, registration, password reset, MFA\\n')">Auth</span>
-              <span class="tag" onclick="insertSnippet('- Access control review: object refs, tenant isolation, admin actions\\n')">Access</span>
-              <span class="tag" onclick="insertSnippet('- Input vectors: query, path, headers, JSON, multipart, websockets\\n')">Inputs</span>
-              <span class="tag" onclick="insertSnippet('- Client-side review: source maps, secrets, hidden routes, feature flags\\n')">Client</span>
-              <span class="tag" onclick="insertSnippet('- SSRF / desync / cache behavior / proxy trust assumptions\\n')">Infra</span>
-              <span class="tag" onclick="insertSnippet('- Impact chain, reproducibility, mitigations, and safe disclosure notes\\n')">Impact</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="tool-section">
-          <div class="section-label">Templates</div>
-          <div class="template-card">
-            <h3>Recon Note</h3>
-            <p>Structured notes for surface mapping, endpoints, parameters, and auth boundaries.</p>
-            <button class="btn small gold" onclick="setEditorTemplate('recon')">Load Template</button>
-          </div>
-          <div class="template-card">
-            <h3>Validated Finding</h3>
-            <p>Turn raw observations into a reproducible security finding with impact and remediation.</p>
-            <button class="btn small gold" onclick="setEditorTemplate('finding')">Load Template</button>
-          </div>
-          <div class="template-card">
-            <h3>Public Paper Draft</h3>
-            <p>Use for long-form writeups that will be exported into the public research feed.</p>
-            <button class="btn small gold" onclick="setEditorTemplate('paper')">Load Template</button>
-          </div>
-        </div>
-
-        <div class="tool-section">
-          <div class="section-label">Backlinks</div>
-          <div id="backlinksPanel">
-            <div class="tool-card">
-              <h3>No active note</h3>
-              <p>Select a note to see incoming wikilinks and related research threads.</p>
-            </div>
-          </div>
-        </div>
-      </aside>
     </div>
   </main>
+
+  <aside class="meta-panel">
+    <div class="meta-panel-inner">
+      <section class="meta-card">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Note Details</div>
+            <div class="panel-sub">Light metadata and workflow state.</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="meta-grid">
+            <div>
+              <div class="meta-label">Type</div>
+              <select class="field" id="editorType">
+                <option value="research-note">Research Note</option>
+                <option value="finding">Finding</option>
+                <option value="playbook">Playbook</option>
+                <option value="paper-draft">Paper Draft</option>
+                <option value="methodology">Methodology</option>
+              </select>
+            </div>
+            <div>
+              <div class="meta-label">Phase</div>
+              <select class="field" id="editorPhase">
+                <option value="triage">Triage</option>
+                <option value="recon">Recon</option>
+                <option value="analysis">Analysis</option>
+                <option value="validation">Validation</option>
+                <option value="drafting">Drafting</option>
+                <option value="published">Published</option>
+              </select>
+            </div>
+            <div>
+              <div class="meta-label">Target</div>
+              <input class="field" id="editorTarget" type="text" placeholder="Optional target or project">
+            </div>
+            <div>
+              <div class="meta-label">Severity</div>
+              <select class="field" id="editorSeverity">
+                <option value="info">Info</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+              </select>
+            </div>
+            <div>
+              <div class="meta-label">Visibility</div>
+              <select class="field" id="editorTlp">
+                <option value="team">Team</option>
+                <option value="amber">Amber</option>
+                <option value="green">Green</option>
+                <option value="white">White</option>
+              </select>
+            </div>
+            <div>
+              <div class="meta-label">Tags</div>
+              <input class="field" id="editorTags" type="text" placeholder="comma, separated, tags">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="meta-card">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Backlinks</div>
+            <div class="panel-sub">Other notes linking here.</div>
+          </div>
+        </div>
+        <div class="panel-body" id="backlinksPanel">
+          <div class="subtle" style="font-size:12px;color:var(--text-dim)">Open a note to see backlinks.</div>
+        </div>
+      </section>
+    </div>
+  </aside>
 </div>
 
 <script>
@@ -596,118 +463,10 @@ let notes = [];
 let currentFolder = null;
 let currentNote = null;
 let isNew = false;
-let mode = 'edit';
+let mode = 'preview';
+let pendingReviewAction = null;
 let bookmarkedNotes = new Set();
 let bookmarkIdMap = {};
-let pendingReviewAction = null;
-
-const templates = {
-  recon: {
-    title: 'Recon Session',
-    note_type: 'research-note',
-    research_phase: 'recon',
-    severity: 'info',
-    tlp: 'team',
-    content: `# Scope Snapshot
-
-## Target
-- Program:
-- Assets:
-- Access level:
-
-## Surface Map
-- Entry points:
-- Interesting routes:
-- API hosts:
-- Third-party integrations:
-
-## Authentication And Session Notes
-- Login flow:
-- MFA / recovery paths:
-- Cookies / tokens:
-
-## Parameter Discovery
-- Path params:
-- Query params:
-- JSON bodies:
-- File upload / multipart:
-
-## Next Experiments
-- [ ] Forced browsing
-- [ ] IDOR / BOLA
-- [ ] Cache poisoning / deception
-- [ ] SSRF / redirect abuse
-- [ ] WebSocket review
-`
-  },
-  finding: {
-    title: 'Validated Finding',
-    note_type: 'finding',
-    research_phase: 'validation',
-    severity: 'medium',
-    tlp: 'team',
-    content: `# Summary
-
-Describe the issue in one paragraph.
-
-## Affected Target
-- Host / app:
-- Role required:
-- Test account:
-
-## Root Cause
-- Trust boundary:
-- Broken assumption:
-
-## Reproduction
-1. 
-2. 
-3. 
-
-## Evidence
-\`\`\`http
-GET /endpoint HTTP/1.1
-Host: target
-\`\`\`
-
-## Impact
-- Confidentiality:
-- Integrity:
-- Availability:
-
-## Remediation
-- Short term:
-- Long term:
-`
-  },
-  paper: {
-    title: 'Research Paper Draft',
-    note_type: 'paper-draft',
-    research_phase: 'drafting',
-    severity: 'info',
-    tlp: 'white',
-    content: `# Title
-
-## Executive Summary
-
-## Background
-
-## Methodology
-
-## Attack Narrative
-
-## Technical Deep Dive
-
-## Detection And Defense
-
-## Responsible Disclosure Timeline
-
-## Credits
-- Researcher:
-- Supporting team:
-`
-  }
-};
 
 function esc(s){
   return String(s ?? '')
@@ -729,8 +488,12 @@ function readCachedUser(){
 }
 
 function authFetch(url, opts = {}){
-  const headers = opts.body instanceof FormData ? (opts.headers || {}) : { 'Content-Type': 'application/json', ...(opts.headers || {}) };
-  return fetch(API + url, { ...opts, headers, credentials:'include', cache:'no-store' }).then((res) => {
+  return fetch(API + url, {
+    ...opts,
+    credentials:'include',
+    cache:'no-store',
+    headers:{ 'Content-Type':'application/json', ...(opts.headers || {}) },
+  }).then((res) => {
     if(res.status === 401){
       localStorage.removeItem('dc_user');
       window.location.href = 'login.html';
@@ -751,9 +514,7 @@ async function ensureSession(){
     localStorage.setItem('dc_user', JSON.stringify(user));
     document.getElementById('sessionBadge').textContent = user.is_admin ? 'admin session active' : 'team session active';
     if(user.is_admin){
-      document.getElementById('adminControls').style.display = 'flex';
-      document.getElementById('publishActionBtn').classList.remove('hidden');
-      document.getElementById('deleteActionBtn').classList.remove('hidden');
+      document.getElementById('adminFolderBtn').classList.remove('hidden');
     }
     return true;
   }catch(_){
@@ -763,35 +524,33 @@ async function ensureSession(){
   }
 }
 
-function timeAgo(d){
-  if(!d) return 'just now';
-  const seconds = (Date.now() - new Date(d)) / 1000;
+function timeAgo(value){
+  if(!value) return 'just now';
+  const seconds = (Date.now() - new Date(value)) / 1000;
   if(seconds < 60) return 'just now';
   if(seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
   if(seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
   return Math.floor(seconds / 86400) + 'd ago';
 }
 
-function reviewLabel(status){
-  const labels = {
-    draft: 'draft',
-    in_review: 'in review',
-    changes_requested: 'changes requested',
-    approved: 'approved',
-    published: 'published',
-  };
-  return labels[status] || status || 'draft';
-}
-
 function wordStats(text){
-  const words = String(text || '').trim().split(/\s+/).filter(Boolean);
-  const count = words.length;
-  return { words: count, minutes: Math.max(1, Math.ceil(count / 220)) };
+  const words = String(text || '').trim().split(/\s+/).filter(Boolean).length;
+  return { words, minutes: Math.max(1, Math.ceil(words / 220)) };
 }
 
-function findFolderName(id){
-  if(id === null) return 'All Notes';
-  return folders.find((f) => f.id === id)?.name || 'Notes';
+function reviewLabel(status){
+  return ({
+    draft:'draft',
+    in_review:'in review',
+    changes_requested:'changes requested',
+    approved:'approved',
+    published:'published'
+  })[status] || 'draft';
+}
+
+function noteStatusChip(note){
+  if(note.published) return '<span class="chip public">public</span>';
+  return `<span class="chip review">${esc(reviewLabel(note.review_status))}</span>`;
 }
 
 async function loadFolders(){
@@ -804,7 +563,6 @@ async function loadNotes(folderId = null){
   const url = folderId !== null ? `/api/notes/?folder_id=${folderId}` : '/api/notes/';
   const res = await authFetch(url);
   notes = res.ok ? await res.json() : [];
-  document.getElementById('railCounts').textContent = notes.length + ' notes';
   renderFolderTree();
   renderNoteList();
 }
@@ -817,18 +575,15 @@ function renderFolderTree(){
       <span>All Notes</span>
       <span class="folder-count">${notes.length}</span>
     </button>`;
-
   folders.forEach((folder) => {
     const count = notes.filter((note) => note.folder_id === folder.id).length;
-    const delBtn = user && user.is_admin
-      ? `<button class="folder-del" type="button" onclick="deleteFolder(event, ${folder.id})">✕</button>`
-      : '';
+    const del = user && user.is_admin ? `<button class="folder-del" onclick="deleteFolder(event, ${folder.id})">✕</button>` : '';
     html += `
       <button class="folder-item ${currentFolder === folder.id ? 'active' : ''}" type="button" onclick="selectFolder(${folder.id})">
         <span>🗂️</span>
         <span>${esc(folder.name)}</span>
         <span class="folder-count">${count}</span>
-        ${delBtn}
+        ${del}
       </button>`;
   });
   tree.innerHTML = html;
@@ -838,15 +593,8 @@ function getFilteredNotes(){
   const query = document.getElementById('globalSearch').value.trim().toLowerCase();
   const phase = document.getElementById('phaseFilter').value;
   const severity = document.getElementById('severityFilter').value;
-
   return notes.filter((note) => {
-    const haystack = [
-      note.title,
-      note.content,
-      note.author_handle,
-      note.target_name,
-      ...(Array.isArray(note.tags) ? note.tags : []),
-    ].join(' ').toLowerCase();
+    const haystack = [note.title, note.content, note.author_handle, note.target_name, ...(note.tags || [])].join(' ').toLowerCase();
     if(query && !haystack.includes(query)) return false;
     if(phase && note.research_phase !== phase) return false;
     if(severity && note.severity !== severity) return false;
@@ -855,154 +603,52 @@ function getFilteredNotes(){
 }
 
 function renderNoteList(){
+  const list = document.getElementById('noteItems');
   const items = getFilteredNotes();
-  const el = document.getElementById('noteItems');
-  document.getElementById('currentFolderName').textContent = findFolderName(currentFolder);
   if(!items.length){
-    el.innerHTML = '<div class="tool-card"><h3>No notes match this view</h3><p>Try another filter, create a new draft, or switch folders.</p></div>';
+    list.innerHTML = `<div class="note-card"><div class="note-title">No notes found</div><div class="note-preview">Try another search or create a new note.</div></div>`;
     return;
   }
-  el.innerHTML = items.map((note) => {
-    const tags = (Array.isArray(note.tags) ? note.tags : []).filter(Boolean).slice(0, 3).map((tag) => `<span class="tag">${esc(String(tag).trim())}</span>`).join('');
-    const starred = bookmarkedNotes.has(note.id);
-    const status = note.published
-      ? '<span class="pill pub">public</span>'
-      : `<span class="pill draft">${esc(reviewLabel(note.review_status))}</span>`;
-    return `
-      <article class="note-row ${currentNote && currentNote.id === note.id ? 'active' : ''}" onclick="openNote(${note.id})">
-        <button class="note-star ${starred ? 'starred' : ''}" type="button" data-noteid="${note.id}" onclick="event.stopPropagation();toggleBookmark(this, ${note.id})">${starred ? '★' : '☆'}</button>
-        <div class="note-top">
-          <div>
-            <div class="note-title">${esc(note.title)}</div>
-          </div>
-          ${status}
-        </div>
-        <div class="note-preview">${esc(note.content || 'No preview yet.')}</div>
-        <div class="note-meta">
-          <span>${esc(note.author_handle || 'unknown')}</span>
-          <span>${esc(note.note_type || 'research-note')}</span>
-          <span>${esc(note.research_phase || 'triage')}</span>
-          <span>${esc(note.target_name || 'no target')}</span>
-          <span>${esc(reviewLabel(note.review_status))}</span>
-          <span>${timeAgo(note.updated_at || note.created_at)}</span>
-        </div>
-        ${tags ? `<div class="tool-list" style="margin-top:10px">${tags}</div>` : ''}
-      </article>`;
-  }).join('');
+  list.innerHTML = items.map((note) => `
+    <article class="note-card ${currentNote && currentNote.id === note.id ? 'active' : ''}" onclick="openNote(${note.id})">
+      <button class="star-btn ${bookmarkedNotes.has(note.id) ? 'starred' : ''}" type="button" onclick="event.stopPropagation();toggleBookmark(this, ${note.id})">${bookmarkedNotes.has(note.id) ? '★' : '☆'}</button>
+      <div class="note-title">${esc(note.title)}</div>
+      <div class="note-preview">${esc(note.content || 'No preview')}</div>
+      <div class="note-meta">
+        <span>${esc(note.author_handle || 'unknown')}</span>
+        <span>${esc(note.note_type || 'research-note')}</span>
+        <span>${timeAgo(note.updated_at || note.created_at)}</span>
+      </div>
+      <div class="btn-row" style="margin-top:10px;justify-content:space-between">
+        ${noteStatusChip(note)}
+        <div class="note-meta">${esc(note.target_name || 'no target')}</div>
+      </div>
+    </article>
+  `).join('');
 }
 
-function selectFolder(folderId){
-  currentFolder = folderId;
+function hideBlank(){
+  document.getElementById('blankState').classList.add('hidden');
+  document.getElementById('noteShell').classList.remove('hidden');
+}
+
+function showBlank(){
   currentNote = null;
   isNew = false;
-  hideWorkspace();
-  loadNotes(folderId);
+  document.getElementById('blankState').classList.remove('hidden');
+  document.getElementById('noteShell').classList.add('hidden');
+  document.getElementById('workspaceHeading').textContent = 'Shared notes for the whole team.';
+  document.getElementById('workspaceSubheading').textContent = 'Open a note to read it, then switch to edit if you need to change it. Admin review and publishing actions appear only when relevant.';
+  document.getElementById('reviewBar').classList.remove('visible');
+  document.getElementById('backlinksPanel').innerHTML = '<div class="subtle" style="font-size:12px;color:var(--text-dim)">Open a note to see backlinks.</div>';
 }
 
-async function openNote(id){
-  const res = await authFetch(`/api/notes/${id}`);
-  if(!res.ok) return;
-  currentNote = await res.json();
-  isNew = false;
-  showWorkspace();
-  populateEditor(currentNote);
-  renderNoteList();
-  renderBacklinks();
-  renderMarkdownPreview();
-}
-
-function populateEditor(note){
-  document.getElementById('workspaceHeading').textContent = note.title;
-  document.getElementById('workspaceSubheading').textContent = `by ${note.author_handle} · ${timeAgo(note.updated_at || note.created_at)} · ${note.note_type}`;
-  document.getElementById('editorTitle').value = note.title || '';
-  document.getElementById('editorType').value = note.note_type || 'research-note';
-  document.getElementById('editorPhase').value = note.research_phase || 'triage';
-  document.getElementById('editorTarget').value = note.target_name || '';
-  document.getElementById('editorSeverity').value = note.severity || 'info';
-  document.getElementById('editorTlp').value = note.tlp || 'team';
-  document.getElementById('editorTags').value = Array.isArray(note.tags) ? note.tags.join(', ') : '';
-  document.getElementById('editorContent').value = note.content || '';
-  const canEdit = user && (user.is_admin || note.author_id === user.id);
-  document.getElementById('editModeBtn').style.display = canEdit ? 'inline-flex' : 'none';
-  document.getElementById('deleteActionBtn').style.display = user && user.is_admin ? 'inline-flex' : 'none';
-  document.getElementById('publishActionBtn').style.display = user && user.is_admin ? 'inline-flex' : 'none';
-  document.getElementById('editorTitle').disabled = !canEdit;
-  document.getElementById('editorType').disabled = !canEdit;
-  document.getElementById('editorPhase').disabled = !canEdit;
-  document.getElementById('editorTarget').disabled = !canEdit;
-  document.getElementById('editorSeverity').disabled = !canEdit;
-  document.getElementById('editorTlp').disabled = !canEdit;
-  document.getElementById('editorTags').disabled = !canEdit;
-  document.getElementById('editorContent').disabled = !canEdit;
-  document.querySelector('#workspaceActions .btn.green').style.display = canEdit ? 'inline-flex' : 'none';
-  syncWorkflowButtons(note, canEdit);
-  updateStatusPills(note);
-  updateStats();
-  setMode(canEdit ? 'edit' : 'preview');
-}
-
-function updateStatusPills(note){
-  const wrapper = document.getElementById('statusPills');
-  wrapper.innerHTML = `
-    <span class="pill">${esc(note.note_type || 'research-note')}</span>
-    <span class="pill">${esc(note.research_phase || 'triage')}</span>
-    <span class="pill">${esc((note.severity || 'info').toUpperCase())}</span>
-    <span class="pill">${esc((note.tlp || 'team').toUpperCase())}</span>
-    <span class="pill">${esc(reviewLabel(note.review_status))}</span>`;
-  document.getElementById('authorPill').textContent = note.author_handle || 'unknown';
-  document.getElementById('publishPill').textContent = note.published ? 'public paper' : reviewLabel(note.review_status);
-}
-
-function showWorkspace(){
-  document.getElementById('emptyState').classList.add('hidden');
-  document.getElementById('editorShell').classList.remove('hidden');
-  document.getElementById('workspaceActions').classList.remove('hidden');
-}
-
-function hideWorkspace(){
-  document.getElementById('workspaceHeading').textContent = 'Select or create a note';
-  document.getElementById('workspaceSubheading').textContent = 'Use markdown, wikilinks like [[Broken Access Control Study]], tags, and security metadata to keep research publication-ready.';
-  document.getElementById('emptyState').classList.remove('hidden');
-  document.getElementById('editorShell').classList.add('hidden');
-  document.getElementById('workspaceActions').classList.add('hidden');
-  document.getElementById('backlinksPanel').innerHTML = '<div class="tool-card"><h3>No active note</h3><p>Select a note to see incoming wikilinks and related research threads.</p></div>';
-}
-
-function newNote(){
-  currentNote = null;
-  isNew = true;
-  showWorkspace();
-  document.getElementById('workspaceHeading').textContent = 'New note';
-  document.getElementById('workspaceSubheading').textContent = 'Create an internal draft first. Admins can export finished work later.';
-  document.getElementById('editorTitle').value = '';
-  document.getElementById('editorType').value = 'research-note';
-  document.getElementById('editorPhase').value = 'triage';
-  document.getElementById('editorTarget').value = '';
-  document.getElementById('editorSeverity').value = 'info';
-  document.getElementById('editorTlp').value = 'team';
-  document.getElementById('editorTags').value = '';
-  document.getElementById('editorContent').value = '';
-  ['editorTitle','editorType','editorPhase','editorTarget','editorSeverity','editorTlp','editorTags','editorContent'].forEach((id) => {
-    document.getElementById(id).disabled = false;
-  });
-  document.getElementById('deleteActionBtn').style.display = 'none';
-  document.getElementById('publishActionBtn').style.display = user && user.is_admin ? 'inline-flex' : 'none';
-  document.querySelector('#workspaceActions .btn.green').style.display = 'inline-flex';
-  syncWorkflowButtons({ review_status:'draft', published:false, author_id:user ? user.id : null }, true);
-  updateStatusPills({
-    author_handle: user ? user.handle : 'unknown',
-    note_type: 'research-note',
-    research_phase: 'triage',
-    severity: 'info',
-    tlp: 'team',
-    review_status: 'draft',
-    published: false,
-  });
-  renderMarkdownPreview();
-  renderBacklinks();
-  updateStats();
-  setMode('edit');
-  document.getElementById('editorTitle').focus();
+function setMode(next){
+  mode = next;
+  document.getElementById('previewModeBtn').classList.toggle('active', next === 'preview');
+  document.getElementById('editModeBtn').classList.toggle('active', next === 'edit');
+  document.getElementById('previewPanel').classList.toggle('hidden', next !== 'preview');
+  document.getElementById('editorPanel').classList.toggle('hidden', next !== 'edit');
 }
 
 function currentDraft(){
@@ -1019,76 +665,152 @@ function currentDraft(){
   };
 }
 
-function syncWorkflowButtons(note, canEdit){
-  const isAdmin = !!(user && user.is_admin);
-  const isAuthor = !!(user && note && note.author_id === user.id);
-  const status = note && note.review_status ? note.review_status : 'draft';
-  document.getElementById('submitReviewBtn').style.display = canEdit && (isAuthor || isAdmin) && !note.published && (status === 'draft' || status === 'changes_requested') ? 'inline-flex' : 'none';
-  document.getElementById('revertDraftBtn').style.display = canEdit && (isAuthor || isAdmin) && !note.published && status === 'in_review' ? 'inline-flex' : 'none';
-  document.getElementById('approveReviewBtn').style.display = isAdmin && !note.published && status === 'in_review' ? 'inline-flex' : 'none';
-  document.getElementById('changesReviewBtn').style.display = isAdmin && !note.published && status === 'in_review' ? 'inline-flex' : 'none';
-  document.getElementById('publishActionBtn').style.display = isAdmin && status === 'approved' ? 'inline-flex' : 'none';
-}
-
-function setMode(nextMode){
-  mode = nextMode;
-  document.getElementById('editModeBtn').classList.toggle('active', nextMode === 'edit');
-  document.getElementById('previewModeBtn').classList.toggle('active', nextMode === 'preview');
-  document.getElementById('previewPanel').style.opacity = nextMode === 'preview' ? '1' : '.92';
-  document.getElementById('editorContent').focus();
-}
-
-function slugify(value){
-  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0,220);
-}
-
-function buildWikiTitleMap(){
+function buildTitleMap(){
   const map = new Map();
-  notes.forEach((note) => {
-    map.set(String(note.title || '').trim().toLowerCase(), note);
-  });
-  if(currentNote){
-    map.set(String(currentNote.title || '').trim().toLowerCase(), currentNote);
-  }
+  notes.forEach((note) => map.set(String(note.title || '').trim().toLowerCase(), note));
+  if(currentNote) map.set(String(currentNote.title || '').trim().toLowerCase(), currentNote);
   return map;
 }
 
-function renderMarkdownWithWikiLinks(raw){
-  const titleMap = buildWikiTitleMap();
-  const source = String(raw || '').replace(/\[\[([^\]]+)\]\]/g, (_, label) => {
-    const key = String(label || '').trim().toLowerCase();
-    const match = titleMap.get(key);
-    if(match){
-      return `[${label}](#note-${match.id})`;
-    }
-    return `\`${label}\``;
-  });
-  const safe = source.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  return marked.parse(safe);
-}
-
-function renderMarkdownPreview(){
+function renderMarkdown(){
   const draft = currentDraft();
-  const title = draft.title || 'Untitled research note';
-  const content = draft.content || '*No content yet.*';
-  document.getElementById('workspaceHeading').textContent = currentNote ? (draft.title || currentNote.title) : title;
-  document.getElementById('mdBody').innerHTML = renderMarkdownWithWikiLinks(`# ${title}\n\n${content}`);
+  const title = draft.title || 'Untitled note';
+  const titleMap = buildTitleMap();
+  const withLinks = String(draft.content || '*No content yet.*').replace(/\[\[([^\]]+)\]\]/g, (_, label) => {
+    const match = titleMap.get(String(label).trim().toLowerCase());
+    return match ? `[${label}](#note-${match.id})` : `\`${label}\``;
+  });
+  document.getElementById('mdBody').innerHTML = marked.parse(`# ${title}\n\n${withLinks}`.replace(/</g,'&lt;').replace(/>/g,'&gt;'));
   document.querySelectorAll('#mdBody pre code').forEach((el) => hljs.highlightElement(el));
-  Array.from(document.querySelectorAll('#mdBody a[href^="#note-"]')).forEach((link) => {
-    link.classList.add('wikilink');
+  document.querySelectorAll('#mdBody a[href^="#note-"]').forEach((link) => {
     link.addEventListener('click', (event) => {
       event.preventDefault();
-      const id = Number(link.getAttribute('href').replace('#note-', ''));
+      const id = Number(link.getAttribute('href').replace('#note-',''));
       if(id) openNote(id);
     });
   });
-  document.getElementById('authorPill').textContent = currentNote ? currentNote.author_handle : (user ? user.handle : 'unknown');
-  document.getElementById('publishPill').textContent = currentNote && currentNote.published ? 'public paper' : reviewLabel(currentNote ? currentNote.review_status : 'draft');
 }
 
 function updateStats(){
   const stats = wordStats(document.getElementById('editorContent').value);
   document.getElementById('editorStats').textContent = `${stats.words} words · ${stats.minutes} min read`;
+}
+
+function syncEditable(note, canEdit){
+  ['editorTitle','editorContent','editorType','editorPhase','editorTarget','editorSeverity','editorTlp','editorTags'].forEach((id) => {
+    document.getElementById(id).disabled = !canEdit;
+  });
+  document.getElementById('saveBtn').style.display = canEdit ? 'inline-flex' : 'none';
+  document.getElementById('deleteBtn').style.display = user && user.is_admin && note && note.id ? 'inline-flex' : 'none';
+  document.getElementById('editModeBtn').style.display = canEdit ? 'inline-flex' : 'none';
+}
+
+function syncStatusChips(note){
+  document.getElementById('statusChips').innerHTML = `
+    ${noteStatusChip(note)}
+    <span class="chip">${esc(note.note_type || 'research-note')}</span>
+    <span class="chip">${esc(note.research_phase || 'triage')}</span>
+    <span class="chip">${esc((note.severity || 'info').toUpperCase())}</span>
+  `;
+}
+
+function syncReviewBar(note, canEdit){
+  const bar = document.getElementById('reviewBar');
+  const text = document.getElementById('reviewBarText');
+  const actions = document.getElementById('reviewBarActions');
+  if(!note){
+    bar.classList.remove('visible');
+    return;
+  }
+  const isAdmin = !!(user && user.is_admin);
+  const isAuthor = !!(user && note.author_id === user.id);
+  const status = note.review_status || 'draft';
+  const reviewer = note.reviewed_by ? ` Reviewed by ${note.reviewed_by}.` : '';
+  const notesText = note.review_notes ? ` Notes: ${note.review_notes}` : '';
+  text.textContent = `Workflow: ${reviewLabel(status)}.${reviewer}${notesText}`;
+  const btns = [];
+  if((isAuthor || isAdmin) && canEdit && (status === 'draft' || status === 'changes_requested')){
+    btns.push('<button class="btn" onclick="submitForReview()">Submit For Review</button>');
+  }
+  if((isAuthor || isAdmin) && status === 'in_review'){
+    btns.push('<button class="btn" onclick="revertToDraft()">Move To Draft</button>');
+  }
+  if(isAdmin && status === 'in_review'){
+    btns.push('<button class="btn green" onclick="showReviewModal(\'approve\')">Approve</button>');
+    btns.push('<button class="btn red" onclick="showReviewModal(\'changes\')">Request Changes</button>');
+  }
+  if(isAdmin && status === 'approved'){
+    btns.push('<button class="btn gold" onclick="showPublishModal()">Export To Publish</button>');
+  }
+  if(isAdmin && note.published){
+    btns.push('<button class="btn red" onclick="showPublishModal()">Manage Publication</button>');
+  }
+  actions.innerHTML = btns.join('');
+  bar.classList.toggle('visible', btns.length > 0 || !!note.review_notes || status !== 'draft');
+}
+
+function populateNote(note){
+  hideBlank();
+  const canEdit = !!(user && (user.is_admin || note.author_id === user.id));
+  document.getElementById('workspaceHeading').textContent = note.title;
+  document.getElementById('workspaceSubheading').textContent = `by ${note.author_handle} · ${timeAgo(note.updated_at || note.created_at)} · ${note.note_type}`;
+  document.getElementById('editorTitle').value = note.title || '';
+  document.getElementById('editorContent').value = note.content || '';
+  document.getElementById('editorType').value = note.note_type || 'research-note';
+  document.getElementById('editorPhase').value = note.research_phase || 'triage';
+  document.getElementById('editorTarget').value = note.target_name || '';
+  document.getElementById('editorSeverity').value = note.severity || 'info';
+  document.getElementById('editorTlp').value = note.tlp || 'team';
+  document.getElementById('editorTags').value = Array.isArray(note.tags) ? note.tags.join(', ') : '';
+  syncEditable(note, canEdit);
+  syncStatusChips(note);
+  syncReviewBar(note, canEdit);
+  renderBacklinks();
+  renderMarkdown();
+  updateStats();
+  setMode(canEdit ? 'preview' : 'preview');
+}
+
+function newNote(){
+  currentNote = null;
+  isNew = true;
+  hideBlank();
+  const base = {
+    title:'',
+    content:'',
+    note_type:'research-note',
+    research_phase:'triage',
+    target_name:'',
+    severity:'info',
+    tlp:'team',
+    tags:[],
+    review_status:'draft',
+    published:false,
+    author_id:user ? user.id : null,
+    author_handle:user ? user.handle : 'unknown'
+  };
+  populateNote(base);
+  setMode('edit');
+  document.getElementById('workspaceHeading').textContent = 'New note';
+  document.getElementById('workspaceSubheading').textContent = 'A normal shared wiki note. Review and publication are optional later steps.';
+  document.getElementById('saveStatus').textContent = 'Not saved yet';
+  document.getElementById('editorTitle').focus();
+}
+
+function selectFolder(folderId){
+  currentFolder = folderId;
+  renderFolderTree();
+  showBlank();
+  loadNotes(folderId);
+}
+
+async function openNote(id){
+  const res = await authFetch(`/api/notes/${id}`);
+  if(!res.ok) return;
+  currentNote = await res.json();
+  isNew = false;
+  renderNoteList();
+  populateNote(currentNote);
 }
 
 async function saveNote(){
@@ -1109,16 +831,112 @@ async function saveNote(){
   isNew = false;
   document.getElementById('saveStatus').textContent = 'Saved just now';
   await loadNotes(currentFolder);
-  populateEditor(currentNote);
-  renderBacklinks();
-  renderMarkdownPreview();
+  renderNoteList();
+  populateNote(currentNote);
+}
+
+async function deleteNote(){
+  if(!currentNote || !currentNote.id) return;
+  if(!confirm(`Delete "${currentNote.title}"? This cannot be undone.`)) return;
+  const res = await authFetch(`/api/notes/${currentNote.id}`, { method:'DELETE' });
+  if(res.ok){
+    showBlank();
+    await loadNotes(currentFolder);
+  }
+}
+
+function slugify(value){
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,220);
+}
+
+function showPublishModal(){
+  if(!currentNote || !user || !user.is_admin) return;
+  document.getElementById('publishTitle').value = currentNote.public_title || currentNote.title || '';
+  document.getElementById('publishSlug').value = currentNote.public_slug || slugify(currentNote.title);
+  document.getElementById('unpublishBtn').classList.toggle('hidden', !currentNote.published);
+  document.getElementById('publishModal').classList.remove('hidden');
+}
+
+function closePublishModal(){
+  document.getElementById('publishModal').classList.add('hidden');
+}
+
+async function publishCurrentNote(){
+  if(!currentNote) return;
+  const res = await authFetch(`/api/notes/${currentNote.id}/publish`, {
+    method:'POST',
+    body:JSON.stringify({
+      public_title: document.getElementById('publishTitle').value.trim() || undefined,
+      slug: document.getElementById('publishSlug').value.trim() || undefined,
+    })
+  });
+  if(!res.ok){
+    const err = await res.json().catch(() => ({}));
+    alert(err.detail || 'Failed to publish note.');
+    return;
+  }
+  currentNote = await res.json();
+  closePublishModal();
+  await loadNotes(currentFolder);
+  populateNote(currentNote);
+}
+
+async function unpublishCurrentNote(){
+  if(!currentNote) return;
+  const res = await authFetch(`/api/notes/${currentNote.id}/unpublish`, { method:'POST' });
+  if(!res.ok){
+    const err = await res.json().catch(() => ({}));
+    alert(err.detail || 'Failed to unpublish note.');
+    return;
+  }
+  currentNote = await res.json();
+  closePublishModal();
+  await loadNotes(currentFolder);
+  populateNote(currentNote);
+}
+
+function showReviewModal(action){
+  pendingReviewAction = action;
+  document.getElementById('reviewModalTitle').textContent = action === 'approve' ? 'Approve Note' : 'Request Changes';
+  document.getElementById('reviewModalText').textContent = action === 'approve'
+    ? 'Add optional reviewer notes and approve this note for publication.'
+    : 'Explain what needs to change before the note is approved.';
+  document.getElementById('reviewNotesInput').value = currentNote ? (currentNote.review_notes || '') : '';
+  document.getElementById('reviewModalConfirmBtn').textContent = action === 'approve' ? 'Approve' : 'Request Changes';
+  document.getElementById('reviewModalConfirmBtn').className = action === 'approve' ? 'btn green' : 'btn red';
+  document.getElementById('reviewModal').classList.remove('hidden');
+}
+
+function closeReviewModal(){
+  pendingReviewAction = null;
+  document.getElementById('reviewModal').classList.add('hidden');
+}
+
+async function confirmReviewAction(){
+  if(!currentNote || !pendingReviewAction) return;
+  const endpoint = pendingReviewAction === 'approve'
+    ? `/api/notes/${currentNote.id}/review/approve`
+    : `/api/notes/${currentNote.id}/review/request-changes`;
+  const res = await authFetch(endpoint, {
+    method:'POST',
+    body:JSON.stringify({ review_notes: document.getElementById('reviewNotesInput').value.trim() })
+  });
+  if(!res.ok){
+    const err = await res.json().catch(() => ({}));
+    alert(err.detail || 'Failed to update review state.');
+    return;
+  }
+  currentNote = await res.json();
+  closeReviewModal();
+  await loadNotes(currentFolder);
+  populateNote(currentNote);
 }
 
 async function submitForReview(){
-  if(!currentNote){
+  if(!currentNote || !currentNote.id){
     await saveNote();
   }
-  if(!currentNote) return;
+  if(!currentNote || !currentNote.id) return;
   const res = await authFetch(`/api/notes/${currentNote.id}/submit-review`, { method:'POST' });
   if(!res.ok){
     const err = await res.json().catch(() => ({}));
@@ -1127,31 +945,40 @@ async function submitForReview(){
   }
   currentNote = await res.json();
   await loadNotes(currentFolder);
-  populateEditor(currentNote);
+  populateNote(currentNote);
 }
 
 async function revertToDraft(){
-  if(!currentNote) return;
+  if(!currentNote || !currentNote.id) return;
   const res = await authFetch(`/api/notes/${currentNote.id}/review/revert-draft`, { method:'POST' });
   if(!res.ok){
     const err = await res.json().catch(() => ({}));
-    alert(err.detail || 'Failed to revert note to draft.');
+    alert(err.detail || 'Failed to move note back to draft.');
     return;
   }
   currentNote = await res.json();
   await loadNotes(currentFolder);
-  populateEditor(currentNote);
+  populateNote(currentNote);
 }
 
-async function deleteNote(){
-  if(!currentNote) return;
-  if(!confirm(`Delete "${currentNote.title}"? This cannot be undone.`)) return;
-  const res = await authFetch(`/api/notes/${currentNote.id}`, { method:'DELETE' });
-  if(res.ok){
-    currentNote = null;
-    hideWorkspace();
-    await loadNotes(currentFolder);
+function renderBacklinks(){
+  const panel = document.getElementById('backlinksPanel');
+  if(!currentNote || !currentNote.title){
+    panel.innerHTML = '<div class="subtle" style="font-size:12px;color:var(--text-dim)">Open a note to see backlinks.</div>';
+    return;
   }
+  const needle = `[[${currentNote.title}]]`.toLowerCase();
+  const backlinks = notes.filter((note) => note.id !== currentNote.id && String(note.content || '').toLowerCase().includes(needle));
+  if(!backlinks.length){
+    panel.innerHTML = '<div class="subtle" style="font-size:12px;color:var(--text-dim)">No backlinks yet.</div>';
+    return;
+  }
+  panel.innerHTML = backlinks.map((note) => `
+    <a class="backlink" href="#" onclick="event.preventDefault();openNote(${note.id})">
+      <strong>${esc(note.title)}</strong>
+      <span style="font-size:12px;color:var(--text-dim)">${esc(note.content || '').slice(0,120)}${(note.content || '').length > 120 ? '...' : ''}</span>
+    </a>
+  `).join('');
 }
 
 function showFolderModal(){
@@ -1182,144 +1009,8 @@ async function deleteFolder(event, folderId){
     if(currentFolder === folderId) currentFolder = null;
     await loadFolders();
     await loadNotes(currentFolder);
+    showBlank();
   }
-}
-
-function showPublishModal(){
-  if(!user || !user.is_admin || !currentNote){
-    return;
-  }
-  document.getElementById('publishTitle').value = currentNote.public_title || currentNote.title || '';
-  document.getElementById('publishSlug').value = currentNote.public_slug || slugify(currentNote.title);
-  document.getElementById('unpublishBtn').classList.toggle('hidden', !currentNote.published);
-  document.getElementById('publishModal').classList.remove('hidden');
-}
-
-function closePublishModal(){
-  document.getElementById('publishModal').classList.add('hidden');
-}
-
-function showReviewModal(action){
-  pendingReviewAction = action;
-  document.getElementById('reviewModalTitle').textContent = action === 'approve' ? 'Approve Review' : 'Request Changes';
-  document.getElementById('reviewModalText').textContent = action === 'approve'
-    ? 'Record reviewer notes and mark this note as approved for publication.'
-    : 'Explain what must change before this note can be approved.';
-  document.getElementById('reviewNotesInput').value = currentNote ? (currentNote.review_notes || '') : '';
-  document.getElementById('reviewModalConfirmBtn').textContent = action === 'approve' ? 'Approve Note' : 'Request Changes';
-  document.getElementById('reviewModalConfirmBtn').className = action === 'approve' ? 'btn green' : 'btn red';
-  document.getElementById('reviewModal').classList.remove('hidden');
-}
-
-function closeReviewModal(){
-  pendingReviewAction = null;
-  document.getElementById('reviewModal').classList.add('hidden');
-}
-
-async function confirmReviewAction(){
-  if(!currentNote || !pendingReviewAction) return;
-  const endpoint = pendingReviewAction === 'approve'
-    ? `/api/notes/${currentNote.id}/review/approve`
-    : `/api/notes/${currentNote.id}/review/request-changes`;
-  const res = await authFetch(endpoint, {
-    method:'POST',
-    body:JSON.stringify({ review_notes: document.getElementById('reviewNotesInput').value.trim() }),
-  });
-  if(!res.ok){
-    const err = await res.json().catch(() => ({}));
-    alert(err.detail || 'Failed to update review state.');
-    return;
-  }
-  currentNote = await res.json();
-  closeReviewModal();
-  await loadNotes(currentFolder);
-  populateEditor(currentNote);
-}
-
-async function publishCurrentNote(){
-  if(!currentNote) return;
-  const publicTitle = document.getElementById('publishTitle').value.trim();
-  const slug = document.getElementById('publishSlug').value.trim();
-  const res = await authFetch(`/api/notes/${currentNote.id}/publish`, {
-    method:'POST',
-    body:JSON.stringify({ public_title: publicTitle || undefined, slug: slug || undefined }),
-  });
-  if(!res.ok){
-    const err = await res.json().catch(() => ({}));
-    alert(err.detail || 'Failed to publish note.');
-    return;
-  }
-  currentNote = await res.json();
-  closePublishModal();
-  await loadNotes(currentFolder);
-  populateEditor(currentNote);
-  renderNoteList();
-}
-
-async function unpublishCurrentNote(){
-  if(!currentNote) return;
-  const res = await authFetch(`/api/notes/${currentNote.id}/unpublish`, { method:'POST' });
-  if(!res.ok){
-    const err = await res.json().catch(() => ({}));
-    alert(err.detail || 'Failed to unpublish note.');
-    return;
-  }
-  currentNote = await res.json();
-  closePublishModal();
-  await loadNotes(currentFolder);
-  populateEditor(currentNote);
-}
-
-function setEditorTemplate(kind){
-  const template = templates[kind];
-  if(!template) return;
-  if(!isNew && currentNote){
-    const content = document.getElementById('editorContent').value.trim();
-    if(content && !confirm('Replace the current draft body with this template?')) return;
-  }
-  if(!isNew && !currentNote) newNote();
-  if(!currentNote && !isNew) newNote();
-  document.getElementById('editorTitle').value = template.title;
-  document.getElementById('editorType').value = template.note_type;
-  document.getElementById('editorPhase').value = template.research_phase;
-  document.getElementById('editorSeverity').value = template.severity;
-  document.getElementById('editorTlp').value = template.tlp;
-  document.getElementById('editorContent').value = template.content;
-  document.getElementById('saveStatus').textContent = 'Template loaded';
-  updateStats();
-  renderMarkdownPreview();
-}
-
-function insertSnippet(snippet){
-  const textarea = document.getElementById('editorContent');
-  if(!textarea || textarea.disabled) return;
-  const start = textarea.selectionStart;
-  const end = textarea.selectionEnd;
-  const value = textarea.value;
-  textarea.value = value.slice(0, start) + snippet + value.slice(end);
-  textarea.selectionStart = textarea.selectionEnd = start + snippet.length;
-  textarea.focus();
-  updateStats();
-  renderMarkdownPreview();
-}
-
-function renderBacklinks(){
-  const panel = document.getElementById('backlinksPanel');
-  if(!currentNote || !currentNote.title){
-    panel.innerHTML = '<div class="tool-card"><h3>No active note</h3><p>Select a note to see incoming wikilinks and related research threads.</p></div>';
-    return;
-  }
-  const needle = `[[${currentNote.title}]]`.toLowerCase();
-  const backlinks = notes.filter((note) => note.id !== currentNote.id && String(note.content || '').toLowerCase().includes(needle));
-  if(!backlinks.length){
-    panel.innerHTML = '<div class="tool-card"><h3>No backlinks yet</h3><p>Use wikilinks like [[Note Title]] across notes to create an Obsidian-style knowledge graph.</p></div>';
-    return;
-  }
-  panel.innerHTML = backlinks.map((note) => `
-    <div class="backlink-row" onclick="openNote(${note.id})">
-      <h4>${esc(note.title)}</h4>
-      <p>${esc(note.content || '').slice(0, 140)}${(note.content || '').length > 140 ? '...' : ''}</p>
-    </div>`).join('');
 }
 
 async function loadBookmarks(){
@@ -1353,7 +1044,7 @@ async function toggleBookmark(btn, noteId){
     }else{
       const res = await authFetch('/api/bookmarks/', {
         method:'POST',
-        body:JSON.stringify({ item_type:'note', item_id:noteId }),
+        body:JSON.stringify({ item_type:'note', item_id:noteId })
       });
       if(res.ok){
         const bookmark = await res.json();
@@ -1366,21 +1057,19 @@ async function toggleBookmark(btn, noteId){
   }
 }
 
-['editorTitle','editorType','editorPhase','editorTarget','editorSeverity','editorTlp','editorTags','editorContent'].forEach((id) => {
+['editorTitle','editorContent','editorType','editorPhase','editorTarget','editorSeverity','editorTlp','editorTags'].forEach((id) => {
   document.addEventListener('input', (event) => {
     if(event.target && event.target.id === id){
-      updateStats();
-      renderMarkdownPreview();
       document.getElementById('saveStatus').textContent = 'Unsaved changes';
-      updateStatusPills({
-        author_handle: currentNote ? currentNote.author_handle : (user ? user.handle : 'unknown'),
-        note_type: document.getElementById('editorType').value,
-        research_phase: document.getElementById('editorPhase').value,
-        severity: document.getElementById('editorSeverity').value,
-        tlp: document.getElementById('editorTlp').value,
-        review_status: currentNote ? currentNote.review_status : 'draft',
-        published: currentNote ? currentNote.published : false,
-      });
+      renderMarkdown();
+      updateStats();
+      if(currentNote){
+        currentNote = {
+          ...currentNote,
+          ...currentDraft(),
+        };
+        syncStatusChips(currentNote);
+      }
     }
   });
 });
@@ -1393,12 +1082,12 @@ document.getElementById('folderNameInput').addEventListener('keydown', (event) =
 document.addEventListener('keydown', (event) => {
   if((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's'){
     event.preventDefault();
-    if(!document.getElementById('editorShell').classList.contains('hidden')) saveNote();
+    if(!document.getElementById('noteShell').classList.contains('hidden')) saveNote();
   }
   if(event.key === 'Escape'){
     closeFolderModal();
-    closePublishModal();
     closeReviewModal();
+    closePublishModal();
   }
 });
 
@@ -1409,6 +1098,7 @@ document.addEventListener('keydown', (event) => {
   await loadBookmarks();
   await loadFolders();
   await loadNotes(null);
+  showBlank();
 })();
 </script>
 <script src="assets/js/lofi-player.js"></script>
