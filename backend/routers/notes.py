@@ -1059,8 +1059,8 @@ def delete_note(
     note = db.query(Note).filter(Note.id == note_id).first()
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
-    if not current.is_admin:
-        raise HTTPException(status_code=403, detail="Only admins can delete notes")
+    if not (current.is_admin or note.author_id == current.id):
+        raise HTTPException(status_code=403, detail="Only note authors or admins can delete notes")
     db.query(NoteComment).filter(NoteComment.note_id == note_id).delete()
     db.query(NoteRevision).filter(NoteRevision.note_id == note_id).delete()
     db.delete(note)

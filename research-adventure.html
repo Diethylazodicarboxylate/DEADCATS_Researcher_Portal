@@ -2,158 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DEADCATS // Research Adventure</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/base.css">
-  <link rel="stylesheet" href="assets/css/theme-portal.css">
-  <link rel="stylesheet" href="assets/css/research-adventure.css">
-  <script src="assets/js/include.js" defer></script>
-  <script src="assets/js/research-adventure.js" defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/react-portal-core.css">
+  <link rel="stylesheet" href="assets/css/workspace-react.css">
+  <link rel="stylesheet" href="assets/css/research-adventure-react.css">
 </head>
-<body>
-  <div data-include="partials/dashboard-topnav.html"></div>
-  <div data-include="partials/dashboard-sidebar.html"></div>
-
-  <div class="pathway-gate hidden" id="pathwayGate">
-    <div class="gate-shell">
-      <div class="gate-header">
-        <div class="gate-kicker">Research Adventure</div>
-        <h1>Choose Your Pathway</h1>
-        <p>Your first choice locks your progression track. You begin at Sequence 9 and rise by completing leaf skills across the roadmap.</p>
-      </div>
-      <div class="pathway-grid" id="pathwayChoices"></div>
-    </div>
-  </div>
-
-  <main class="main adventure-main">
-    <div class="main-inner adventure-inner">
-      <section class="adventure-hero">
-        <div class="hero-copy">
-          <div class="eyebrow">Research Adventure</div>
-          <h1>Specialize through a real roadmap, not a vague checklist.</h1>
-          <p>Start at the center, branch into a specialization, clear each level, and complete leaf skills to bubble progress up through topics, levels, and the full specialization.</p>
-        </div>
-        <div class="hero-meta">
-          <div class="hero-chip">
-            <span>Pathway</span>
-            <strong id="heroPathway">Unchosen</strong>
-          </div>
-          <div class="hero-chip">
-            <span>Sequence</span>
-            <strong id="heroSequence">9</strong>
-          </div>
-          <div class="hero-chip">
-            <span>Total Points</span>
-            <strong id="heroPoints">0</strong>
-          </div>
-        </div>
-      </section>
-
-      <section class="adventure-grid">
-        <div class="left-column">
-          <article class="panel journey-panel">
-            <div class="panel-head">
-              <span class="panel-title">Current Journey</span>
-              <span class="panel-tag" id="journeyLockState">PATHWAY LOCKED</span>
-            </div>
-            <div class="journey-body">
-              <div class="journey-avatar-wrap">
-                <img id="journeyAvatar" class="journey-avatar" alt="Current pathway avatar">
-              </div>
-              <div class="journey-info">
-                <h2 id="journeyPathwayName">Awaiting selection</h2>
-                <div class="journey-sequence" id="journeySequenceTitle">Sequence 9</div>
-                <p id="journeySequenceSummary">Choose a pathway to start the progression ladder.</p>
-                <div class="journey-stats">
-                  <div class="journey-stat">
-                    <span>Skill Points</span>
-                    <strong id="skillPoints">0</strong>
-                  </div>
-                  <div class="journey-stat">
-                    <span>Daily Bonus</span>
-                    <strong id="dailyPoints">0</strong>
-                  </div>
-                  <div class="journey-stat penalty">
-                    <span>Penalty Debt</span>
-                    <strong id="penaltyPoints">0</strong>
-                  </div>
-                </div>
-                <div class="progress-wrap">
-                  <div class="progress-track">
-                    <div class="progress-bar" id="sequenceBar"></div>
-                  </div>
-                  <div class="progress-meta" id="sequenceMeta">Need 120 points for Sequence 8</div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="panel ladder-panel">
-            <div class="panel-head">
-              <span class="panel-title">Sequence Ladder</span>
-              <span class="panel-tag">PIXEL RELICS</span>
-            </div>
-            <div class="sequence-ladder" id="sequenceLadder"></div>
-          </article>
-
-          <article class="panel tasks-panel">
-            <div class="panel-head">
-              <span class="panel-title">Daily Task Ledger</span>
-              <span class="panel-tag" id="taskCountTag">0 / 5 ACTIVE</span>
-            </div>
-            <div class="tasks-shell">
-              <form class="task-form" id="taskForm">
-                <div class="task-form-copy">
-                  <h3>Plan tomorrow’s work</h3>
-                  <p>You can preload up to 5 tasks for the next day. Missed tasks subtract the same points they would have awarded.</p>
-                </div>
-                <div class="task-form-grid">
-                  <label>
-                    <span>Task</span>
-                    <input id="taskTitleInput" type="text" maxlength="140" placeholder="Example: Review event loop notes">
-                  </label>
-                  <label>
-                    <span>Reward</span>
-                    <select id="taskPointsInput">
-                      <option value="10">10 pts</option>
-                      <option value="15" selected>15 pts</option>
-                      <option value="20">20 pts</option>
-                      <option value="25">25 pts</option>
-                      <option value="30">30 pts</option>
-                    </select>
-                  </label>
-                  <label>
-                    <span>Due</span>
-                    <input id="taskDueInput" type="text" readonly>
-                  </label>
-                </div>
-                <button type="submit" class="task-submit">Queue Daily Task</button>
-              </form>
-              <div class="tasks-list" id="tasksList"></div>
-            </div>
-          </article>
-        </div>
-
-        <div class="right-column">
-          <article class="panel roadmap-panel">
-            <div class="panel-head">
-              <span class="panel-title">Research Roadmap</span>
-              <span class="panel-tag">HEX CHART</span>
-            </div>
-            <div class="destiny-board-wrap">
-              <div class="destiny-board" id="destinyBoard"></div>
-            </div>
-          </article>
-        </div>
-      </section>
-    </div>
-  </main>
-
-  <div class="toast-stack" id="toastStack"></div>
-  <div class="hex-tooltip hidden" id="hexTooltip"></div>
+<body class="portal-body">
+  <div id="app-root"></div>
+  <script type="module" src="assets/js/research-adventure-app.js"></script>
+  <script src="assets/js/lofi-player.js"></script>
 </body>
 </html>
