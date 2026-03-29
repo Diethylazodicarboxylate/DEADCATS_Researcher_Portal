@@ -1,16 +1,11 @@
-import React, { useEffect } from 'https://esm.sh/react@18.3.1';
+import React from 'https://esm.sh/react@18.3.1';
 import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client';
 import htm from 'https://esm.sh/htm@3.1.1';
-import { loadLegacyScript } from './legacy-react-loader.js';
 
 const html = htm.bind(React.createElement);
 
 function App() {
-  useEffect(() => {
-    loadLegacyScript('/assets/js/login.js');
-  }, []);
-
-  const template = document.getElementById('login-markup');
+  const template = document.getElementById('profile-markup');
   const markup = template ? template.innerHTML : '';
   return html`<div dangerouslySetInnerHTML=${{ __html: markup }}></div>`;
 }
