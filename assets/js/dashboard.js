@@ -770,7 +770,6 @@ async function initDashboard() {
   loadRecentNotes();
   loadNotifications();
   checkCtfReminders();
-  maybeRequestNotificationPermission();
   setInterval(loadNotifications, 30000);
   setInterval(checkCtfReminders, 60000);
 }

@@ -3,6 +3,8 @@ body{
   font-size:17px;
 }
 
+.hidden{display:none!important}
+
 /* ── TOP NAV ── */
 .topnav{
   position:fixed;top:0;left:0;right:0;z-index:100;
@@ -138,6 +140,77 @@ body{
 .notif-item-type-publication{color:var(--cyan)}
 .notif-item-type-operation{color:var(--text-bright)}
 .notif-item-type-goal{color:var(--green)}
+
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  z-index:300;
+  background:rgba(0,0,0,0.78);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  backdrop-filter:blur(4px);
+}
+
+.modal{
+  width:min(560px, calc(100vw - 40px));
+  background:var(--surface);
+  border:1px solid var(--border2);
+  box-shadow:0 20px 60px rgba(0,0,0,0.65);
+  padding:22px;
+}
+
+.modal-title{
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:0.22em;
+  text-transform:uppercase;
+  color:var(--text-bright);
+  margin-bottom:18px;
+}
+
+.modal-row{margin-bottom:14px}
+
+.modal-label{
+  display:block;
+  margin-bottom:6px;
+  font-family:var(--mono);
+  font-size:10px;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--text-dim);
+}
+
+.modal-input,.modal-select,.modal-textarea{
+  width:100%;
+  padding:10px 12px;
+  background:var(--bg);
+  border:1px solid var(--border2);
+  color:var(--text-bright);
+  font-family:var(--mono);
+  font-size:11px;
+  outline:none;
+}
+
+.modal-textarea{
+  min-height:96px;
+  resize:vertical;
+  font-family:var(--body);
+  font-size:13px;
+}
+
+.modal-input:focus,.modal-select:focus,.modal-textarea:focus{
+  border-color:var(--cyan-dim);
+}
+
+.modal-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+}
+
+.modal-overlay.hidden{display:none!important}
 .notif-item-type-ctf_event{color:var(--gold)}
 .notif-empty{
   padding:20px 14px;
