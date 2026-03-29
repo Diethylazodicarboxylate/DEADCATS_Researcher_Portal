@@ -2,10 +2,14 @@
 const API = '';
 // ────────────────────────────────────────────────────────────────
 
+function appPath(path = '') {
+  return `/${String(path || '').replace(/^\/+/, '')}`;
+}
+
 // If already logged in, skip login page
 (function checkSession() {
   fetch(`${API}/api/auth/me`, { credentials: 'include' })
-    .then((res) => { if (res.ok) window.location.replace('dashboard.html'); })
+    .then((res) => { if (res.ok) window.location.replace(appPath('dashboard.html')); })
     .catch(() => {});
 })();
 
@@ -49,7 +53,7 @@ async function handleLogin() {
     localStorage.setItem('dc_user', JSON.stringify(data.user));
 
     // Redirect to dashboard
-    window.location.href = 'dashboard.html';
+    window.location.href = appPath('dashboard.html');
   } catch (e) {
     err.textContent = '⚠ Cannot reach server. Check your Tailscale connection.';
     err.classList.add('show');
@@ -100,7 +104,7 @@ async function handleRegister() {
       return;
     }
     localStorage.setItem('dc_user', JSON.stringify(data.user));
-    window.location.href = 'dashboard.html';
+    window.location.href = appPath('dashboard.html');
   } catch (e) {
     err.textContent = '⚠ Cannot reach server.';
     err.classList.add('show');

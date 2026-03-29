@@ -1,1 +1,47 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>DEADCATS // Audit Log</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="assets/css/react-portal-core.css"><link rel="stylesheet" href="assets/css/workspace-react.css"></head><body class="portal-body"><div id="app-root"></div><script type="module">import { initAuditPage } from './assets/js/simple-pages.js'; initAuditPage();</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEADCATS // Audit Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#071018;--bg2:#0d1822;--surface:#132432;--border:#1d3343;--text:#d7e7f4;--text-dim:#87a0b1;--white:#eef7ff;--cyan:#55d6ff;--gold:#f4b33c;--green:#42d392;--mono:'IBM Plex Mono',monospace;--body:'IBM Plex Sans',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}body{min-height:100vh;font-family:var(--body);color:var(--text);background:radial-gradient(circle at top left, rgba(85,214,255,.12), transparent 28%),linear-gradient(180deg,#071018,#050c12)}
+.top{position:sticky;top:0;z-index:10;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;background:rgba(7,16,24,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}.brand,.nav-link,.eyebrow,.meta{font-family:var(--mono)}.brand,.nav-link{text-decoration:none;color:var(--text-dim);font-size:11px;letter-spacing:.18em;text-transform:uppercase}.brand span{color:var(--gold)}.nav-link:hover{color:var(--text)}
+.layout{max-width:1380px;margin:0 auto;padding:24px 20px 36px}.hero{margin-bottom:18px}.eyebrow{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px}.hero h1{font-size:40px;color:var(--white);letter-spacing:-.05em}.hero p{max-width:880px;font-size:15px;line-height:1.8;color:var(--text-dim);margin-top:10px}
+.panel{border:1px solid var(--border);border-radius:24px;background:linear-gradient(180deg,rgba(19,36,50,.95),rgba(8,16,23,.95))}
+.controls{padding:18px;display:grid;grid-template-columns:1.5fr 1fr 1fr auto;gap:12px;border-bottom:1px solid var(--border)}.field{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:var(--bg2);color:var(--text)}.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:transparent;color:var(--text);font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.items{padding:16px;display:grid;gap:12px}.item{padding:14px;border:1px solid var(--border);border-radius:18px;background:rgba(10,19,28,.76)}.item h3{font-size:15px;color:var(--white);margin-bottom:8px}.item p{font-size:13px;color:var(--text-dim);line-height:1.75}.meta{display:flex;gap:8px;flex-wrap:wrap;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-top:10px}.empty{padding:36px;text-align:center;border:1px dashed var(--border);border-radius:18px;color:var(--text-dim)}
+@media (max-width:980px){.controls{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="top"><a class="brand" href="index.html">DEAD<span>CATS</span></a><div style="display:flex;gap:16px"><a class="nav-link" href="dashboard.html">Dashboard</a><a class="nav-link" href="search.html">Search</a><a class="nav-link" href="review-board.html">Publication</a></div></div>
+<div class="layout">
+  <div class="hero"><div class="eyebrow">Audit</div><h1>Platform Event Log</h1><p>Track who changed what across notes, reviews, comments, operations, goals, CTF events, and publication actions.</p></div>
+  <section class="panel">
+    <div class="controls">
+      <input class="field" id="searchInput" type="text" placeholder="Filter title, summary, actor...">
+      <select class="field" id="kindFilter"><option value="">All kinds</option><option value="note">Notes</option><option value="comment">Comments</option><option value="review">Reviews</option><option value="publication">Publications</option><option value="operation">Operations</option><option value="goal">Goals</option><option value="ctf_event">CTF Events</option></select>
+      <select class="field" id="scopeFilter"><option value="">Team visibility</option><option value="mine">My related events</option></select>
+      <button class="btn" onclick="loadAudit()">Refresh</button>
+    </div>
+    <div class="items" id="auditItems"><div class="empty">Loading audit log...</div></div>
+  </section>
+</div>
+<script>
+const API='';
+let rows=[];
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function authFetch(url,opts={}){return fetch(API+url,{...opts,credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json',...(opts.headers||{})}}).then((res)=>{if(res.status===401){localStorage.removeItem('dc_user');window.location.href='login.html';}return res;})}
+function timeAgo(value){if(!value)return'just now';const seconds=(Date.now()-new Date(value))/1000;if(seconds<60)return'just now';if(seconds<3600)return Math.floor(seconds/60)+'m ago';if(seconds<86400)return Math.floor(seconds/3600)+'h ago';return Math.floor(seconds/86400)+'d ago'}
+async function ensureSession(){const res=await authFetch('/api/auth/me');if(!res.ok)return false;const me=await res.json();localStorage.setItem('dc_user',JSON.stringify(me));return true}
+function render(){const q=document.getElementById('searchInput').value.trim().toLowerCase();const root=document.getElementById('auditItems');const filtered=rows.filter((row)=>!q||[row.title,row.summary,row.actor_handle,row.kind,row.action].join(' ').toLowerCase().includes(q));if(!filtered.length){root.innerHTML='<div class="empty">No matching audit events.</div>';return}root.innerHTML=filtered.map((row)=>`<a class="item" href="${esc(row.href||'#')}" style="text-decoration:none;color:inherit"><h3>${esc(row.title)}</h3><p>${esc(row.summary||'No summary')}</p><div class="meta"><span>${esc(row.kind)}</span><span>${esc(row.action)}</span><span>${esc(row.actor_handle||'system')}</span>${row.operation_id?`<span>operation ${esc(String(row.operation_id))}</span>`:''}<span>${esc(timeAgo(row.created_at))}</span></div></a>`).join('')}
+async function loadAudit(){const kind=document.getElementById('kindFilter').value;const mine=document.getElementById('scopeFilter').value==='mine';const params=new URLSearchParams();if(kind)params.set('kind',kind);if(mine)params.set('mine','true');const res=await authFetch('/api/audit/?'+params.toString());if(!res.ok){document.getElementById('auditItems').innerHTML='<div class="empty">Unable to load audit log.</div>';return}rows=await res.json();render()}
+document.getElementById('searchInput').addEventListener('input',render);document.getElementById('kindFilter').addEventListener('change',loadAudit);document.getElementById('scopeFilter').addEventListener('change',loadAudit);
+(async()=>{const ok=await ensureSession();if(!ok)return;await loadAudit()})()
+</script>
+</body>
+</html>

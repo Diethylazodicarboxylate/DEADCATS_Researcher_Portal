@@ -1,144 +1,161 @@
 import React from 'https://esm.sh/react@18.3.1';
 import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client';
 import htm from 'https://esm.sh/htm@3.1.1';
-import { appPath } from './react-portal-utils.js';
 
 const html = htm.bind(React.createElement);
 
-function LandingApp() {
-  const modules = [
-    {
-      title: 'Research library',
-      copy: 'Shared notes, revision history, review workflow, and publication control in one internal workspace.',
-      href: appPath('library.html'),
-      cta: 'Open internal wiki',
-    },
-    {
-      title: 'Operations tracking',
-      copy: 'Tie notes, indicators, vault evidence, goals, and CTF work into actual investigations.',
-      href: appPath('operations.html'),
-      cta: 'Open operations',
-    },
-    {
-      title: 'Public research',
-      copy: 'Keep a clear separation between the internal wiki and the outward-facing published research feed.',
-      href: appPath('research-feed.html'),
-      cta: 'Open public wiki',
-    },
-  ];
-
-  const pillars = [
-    {
-      title: 'Private by default',
-      copy: 'The portal is built for internal research flow first. Public output is a deliberate export step, not a leak-prone side effect.',
-    },
-    {
-      title: 'Research-first workflow',
-      copy: 'Notes, IOCs, vault files, whiteboard items, and review state are treated as one operational graph instead of disconnected tools.',
-    },
-    {
-      title: 'Cleaner operator UI',
-      copy: 'The old landing page was loud. This version keeps the hacker tone, but uses real hierarchy, spacing, and contrast instead of eye strain.',
-    },
-  ];
-
-  return html`
-    <div className="portal-shell">
-      <header className="portal-topbar">
-        <a className="portal-brand" href=${appPath('index.html')}>
-          <div className="portal-mark"></div>
-          <div className="portal-brand-copy">
-            <div className="portal-kicker">DEADCATS Research Portal</div>
-            <div className="portal-brand-title">Entry node</div>
-          </div>
-        </a>
-        <nav className="portal-nav">
-          <a className="portal-nav-link" href=${appPath('research-feed.html')}>Public Wiki</a>
-          <a className="portal-nav-link" href=${appPath('login.html')}>Login</a>
-          <a className="portal-nav-link" href=${appPath('dashboard.html')}>Dashboard</a>
-        </nav>
-      </header>
-
-      <main className="portal-main">
-        <section className="landing-hero">
-          <div className="portal-panel landing-panel">
-            <div className="portal-chip hot">Internal research environment</div>
-            <h1 className="landing-title">A tighter front door for the DEADCATS portal.</h1>
-            <div className="landing-copy">
-              The landing page now follows the same darker red research-console direction as the dashboard. It is less noisy, easier to scan, and keeps the separation between internal collaboration and public publishing explicit.
-            </div>
-            <div className="landing-actions">
-              <a className="portal-button primary" href=${appPath('login.html')}>Access portal</a>
-              <a className="portal-button ghost" href=${appPath('research-feed.html')}>Public wiki</a>
-              <a className="portal-button ghost" href=${appPath('dashboard.html')}>Dashboard</a>
-            </div>
-            <div className="landing-stats">
-              <div className="landing-stat">
-                <div className="portal-meta">Environment</div>
-                <div className="landing-stat-value">Private</div>
-                <div className="portal-mini">Internal collaboration workspace</div>
-              </div>
-              <div className="landing-stat">
-                <div className="portal-meta">Publishing</div>
-                <div className="landing-stat-value">Curated</div>
-                <div className="portal-mini">Public research is exported intentionally</div>
-              </div>
-              <div className="landing-stat">
-                <div className="portal-meta">Primary flow</div>
-                <div className="landing-stat-value">Research</div>
-                <div className="portal-mini">Notes, operations, evidence, review</div>
-              </div>
-              <div className="landing-stat">
-                <div className="portal-meta">Theme</div>
-                <div className="landing-stat-value">Unified</div>
-                <div className="portal-mini">React entry pages with shared styling</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="portal-panel landing-terminal">
-            <div className="landing-terminal-head">
-              <div className="landing-leds">
-                <span className="landing-led hot"></span>
-                <span className="landing-led warn"></span>
-                <span className="landing-led good"></span>
-              </div>
-              <div className="portal-mini">node / research-gateway / status</div>
-            </div>
-            <div className="landing-terminal-body">
-              <div className="landing-terminal-line"><strong>status</strong> operational</div>
-              <div className="landing-terminal-line"><strong>workspace</strong> internal wiki, operations, vault, review, search</div>
-              <div className="landing-terminal-line"><strong>publication</strong> public wiki exposed through reviewed exports only</div>
-              <div className="landing-terminal-line"><strong>design</strong> unified red-dark research console replacing the old mixed visual language</div>
-              <div className="landing-terminal-line"><strong>entrypoints</strong> login for internal portal, research feed for public readers</div>
-            </div>
-          </div>
-        </section>
-
-        <section className="landing-grid">
-          ${modules.map((item) => html`
-            <article key=${item.title} className="portal-panel landing-card">
-              <div className="portal-kicker">Primary route</div>
-              <div className="landing-card-title">${item.title}</div>
-              <div className="landing-card-copy">${item.copy}</div>
-              <div className="landing-card-actions">
-                <a className="portal-button primary" href=${item.href}>${item.cta}</a>
-              </div>
-            </article>
-          `)}
-        </section>
-
-        <section className="landing-bands">
-          ${pillars.map((item) => html`
-            <article key=${item.title} className="portal-panel landing-band">
-              <div className="portal-chip">${item.title}</div>
-              <div className="landing-band-copy">${item.copy}</div>
-            </article>
-          `)}
-        </section>
-      </main>
+const markup = `
+<header>
+  <div class="header-left">
+    <div class="logo-mark">
+      <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="26" height="26" stroke="#1e2535" stroke-width="1"></rect>
+        <rect x="5" y="5" width="8" height="8" fill="#ff2d2d" opacity="0.8"></rect>
+        <rect x="15" y="5" width="8" height="8" stroke="#ff2d2d" stroke-width="1" opacity="0.4"></rect>
+        <rect x="5" y="15" width="8" height="8" stroke="#ff2d2d" stroke-width="1" opacity="0.4"></rect>
+        <rect x="15" y="15" width="8" height="8" fill="#ff2d2d" opacity="0.2"></rect>
+        <line x1="0" y1="14" x2="28" y2="14" stroke="#1e2535" stroke-width="0.5"></line>
+        <line x1="14" y1="0" x2="14" y2="28" stroke="#1e2535" stroke-width="0.5"></line>
+      </svg>
     </div>
-  `;
+    <span class="logo-text">DEAD<span>CATS</span></span>
+    <div class="header-status">
+      <div class="status-dot"></div>
+      SECURE CHANNEL ACTIVE
+    </div>
+  </div>
+  <nav>
+    <a href="#features">Modules</a>
+    <a href="#access">Access</a>
+    <a href="#">Docs</a>
+  </nav>
+  <a href="#access" class="btn-login">Request Access</a>
+</header>
+
+<section class="hero">
+  <div class="corner-accent"></div>
+  <div class="hero-left">
+    <div class="hero-eyebrow">Researcher Portal // v1.0.0</div>
+    <h1 class="hero-title">
+      <span class="dc">DEADCATS</span>
+      RESEARCH<br>COLLECTIVE
+    </h1>
+    <p class="hero-subtitle">Threat Intel · Malware Analysis · Exploitation Research</p>
+    <p class="hero-desc">
+      A <strong>closed-network collaboration platform</strong> for the team.
+      Share findings, track IOCs, annotate samples, and build a collective
+      intelligence base — all behind Tailscale. <strong>No cloud. No exposure. No noise.</strong>
+    </p>
+    <div class="hero-actions">
+      <a href="/login.html" class="btn-primary">Access Portal</a>
+      <a href="#features" class="btn-secondary">View modules</a>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="t-dot red"></div>
+        <div class="t-dot yellow"></div>
+        <div class="t-dot green"></div>
+        <span class="terminal-title">deadcats@research-node:~</span>
+      </div>
+      <div class="terminal-body">
+        <span class="t-line"><span class="t-prompt">❯ </span><span class="t-cmd">dc-platform --status</span></span>
+        <span class="t-line">&nbsp;</span>
+        <span class="t-line"><span class="t-comment">// DEADCATS Research Node</span></span>
+        <span class="t-line"><span class="t-bracket">{</span></span>
+        <span class="t-line">&nbsp;&nbsp;<span class="t-key"> "status"</span><span class="t-bracket">: </span><span class="t-val">"operational"</span><span class="t-bracket">,</span></span>
+        <span class="t-line">&nbsp;&nbsp;<span class="t-key"> "network"</span><span class="t-bracket">: </span><span class="t-val">"tailscale-mesh"</span><span class="t-bracket">,</span></span>
+        <span class="t-line">&nbsp;&nbsp;<span class="t-key"> "encryption"</span><span class="t-bracket">: </span><span class="t-val">"wireguard/e2e"</span><span class="t-bracket">,</span></span>
+        <span class="t-line">&nbsp;&nbsp;<span class="t-key"> "modules"</span><span class="t-bracket">: [</span></span>
+        <span class="t-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-string"> "ioc-tracker"</span><span class="t-bracket">,</span></span>
+        <span class="t-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-string"> "mal-library"</span><span class="t-bracket">,</span></span>
+        <span class="t-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-string"> "collab-notes"</span><span class="t-bracket">,</span></span>
+        <span class="t-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-string"> "file-vault"</span></span>
+        <span class="t-line">&nbsp;&nbsp;<span class="t-bracket">],</span></span>
+        <span class="t-line">&nbsp;&nbsp;<span class="t-key"> "active_users"</span><span class="t-bracket">: </span><span class="t-num">0</span><span class="t-bracket">,</span></span>
+        <span class="t-line">&nbsp;&nbsp;<span class="t-key"> "uptime"</span><span class="t-bracket">: </span><span class="t-string">"100%"</span></span>
+        <span class="t-line"><span class="t-bracket">}</span></span>
+        <span class="t-line">&nbsp;</span>
+        <span class="t-line"><span class="t-prompt">❯ </span><span class="t-cursor"></span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <span class="marquee-item">Malware Analysis</span>
+    <span class="marquee-item">IOC Tracking</span>
+    <span class="marquee-item">Exploit Research</span>
+    <span class="marquee-item">Threat Intelligence</span>
+    <span class="marquee-item">Rootkit Development</span>
+    <span class="marquee-item">Reverse Engineering</span>
+    <span class="marquee-item">Network Forensics</span>
+    <span class="marquee-item">YARA Rules</span>
+    <span class="marquee-item">Binary Exploitation</span>
+    <span class="marquee-item">Protocol Analysis</span>
+    <span class="marquee-item">Malware Analysis</span>
+    <span class="marquee-item">IOC Tracking</span>
+    <span class="marquee-item">Exploit Research</span>
+    <span class="marquee-item">Threat Intelligence</span>
+    <span class="marquee-item">Rootkit Development</span>
+    <span class="marquee-item">Reverse Engineering</span>
+    <span class="marquee-item">Network Forensics</span>
+    <span class="marquee-item">YARA Rules</span>
+    <span class="marquee-item">Binary Exploitation</span>
+    <span class="marquee-item">Protocol Analysis</span>
+  </div>
+</div>
+
+<section class="features" id="features">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <span class="section-title">Platform Modules</span>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card"><div class="feature-icon">⬡</div><div class="feature-name">IOC Tracker</div><p class="feature-desc">Submit, tag, and search indicators of compromise across the team. IPs, domains, hashes, URLs. Bulk import via CSV. Export to any toolchain.</p><span class="feature-tag">Active</span></div>
+    <div class="feature-card"><div class="feature-icon">◈</div><div class="feature-name">Research Library</div><p class="feature-desc">Shared Markdown knowledge base with full-text search. Write analysis reports, document TTP findings, annotate techniques. Version history on every entry.</p><span class="feature-tag">Active</span></div>
+    <div class="feature-card"><div class="feature-icon">⬕</div><div class="feature-name">File Vault</div><p class="feature-desc">Upload samples, screenshots, memory dumps, and reports. SHA256 hashed on upload. Tagged and annotated. Access logged. Never touches cloud storage.</p><span class="feature-tag">Active</span></div>
+    <div class="feature-card"><div class="feature-icon">◉</div><div class="feature-name">Live Collab</div><p class="feature-desc">Real-time collaborative note editing over WebSockets. See what teammates are writing as they write it. Activity feed shows all research contributions live.</p><span class="feature-tag">Active</span></div>
+    <div class="feature-card"><div class="feature-icon">⬙</div><div class="feature-name">Member Profiles</div><p class="feature-desc">Individual dashboards per researcher. Track your notes, IOC submissions, and findings. Role-based access — admin and researcher tiers. Private and shared workspaces.</p><span class="feature-tag">Active</span></div>
+    <div class="feature-card"><div class="feature-icon">◪</div><div class="feature-name">Tailscale Mesh</div><p class="feature-desc">Zero exposure to the public internet. Every team member connects over an encrypted WireGuard mesh. No domain required. Network-layer ACLs before application auth.</p><span class="feature-tag">Secure</span></div>
+  </div>
+</section>
+
+<section class="access-panel" id="access">
+  <div class="access-left">
+    <div class="section-num">02</div>
+    <h2 class="access-title">Authenticate<br>to <span>Portal</span></h2>
+    <p class="access-desc">Access is restricted to authorised DEADCATS team members connected via the Tailscale mesh network. External connections are dropped at the network layer.</p>
+    <div class="network-info">
+      <div class="net-item"><span class="net-label">NETWORK</span><span class="net-value">Tailscale Mesh</span></div>
+      <div class="net-item"><span class="net-label">PROTOCOL</span><span class="net-value">WireGuard/E2E</span></div>
+      <div class="net-item"><span class="net-label">NODE STATUS</span><span class="net-value">Online</span></div>
+      <div class="net-item"><span class="net-label">EXTERNAL ACCESS</span><span class="net-value red">Blocked</span></div>
+      <div class="net-item"><span class="net-label">AUTH</span><span class="net-value amber">JWT / Invite Only</span></div>
+    </div>
+  </div>
+
+  <div class="login-form">
+    <a href="/login.html" class="form-submit" style="display:block; text-align:center; text-decoration:none;">Login to Portal →</a>
+    <div class="form-footer">No account? Contact an admin to get access.</div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-left">
+    <strong>DEADCATS</strong> // Researcher Portal // Internal Use Only
+  </div>
+  <div class="footer-right">
+    All traffic encrypted · Zero cloud dependency · Tailscale mesh
+  </div>
+</footer>
+`;
+
+function App() {
+  return html`<div dangerouslySetInnerHTML=${{ __html: markup }}></div>`;
 }
 
-createRoot(document.getElementById('app-root')).render(html`<${LandingApp} />`);
+createRoot(document.getElementById('app-root')).render(html`<${App} />`);

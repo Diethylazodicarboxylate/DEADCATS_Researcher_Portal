@@ -1,18 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DEADCATS // Operations</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/react-portal-core.css">
-  <link rel="stylesheet" href="assets/css/workspace-react.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEADCATS // Operations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#071018;--bg2:#0d1822;--surface:#132432;--surface2:#10202c;--border:#1d3343;--text:#d7e7f4;--text-dim:#87a0b1;--white:#eef7ff;--cyan:#55d6ff;--gold:#f4b33c;--green:#42d392;--red:#ff667a;--mono:'IBM Plex Mono',monospace;--body:'IBM Plex Sans',sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0}html,body{height:100%}body{font-family:var(--body);color:var(--text);background:radial-gradient(circle at top left, rgba(85,214,255,.12), transparent 28%),linear-gradient(180deg,#071018,#050c12)}
+body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);background-size:34px 34px;opacity:.2;pointer-events:none}
+.top{position:fixed;top:0;left:0;right:0;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;background:rgba(7,16,24,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);z-index:10}
+.brand,.nav-link,.eyebrow,.chip,.meta{font-family:var(--mono)}
+.brand,.nav-link{text-decoration:none;color:var(--text-dim);font-size:11px;letter-spacing:.18em;text-transform:uppercase}.brand span{color:var(--gold)}.nav-link:hover{color:var(--text)}
+.layout{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px;padding:82px 20px 20px;max-width:1380px;margin:0 auto}
+.panel{border:1px solid var(--border);border-radius:24px;background:linear-gradient(180deg,rgba(19,36,50,.95),rgba(8,16,23,.95));box-shadow:0 24px 40px rgba(0,0,0,.22)}
+.side{padding:18px}.search{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--border);background:var(--bg2);color:var(--text);margin-top:12px}
+.section{margin-top:18px}.eyebrow{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px}.title{font-size:28px;font-weight:700;color:var(--white);letter-spacing:-.04em}
+.operation-list{display:grid;gap:10px;margin-top:18px;max-height:calc(100vh - 210px);overflow:auto}
+.operation-item{padding:14px;border:1px solid var(--border);border-radius:18px;background:rgba(10,19,28,.72);cursor:pointer}.operation-item.active{border-color:rgba(85,214,255,.3);box-shadow:0 18px 26px rgba(0,0,0,.18)}
+.operation-item h3{font-size:15px;color:var(--white);margin-bottom:6px}.operation-item p{font-size:13px;color:var(--text-dim);line-height:1.7;margin-bottom:10px}.meta{display:flex;gap:8px;flex-wrap:wrap;font-size:10px;letter-spacing:.12em;color:var(--text-dim);text-transform:uppercase}
+.main{padding:20px}.hero{padding:10px 4px 20px;border-bottom:1px solid var(--border)}
+.hero h1{font-size:42px;color:var(--white);letter-spacing:-.05em;margin:6px 0 12px}.hero p{max-width:920px;font-size:15px;line-height:1.85;color:var(--text-dim)}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text);text-decoration:none;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.btn:hover{transform:translateY(-1px)}.btn.cyan{color:var(--cyan);border-color:rgba(85,214,255,.28)}.btn.green{color:var(--green);border-color:rgba(66,211,146,.28)}
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:18px 0}
+.stat{padding:16px;border:1px solid var(--border);border-radius:18px;background:rgba(10,19,28,.72)}.stat .num{font-size:28px;font-weight:700;color:var(--white)}.stat .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);margin-top:4px}
+.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}.card{padding:18px;border:1px solid var(--border);border-radius:22px;background:rgba(10,19,28,.72)}
+.card h2{font-size:16px;color:var(--white);margin-bottom:12px}.entry{padding:14px;border:1px solid var(--border);border-radius:16px;background:rgba(8,16,23,.82);margin-bottom:10px}.entry:last-child{margin-bottom:0}
+.entry a{color:inherit;text-decoration:none}.entry strong{display:block;color:var(--white);margin-bottom:6px}.entry p{font-size:13px;color:var(--text-dim);line-height:1.75}.empty{padding:36px;border:1px dashed var(--border);border-radius:20px;text-align:center;color:var(--text-dim)}
+.chip{display:inline-flex;padding:5px 8px;border-radius:999px;border:1px solid var(--border);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim)}
+.timeline{display:grid;gap:10px}.timeline-item{padding:14px;border:1px solid var(--border);border-radius:16px;background:rgba(8,16,23,.82)}.timeline-meta{display:flex;gap:8px;flex-wrap:wrap;font-size:10px;letter-spacing:.12em;color:var(--text-dim);text-transform:uppercase;margin-top:8px}
+.hidden{display:none!important}
+.modal-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:20px}
+@media (max-width:1024px){.layout{grid-template-columns:1fr}.stats,.grid{grid-template-columns:1fr}.operation-list{max-height:none}}
+</style>
 </head>
-<body class="portal-body">
-  <div id="app-root"></div>
-  <script type="module" src="assets/js/operations-app.js"></script>
-  <script src="assets/js/lofi-player.js"></script>
+<body>
+<div class="top">
+  <a class="brand" href="index.html">DEAD<span>CATS</span></a>
+  <div style="display:flex;gap:16px">
+    <button class="btn cyan" id="createOperationBtn" style="display:none" onclick="openOperationForm()">Create Operation</button>
+    <a class="nav-link" href="search.html">Search</a>
+    <a class="nav-link" href="dashboard.html">Dashboard</a>
+    <a class="nav-link" href="library.html">Wiki</a>
+    <a class="nav-link" href="ioc-tracker.html">IOC Tracker</a>
+    <a class="nav-link" href="vault.html">Vault</a>
+  </div>
+</div>
+<div class="modal-overlay hidden" id="operationModal">
+  <div class="panel" style="width:min(560px,100%);padding:20px">
+    <div class="eyebrow">Operations</div>
+    <div class="title" id="operationModalTitle" style="font-size:22px">Create Operation</div>
+    <div class="section">
+      <input class="search" id="operationName" type="text" placeholder="Operation name">
+    </div>
+    <div class="section" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <input class="search" id="operationLead" type="text" placeholder="Lead handle">
+      <select class="search" id="operationStatus">
+        <option value="active">Active</option>
+        <option value="planning">Planning</option>
+        <option value="on_hold">On Hold</option>
+        <option value="closed">Closed</option>
+        <option value="archived">Archived</option>
+      </select>
+      <select class="search" id="operationPriority">
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+        <option value="high">High</option>
+        <option value="critical">Critical</option>
+      </select>
+    </div>
+    <div class="section">
+      <textarea class="search" id="operationSummary" placeholder="Operation summary" style="min-height:140px;resize:vertical"></textarea>
+    </div>
+    <div class="hero-actions" style="margin-top:0">
+      <button class="btn" onclick="closeOperationForm()">Cancel</button>
+      <button class="btn cyan" id="operationSaveBtn" onclick="submitOperationForm()">Create</button>
+    </div>
+  </div>
+</div>
+<div class="layout">
+  <aside class="panel side">
+    <div class="eyebrow">Operations</div>
+    <div class="title">Case Board</div>
+    <input class="search" id="operationSearch" type="text" placeholder="Search operations..." oninput="renderOperations()">
+    <div class="operation-list" id="operationList"><div class="empty">Loading operations...</div></div>
+  </aside>
+  <main class="panel main" id="operationRoot">
+    <div class="empty">Select an operation.</div>
+  </main>
+</div>
+<script>
+const API='';
+let user=null;
+let operations=[];
+let currentOperation=null;
+let currentWarRoom=null;
+let editingOperationId=null;
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function authFetch(url,opts={}){return fetch(API+url,{...opts,credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json',...(opts.headers||{})}}).then((res)=>{if(res.status===401){localStorage.removeItem('dc_user');window.location.href='login.html';}return res;})}
+function timeAgo(value){if(!value)return'just now';const seconds=(Date.now()-new Date(value))/1000;if(seconds<60)return'just now';if(seconds<3600)return Math.floor(seconds/60)+'m ago';if(seconds<86400)return Math.floor(seconds/3600)+'h ago';return Math.floor(seconds/86400)+'d ago';}
+function fmtDate(value){if(!value)return'schedule tba';return new Date(value).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+function label(value){return String(value||'').replace(/_/g,' ')}
+async function ensureSession(){const res=await authFetch('/api/auth/me');if(!res.ok)return false;user=await res.json();localStorage.setItem('dc_user',JSON.stringify(user));return true}
+function openOperationForm(operation=null){editingOperationId=operation?operation.id:null;document.getElementById('operationModalTitle').textContent=operation?'Edit Operation':'Create Operation';document.getElementById('operationSaveBtn').textContent=operation?'Save':'Create';document.getElementById('operationName').value=operation?.name||'';document.getElementById('operationLead').value=operation?.lead_handle||user?.handle||'';document.getElementById('operationStatus').value=operation?.status||'active';document.getElementById('operationPriority').value=operation?.priority||'medium';document.getElementById('operationSummary').value=operation?.summary||'';document.getElementById('operationModal').classList.remove('hidden')}
+function closeOperationForm(){editingOperationId=null;document.getElementById('operationModal').classList.add('hidden')}
+function editOperation(operationId){const operation=operations.find((item)=>item.id===operationId);if(operation)openOperationForm(operation)}
+async function submitOperationForm(){const payload={name:document.getElementById('operationName').value.trim(),lead_handle:document.getElementById('operationLead').value.trim()||user.handle,status:document.getElementById('operationStatus').value,priority:document.getElementById('operationPriority').value,summary:document.getElementById('operationSummary').value.trim()};if(!payload.name){alert('Operation name required.');return;}const url=editingOperationId?`/api/operations/${editingOperationId}`:'/api/operations/';const method=editingOperationId?'PATCH':'POST';const res=await authFetch(url,{method,body:JSON.stringify(payload)});if(!res.ok){const err=await res.json().catch(()=>({}));alert(err.detail||'Unable to save operation.');return;}const operation=await res.json();closeOperationForm();await loadOperations();if(operation&&operation.id)await openOperation(operation.id)}
+async function loadOperations(){const res=await authFetch('/api/operations/');operations=res.ok?await res.json():[];renderOperations();const params=new URLSearchParams(window.location.search);const id=params.get('id');if(id){await openOperation(Number(id));return;}if(operations.length){await openOperation(operations[0].id)}}
+function renderOperations(){const q=document.getElementById('operationSearch').value.trim().toLowerCase();const list=document.getElementById('operationList');const items=operations.filter((op)=>!q||[op.name,op.summary,op.lead_handle].join(' ').toLowerCase().includes(q));if(!items.length){list.innerHTML='<div class="empty">No matching operations.</div>';return;}list.innerHTML=items.map((op)=>`<div class="operation-item ${currentOperation&&currentOperation.id===op.id?'active':''}" onclick="openOperation(${op.id})"><h3>${esc(op.name)}</h3><p>${esc(op.summary||'No summary yet.')}</p><div class="meta"><span>${esc(label(op.status))}</span><span>${esc(label(op.priority))}</span><span>${esc(op.lead_handle||'unassigned')}</span></div>${user&&(user.is_admin||op.created_by===user.id)?`<div class="meta" style="margin-top:10px"><a href="#" onclick="event.stopPropagation();event.preventDefault();editOperation(${op.id})" class="nav-link">Edit</a></div>`:''}</div>`).join('')}
+async function loadWarRoom(operationId){const res=await authFetch('/api/operations/'+operationId+'/war-room');currentWarRoom=res.ok?await res.json():null}
+async function openOperation(id){const [detailRes,_]=await Promise.all([authFetch('/api/operations/'+id),loadWarRoom(id)]);if(!detailRes.ok)return;currentOperation=await detailRes.json();history.replaceState(null,'',`operations.html?id=${currentOperation.id}`);renderOperations();renderOperationDetail()}
+async function resetWarRoom(){if(!currentOperation)return;if(!confirm('Reset this operation war room? This will rotate the shared canvas URL.'))return;const res=await authFetch('/api/operations/'+currentOperation.id+'/war-room/reset',{method:'POST'});if(!res.ok){alert('Unable to reset war room.');return;}currentWarRoom=await res.json();renderOperationDetail()}
+function renderOperationDetail(){const root=document.getElementById('operationRoot');if(!currentOperation){root.innerHTML='<div class="empty">Select an operation.</div>';return;}const notes=Array.isArray(currentOperation.notes)?currentOperation.notes:[];const iocs=Array.isArray(currentOperation.iocs)?currentOperation.iocs:[];const files=Array.isArray(currentOperation.files)?currentOperation.files:[];const goals=Array.isArray(currentOperation.goals)?currentOperation.goals:[];const ctfEvents=Array.isArray(currentOperation.ctf_events)?currentOperation.ctf_events:[];const activity=Array.isArray(currentOperation.activity)?currentOperation.activity:[];const iconMap={note:'📖',ioc:'📌',vault_file:'📁',goal:'🎯',ctf_event:'🚩'};root.innerHTML=`<div class="hero"><div class="eyebrow">Operation</div><h1>${esc(currentOperation.name)}</h1><div class="meta"><span class="chip">${esc(label(currentOperation.status))}</span><span class="chip">${esc(label(currentOperation.priority))}</span><span class="chip">${esc(currentOperation.lead_handle||'unassigned')}</span><span class="chip">${esc(timeAgo(currentOperation.updated_at||currentOperation.created_at))}</span></div><p>${esc(currentOperation.summary||'No summary yet.')}</p><div class="hero-actions"><a class="btn cyan" href="library.html?operation_id=${encodeURIComponent(currentOperation.id)}">Open In Wiki</a><a class="btn green" href="ioc-tracker.html?operation_id=${encodeURIComponent(currentOperation.id)}">Open In IOC Tracker</a><a class="btn" href="vault.html?operation_id=${encodeURIComponent(currentOperation.id)}">Open In Vault</a><a class="btn" href="ctf.html?operation_id=${encodeURIComponent(currentOperation.id)}">Open CTF Tracker</a>${currentWarRoom&&currentWarRoom.room_url?`<a class="btn" href="whiteboard.html?operation_id=${encodeURIComponent(currentOperation.id)}">Open War Room</a>`:''}${user&& (user.is_admin||currentOperation.created_by===user.id)?'<button class="btn red" onclick="resetWarRoom()">Reset War Room</button>':''}</div></div><div class="stats"><div class="stat"><div class="num">${esc(String(currentOperation.note_count||0))}</div><div class="lbl">Linked Notes</div></div><div class="stat"><div class="num">${esc(String(currentOperation.ioc_count||0))}</div><div class="lbl">Linked IOCs</div></div><div class="stat"><div class="num">${esc(String(currentOperation.file_count||0))}</div><div class="lbl">Linked Files</div></div><div class="stat"><div class="num">${esc(String(currentOperation.goal_count||0))}</div><div class="lbl">Goals</div></div><div class="stat"><div class="num">${esc(String(currentOperation.ctf_count||0))}</div><div class="lbl">CTF Events</div></div><div class="stat"><div class="num">${esc(String(currentOperation.published_count||0))}</div><div class="lbl">Public Papers</div></div></div><div class="grid"><section class="card"><h2>Recent Notes</h2>${notes.length?notes.map((note)=>`<div class="entry"><a href="library.html?note_id=${encodeURIComponent(note.id)}"><strong>${esc(note.title)}</strong><p>${esc((note.content||'').slice(0,180))}${(note.content||'').length>180?'...':''}</p><div class="meta" style="margin-top:8px"><span>${esc(note.author_handle||'unknown')}</span><span>${esc(label(note.review_status||'draft'))}</span></div></a></div>`).join(''):'<div class="empty">No notes linked yet.</div>'}</section><section class="card"><h2>Evidence And Indicators</h2>${iocs.length?iocs.map((ioc)=>`<div class="entry"><strong>${esc(ioc.value)}</strong><p>${esc(ioc.notes||'No notes')}</p><div class="meta" style="margin-top:8px"><span>${esc(ioc.type)}</span><span>${esc(ioc.severity)}</span><span>${esc(ioc.author)}</span></div></div>`).join(''):''}${files.length?files.map((file)=>`<div class="entry"><strong>${esc(file.original_name)}</strong><p>${esc(file.description||'Vault evidence file')}</p><div class="meta" style="margin-top:8px"><span>file</span><span>${esc(file.author)}</span><span>${esc(timeAgo(file.created_at))}</span></div></div>`).join(''):''}${!iocs.length&&!files.length?'<div class="empty">No IOCs or files linked yet.</div>':''}</section></div><div class="grid" style="margin-top:18px"><section class="card"><h2>Operation Goals</h2>${goals.length?goals.map((goal)=>`<div class="entry"><strong>${goal.completed?'[Done] ':'[Open] '}${esc(goal.text)}</strong><p>${goal.completed?`Completed by ${esc(goal.completed_by||'unknown')}`:`Added by ${esc(goal.created_by||'unknown')}`}</p></div>`).join(''):'<div class="empty">No operation goals yet.</div>'}</section><section class="card"><h2>Linked CTF Events</h2>${ctfEvents.length?ctfEvents.map((event)=>`<div class="entry"><strong>${esc(event.title)}</strong><p>${esc(event.description||'No description')}</p><div class="meta" style="margin-top:8px"><span>${esc(label(event.status||'upcoming'))}</span><span>${esc(event.format||'mixed')}</span><span>${esc(fmtDate(event.start_time))}</span></div></div>`).join(''):'<div class="empty">No operation CTF events yet.</div>'}</section></div><section class="card" style="margin-top:18px"><h2>Activity Timeline</h2>${activity.length?`<div class="timeline">${activity.map((item)=>`<div class="timeline-item"><strong>${iconMap[item.kind]||'•'} ${esc(item.title||'Untitled')}</strong><div class="timeline-meta"><span>${esc(label(item.kind))}</span><span>${esc(item.author||'unknown')}</span><span>${esc(timeAgo(item.created_at))}</span></div></div>`).join('')}</div>`:'<div class="empty">No activity yet.</div>'}</section>`}
+document.addEventListener('keydown',(event)=>{if(event.key==='Escape')closeOperationForm()})
+(async()=>{const ok=await ensureSession();if(!ok)return;if(user&&user.is_admin){document.getElementById('createOperationBtn').style.display='inline-flex'}await loadOperations()})()
+</script>
 </body>
 </html>

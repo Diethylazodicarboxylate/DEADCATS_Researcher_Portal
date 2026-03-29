@@ -1,203 +1,116 @@
-import React, { useEffect, useState } from 'https://esm.sh/react@18.3.1';
+import React, { useEffect } from 'https://esm.sh/react@18.3.1';
 import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client';
 import htm from 'https://esm.sh/htm@3.1.1';
-import { appPath, navigate } from './react-portal-utils.js';
+import { loadLegacyScript } from './legacy-react-loader.js';
 
 const html = htm.bind(React.createElement);
-const API = '';
 
-function LoginApp() {
-  const [tab, setTab] = useState('login');
-  const [login, setLogin] = useState({ handle: '', password: '' });
-  const [register, setRegister] = useState({ handle: '', password: '', confirm: '', token: '' });
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
+const markup = `
+<div class="bg"></div>
+<div class="jp-bg">死猫</div>
 
+<div class="corner tl"></div>
+<div class="corner tr"></div>
+<div class="corner bl"></div>
+<div class="corner br"></div>
+
+<div class="strip top">DEADCATS RESEARCH NETWORK // RESTRICTED ACCESS // TAILSCALE MESH ONLY</div>
+<div class="strip bottom">
+  <span>NODE <span>DC-RESEARCH-01</span></span>
+  <span>ENC <span>WIREGUARD/E2E</span></span>
+  <span>STATUS <span>OPERATIONAL</span></span>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="logo-mark">
+      <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="10" height="10" fill="#e8001e" opacity="0.8"></rect>
+        <rect x="15" y="1" width="10" height="10" stroke="#e8001e" stroke-width="1" opacity="0.35"></rect>
+        <rect x="1" y="15" width="10" height="10" stroke="#e8001e" stroke-width="1" opacity="0.35"></rect>
+        <rect x="15" y="15" width="10" height="10" fill="#e8001e" opacity="0.15"></rect>
+        <line x1="0" y1="13" x2="26" y2="13" stroke="#1a2030" stroke-width="0.5"></line>
+        <line x1="13" y1="0" x2="13" y2="26" stroke="#1a2030" stroke-width="0.5"></line>
+      </svg>
+    </div>
+    <div class="card-title">DEAD<span>CATS</span></div>
+    <div class="card-subtitle">Researcher Portal // Authentication</div>
+    <div class="auth-status">
+      <div class="status-dot"></div>
+      SECURE CHANNEL ACTIVE
+    </div>
+  </div>
+
+  <div class="auth-tabs">
+    <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Login</button>
+    <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Register</button>
+  </div>
+
+  <div class="card-body" id="form-login">
+    <div class="error-msg" id="errMsg">⚠ Invalid credentials. Access denied.</div>
+    <div class="form-group">
+      <label class="form-label">Handle <span>*</span></label>
+      <div class="input-wrap">
+        <span class="input-ico">❯</span>
+        <input class="form-input" type="text" id="handle" placeholder="your_handle" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Passphrase <span>*</span></label>
+      <div class="input-wrap">
+        <span class="input-ico">◈</span>
+        <input class="form-input" type="password" id="pass" placeholder="••••••••••••••••">
+      </div>
+    </div>
+    <button class="btn-submit" id="submitBtn" onclick="handleLogin()">Authenticate →</button>
+  </div>
+
+  <div class="card-body hidden" id="form-register">
+    <div class="error-msg" id="regErrMsg">⚠ Registration failed.</div>
+    <div class="form-group">
+      <label class="form-label">Handle <span>*</span></label>
+      <div class="input-wrap">
+        <span class="input-ico">❯</span>
+        <input class="form-input" type="text" id="reg-handle" placeholder="your_handle" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password <span>*</span></label>
+      <div class="input-wrap">
+        <span class="input-ico">◈</span>
+        <input class="form-input" type="password" id="reg-pass" placeholder="••••••••••••••••">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Confirm Password <span>*</span></label>
+      <div class="input-wrap">
+        <span class="input-ico">◈</span>
+        <input class="form-input" type="password" id="reg-pass2" placeholder="••••••••••••••••">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Access Token <span>*</span></label>
+      <div class="input-wrap">
+        <span class="input-ico">🔑</span>
+        <input class="form-input" type="password" id="reg-token" placeholder="provided by admin">
+      </div>
+    </div>
+    <button class="btn-submit" id="regBtn" onclick="handleRegister()">Request Access →</button>
+  </div>
+
+  <div class="card-footer">
+    <span class="footer-note">No token? <a href="#">Contact admin</a></span>
+    <span class="footer-version">v1.0.0</span>
+  </div>
+</div>
+`;
+
+function App() {
   useEffect(() => {
-    fetch(`${API}/api/auth/me`, { credentials: 'include', cache: 'no-store' })
-      .then((res) => {
-        if (res.ok) navigate('dashboard.html', { replace: true });
-      })
-      .catch(() => {});
+    loadLegacyScript('/assets/js/login.js');
   }, []);
 
-  async function submitLogin(event) {
-    event?.preventDefault();
-    if (!login.handle.trim() || !login.password) {
-      setError('Handle and passphrase are required.');
-      return;
-    }
-    setBusy(true);
-    setError('');
-    try {
-      const res = await fetch(`${API}/api/auth/login`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ handle: login.handle.trim(), password: login.password }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.detail || 'Authentication failed.');
-        setBusy(false);
-        return;
-      }
-      localStorage.removeItem('dc_token');
-      localStorage.setItem('dc_user', JSON.stringify(data.user));
-      navigate('dashboard.html');
-    } catch (_) {
-      setError('Cannot reach server. Check the portal connection and try again.');
-      setBusy(false);
-    }
-  }
-
-  async function submitRegister(event) {
-    event?.preventDefault();
-    if (!register.handle.trim() || !register.password || !register.confirm || !register.token.trim()) {
-      setError('All registration fields are required.');
-      return;
-    }
-    if (register.password !== register.confirm) {
-      setError('Passwords do not match.');
-      return;
-    }
-    if (register.password.length < 8) {
-      setError('Password must be at least 8 characters.');
-      return;
-    }
-    setBusy(true);
-    setError('');
-    try {
-      const res = await fetch(`${API}/api/auth/register`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          handle: register.handle.trim(),
-          password: register.password,
-          access_token: register.token.trim(),
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.detail || 'Registration failed.');
-        setBusy(false);
-        return;
-      }
-      localStorage.setItem('dc_user', JSON.stringify(data.user));
-      navigate('dashboard.html');
-    } catch (_) {
-      setError('Cannot reach server. Registration could not be completed.');
-      setBusy(false);
-    }
-  }
-
-  function switchTab(nextTab) {
-    setTab(nextTab);
-    setError('');
-  }
-
-  const isLogin = tab === 'login';
-
-  return html`
-    <div className="portal-shell">
-      <header className="portal-topbar">
-        <a className="portal-brand" href=${appPath('index.html')}>
-          <div className="portal-mark"></div>
-          <div className="portal-brand-copy">
-            <div className="portal-kicker">DEADCATS Authentication</div>
-            <div className="portal-brand-title">Secure entry</div>
-          </div>
-        </a>
-        <nav className="portal-nav">
-          <a className="portal-nav-link" href=${appPath('index.html')}>Home</a>
-          <a className="portal-nav-link" href=${appPath('research-feed.html')}>Public Wiki</a>
-        </nav>
-      </header>
-
-      <main className="portal-main">
-        <section className="login-shell">
-          <div className="portal-panel login-info">
-            <div className="portal-chip hot">Restricted access</div>
-            <h1 className="login-title">Authenticate into the internal research workspace.</h1>
-            <div className="login-copy">
-              The old login page was visually abrasive and overloaded with decorative chrome. This rewrite keeps the same security posture, but presents the flow as a cleaner operator entry panel aligned with the new dashboard and landing pages.
-            </div>
-            <div className="login-points">
-              <div className="login-point">
-                <div className="login-point-title">Internal-first access</div>
-                <div className="login-point-copy">Login drops you into the private research environment. The public wiki remains separately reachable from the landing page.</div>
-              </div>
-              <div className="login-point">
-                <div className="login-point-title">Registration still enforced by token</div>
-                <div className="login-point-copy">If self-registration is disabled or the token is invalid, the backend will block the request. The UI stays aligned with that policy instead of pretending otherwise.</div>
-              </div>
-              <div className="login-point">
-                <div className="login-point-title">Unified visual system</div>
-                <div className="login-point-copy">Same typography, same button language, same red-dark palette, and the same React stack as the new dashboard entry pages.</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="portal-panel login-card">
-            <div className="portal-kicker">Access Control</div>
-            <div className="portal-brand-title">${isLogin ? 'Login to portal' : 'Register a researcher account'}</div>
-            <div className="portal-mini">Use your internal handle and credentials. Successful auth redirects directly to the dashboard.</div>
-
-            <div className="login-tabs">
-              <button className=${`portal-button ${isLogin ? 'primary' : 'ghost'} login-tab`} onClick=${() => switchTab('login')}>Login</button>
-              <button className=${`portal-button ${!isLogin ? 'primary' : 'ghost'} login-tab`} onClick=${() => switchTab('register')}>Register</button>
-            </div>
-
-            ${error ? html`<div className="portal-error">${error}</div>` : null}
-
-            ${isLogin ? html`
-              <form className="login-form" onSubmit=${submitLogin}>
-                <div>
-                  <label className="portal-label">Handle</label>
-                  <input className="portal-input" value=${login.handle} onInput=${(event) => setLogin((value) => ({ ...value, handle: event.target.value }))} placeholder="your_handle" autoComplete="username" />
-                </div>
-                <div>
-                  <label className="portal-label">Passphrase</label>
-                  <input className="portal-input" type="password" value=${login.password} onInput=${(event) => setLogin((value) => ({ ...value, password: event.target.value }))} placeholder="••••••••••••••••" autoComplete="current-password" />
-                </div>
-                <button className="portal-button primary" type="submit" disabled=${busy}>${busy ? 'Authenticating...' : 'Authenticate'}</button>
-              </form>
-            ` : html`
-              <form className="login-form" onSubmit=${submitRegister}>
-                <div className="login-form-grid">
-                  <div>
-                    <label className="portal-label">Handle</label>
-                    <input className="portal-input" value=${register.handle} onInput=${(event) => setRegister((value) => ({ ...value, handle: event.target.value }))} placeholder="your_handle" autoComplete="username" />
-                  </div>
-                  <div>
-                    <label className="portal-label">Access token</label>
-                    <input className="portal-input" type="password" value=${register.token} onInput=${(event) => setRegister((value) => ({ ...value, token: event.target.value }))} placeholder="provided by admin" />
-                  </div>
-                </div>
-                <div className="login-form-grid">
-                  <div>
-                    <label className="portal-label">Password</label>
-                    <input className="portal-input" type="password" value=${register.password} onInput=${(event) => setRegister((value) => ({ ...value, password: event.target.value }))} placeholder="minimum 8 characters" autoComplete="new-password" />
-                  </div>
-                  <div>
-                    <label className="portal-label">Confirm password</label>
-                    <input className="portal-input" type="password" value=${register.confirm} onInput=${(event) => setRegister((value) => ({ ...value, confirm: event.target.value }))} placeholder="repeat password" autoComplete="new-password" />
-                  </div>
-                </div>
-                <button className="portal-button primary" type="submit" disabled=${busy}>${busy ? 'Registering...' : 'Create account'}</button>
-              </form>
-            `}
-
-            <div className="login-footer">
-              <span>Portal route: private workspace</span>
-              <span>Public route: research-feed.html</span>
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
-  `;
+  return html`<div dangerouslySetInnerHTML=${{ __html: markup }}></div>`;
 }
 
-createRoot(document.getElementById('app-root')).render(html`<${LoginApp} />`);
+createRoot(document.getElementById('app-root')).render(html`<${App} />`);

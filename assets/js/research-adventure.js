@@ -9,6 +9,10 @@ let metaState = null;
 let adventureState = null;
 let currentUser = readCachedUser();
 
+function appPath(path = '') {
+  return `/${String(path || '').replace(/^\/+/, '')}`;
+}
+
 function esc(s) {
   return String(s ?? '')
     .replace(/&/g, '&amp;')
@@ -61,7 +65,7 @@ async function authFetch(url, opts = {}) {
   if (res.status === 401) {
     localStorage.removeItem('dc_token');
     localStorage.removeItem('dc_user');
-    window.location.replace('login.html');
+    window.location.replace(appPath('login.html'));
   }
   return res;
 }
@@ -231,7 +235,7 @@ function renderPathwayGate() {
         return;
       }
       showToast('Pathway locked', 'success');
-      await loadAdventure();
+      window.location.replace(appPath('research-adventure.html'));
     });
   });
 }
@@ -492,7 +496,7 @@ function setNavState() {
   const sidebarLinks = Array.from(document.querySelectorAll('.sidebar .nav-item'));
   for (const link of sidebarLinks) {
     const href = link.getAttribute('href') || '';
-    link.classList.toggle('active', href === 'research-adventure.html');
+    link.classList.toggle('active', href === '/research-adventure.html' || href === 'research-adventure.html');
   }
 }
 
@@ -529,7 +533,7 @@ function renderAll() {
 async function init() {
   currentUser = await fetchMeWithRetry();
   if (!currentUser) {
-    window.location.replace('login.html');
+    window.location.replace(appPath('login.html'));
     return;
   }
   localStorage.setItem('dc_user', JSON.stringify(currentUser));
@@ -548,7 +552,7 @@ window.addEventListener('partials:loaded', () => {
         .finally(() => {
           localStorage.removeItem('dc_token');
           localStorage.removeItem('dc_user');
-          window.location.replace('login.html');
+          window.location.replace(appPath('login.html'));
         });
     });
   }

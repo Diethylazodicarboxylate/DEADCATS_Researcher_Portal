@@ -1,5 +1,9 @@
 const API = '';
 
+function appPath(path = '') {
+  return `/${String(path || '').replace(/^\/+/, '')}`;
+}
+
 function esc(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
@@ -36,7 +40,7 @@ async function initDashboard() {
   } else if (!user) {
     localStorage.removeItem('dc_token');
     localStorage.removeItem('dc_user');
-    window.location.href = 'login.html';
+    window.location.href = appPath('login.html');
     return;
   }
 
@@ -67,7 +71,7 @@ async function initDashboard() {
       if (res.status === 401) {
         localStorage.removeItem('dc_token');
         localStorage.removeItem('dc_user');
-        window.location.href = 'login.html';
+        window.location.href = appPath('login.html');
       }
     }
     return res;
@@ -105,7 +109,7 @@ async function initDashboard() {
     const rankEl = document.getElementById('nav-rank');
     const profileLink = document.getElementById('nav-profile-link');
     if (profileLink) {
-      const myProfileUrl = `members/profile.html?user=${encodeURIComponent(user.handle)}`;
+      const myProfileUrl = appPath(`members/profile.html?user=${encodeURIComponent(user.handle)}`);
       profileLink.href = myProfileUrl;
       if (!profileLink.dataset.navBound) {
         profileLink.dataset.navBound = '1';
@@ -120,7 +124,7 @@ async function initDashboard() {
     handleEl.textContent = user.handle;
     rankEl.textContent = String(user.rank || '').toUpperCase();
     rankEl.style.color = RANK_COLORS[user.rank] || '#445060';
-    profileLink.href = `members/profile.html?user=${encodeURIComponent(user.handle)}`;
+    profileLink.href = appPath(`members/profile.html?user=${encodeURIComponent(user.handle)}`);
   }
 
   async function loadMembers() {
@@ -144,7 +148,7 @@ async function initDashboard() {
         return `<div class="member-row">
           <div class="m-ava">${esc(m.emoji)}<div class="m-status ${status}"></div></div>
           <div class="m-info">
-            <div class="m-handle"><a href="members/profile.html?user=${encodeURIComponent(m.handle)}" style="color:inherit;text-decoration:none;">${esc(m.handle)}</a></div>
+            <div class="m-handle"><a href="${appPath(`members/profile.html?user=${encodeURIComponent(m.handle)}`)}" style="color:inherit;text-decoration:none;">${esc(m.handle)}</a></div>
             <div class="m-rank" style="color:${esc(color)};">${esc(String(m.rank || '').toUpperCase())}</div>
           </div>
           <span class="m-last">${timeAgo(m.last_seen)}</span>
@@ -159,7 +163,7 @@ async function initDashboard() {
           return `<div class="member-row">
             <div class="m-ava">${esc(m.emoji)}<div class="m-status ${isOnline(m.last_seen)}"></div></div>
             <div class="m-info">
-              <div class="m-handle"><a href="members/profile.html?user=${encodeURIComponent(m.handle)}" style="color:inherit;text-decoration:none;">${esc(m.handle)}</a></div>
+              <div class="m-handle"><a href="${appPath(`members/profile.html?user=${encodeURIComponent(m.handle)}`)}" style="color:inherit;text-decoration:none;">${esc(m.handle)}</a></div>
               <div class="m-rank" style="color:${esc(color)};">${esc(String(m.rank || '').toUpperCase())}</div>
             </div>
             <span class="m-last">${timeAgo(m.last_seen)}</span>
@@ -261,7 +265,7 @@ async function initDashboard() {
       el.innerHTML = ordered.slice(0, 6).map((operation) => {
         const canEdit = user.is_admin || operation.created_by === user.id;
         return `<div class="note-item">
-          <div class="note-title"><a href="operations.html?id=${encodeURIComponent(operation.id)}" style="color:inherit;text-decoration:none;">${esc(operation.name)}</a></div>
+          <div class="note-title"><a href="${appPath(`operations.html?id=${encodeURIComponent(operation.id)}`)}" style="color:inherit;text-decoration:none;">${esc(operation.name)}</a></div>
           <div class="note-preview">${esc(operation.summary || 'No summary yet.')}</div>
           <div class="note-meta">
             <span>${esc(statusLabel(operation.status))}</span>
@@ -296,12 +300,12 @@ async function initDashboard() {
       }
       const iconMap = { note: '📖', ioc: '📌', vault_file: '📁', goal: '🎯', ctf_event: '🚩' };
       const hrefFor = (item) => {
-        if (item.kind === 'note') return `library.html?note_id=${encodeURIComponent(item.id)}`;
-        if (item.kind === 'ioc') return item.meta && item.meta.operation_id ? `ioc-tracker.html?operation_id=${encodeURIComponent(item.meta.operation_id)}` : 'ioc-tracker.html';
-        if (item.kind === 'vault_file') return item.meta && item.meta.operation_id ? `operations.html?id=${encodeURIComponent(item.meta.operation_id)}` : 'vault.html';
-        if (item.kind === 'goal') return item.meta && item.meta.operation_id ? `whiteboard.html?operation_id=${encodeURIComponent(item.meta.operation_id)}` : 'whiteboard.html';
-        if (item.kind === 'ctf_event') return item.meta && item.meta.operation_id ? `ctf.html?operation_id=${encodeURIComponent(item.meta.operation_id)}` : 'ctf.html';
-        return 'dashboard.html';
+        if (item.kind === 'note') return appPath(`library.html?note_id=${encodeURIComponent(item.id)}`);
+        if (item.kind === 'ioc') return item.meta && item.meta.operation_id ? appPath(`ioc-tracker.html?operation_id=${encodeURIComponent(item.meta.operation_id)}`) : appPath('ioc-tracker.html');
+        if (item.kind === 'vault_file') return item.meta && item.meta.operation_id ? appPath(`operations.html?id=${encodeURIComponent(item.meta.operation_id)}`) : appPath('vault.html');
+        if (item.kind === 'goal') return item.meta && item.meta.operation_id ? appPath(`whiteboard.html?operation_id=${encodeURIComponent(item.meta.operation_id)}`) : appPath('whiteboard.html');
+        if (item.kind === 'ctf_event') return item.meta && item.meta.operation_id ? appPath(`ctf.html?operation_id=${encodeURIComponent(item.meta.operation_id)}`) : appPath('ctf.html');
+        return appPath('dashboard.html');
       };
       el.innerHTML = items.slice(0, 10).map((item) => `
         <div class="note-item" onclick="window.location='${hrefFor(item)}'" style="cursor:crosshair;">
@@ -337,7 +341,7 @@ async function initDashboard() {
         return;
       }
       root.innerHTML = items.map((item) => `
-        <div class="note-item" onclick="window.location='library.html?note_id=${encodeURIComponent(item.id)}'" style="cursor:crosshair;">
+        <div class="note-item" onclick="window.location='${appPath(`library.html?note_id=${encodeURIComponent(item.id)}`)}'" style="cursor:crosshair;">
           <div class="note-title">${esc(item.title)}</div>
           <div class="note-preview">${esc(item.operation_name || 'No operation')} · ${esc(item.review_status || 'draft')}</div>
           <div class="note-meta">
@@ -393,7 +397,7 @@ async function initDashboard() {
         return;
       }
       el.innerHTML = notes.slice(0, 5).map(n => `
-        <div class="note-item" onclick="window.location='library.html?note_id=${encodeURIComponent(n.id)}'" style="cursor:crosshair;">
+        <div class="note-item" onclick="window.location='${appPath(`library.html?note_id=${encodeURIComponent(n.id)}`)}'" style="cursor:crosshair;">
           <div class="note-title">${esc(n.title)}</div>
           <div class="note-preview">${esc(n.content || 'No preview')}</div>
           <div class="note-meta">
@@ -412,7 +416,7 @@ async function initDashboard() {
       .finally(() => {
         localStorage.removeItem('dc_token');
         localStorage.removeItem('dc_user');
-        window.location.replace('login.html');
+        window.location.replace(appPath('login.html'));
       });
   }
 
@@ -651,7 +655,7 @@ async function initDashboard() {
       });
       n.onclick = () => {
         window.focus();
-        window.location.href = 'ctf.html';
+        window.location.href = appPath('ctf.html');
       };
     } catch (_) {}
   }
