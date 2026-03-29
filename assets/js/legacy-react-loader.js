@@ -1,4 +1,4 @@
-const LEGACY_VERSION = 'legacy-react-2';
+const LEGACY_VERSION = 'legacy-react-3';
 
 export function loadLegacyScript(src, { dispatchPartialsLoaded = false } = {}) {
   const normalized = src.includes('?') ? `${src}&v=${LEGACY_VERSION}` : `${src}?v=${LEGACY_VERSION}`;
